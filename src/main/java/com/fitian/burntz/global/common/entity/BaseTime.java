@@ -28,7 +28,7 @@ public abstract class BaseTime {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_yn",columnDefinition = "char(1) NOT NULL DEFAULT 'N'")
+    @Column(name = "deleted_yn", length = 1, nullable = false)
     @Enumerated(EnumType.STRING)
     private Yn deletedYN = Yn.N;
 
