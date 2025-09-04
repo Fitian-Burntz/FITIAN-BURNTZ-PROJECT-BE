@@ -44,6 +44,9 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	//헬스체크 url
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
 	//postgresql 의존성
 	implementation 'org.postgresql:postgresql'
 

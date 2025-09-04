@@ -1,0 +1,35 @@
+{
+  "family": "burntz-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::209479269102:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "burntz",
+      "image": "209479269102.dkr.ecr.ap-northeast-2.amazonaws.com/burntz:latest",
+      "portMappings": [
+        { "containerPort": 8080, "protocol": "tcp" }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "DB_URL",
+          "value": "jdbc:postgresql://burntz-db.cdgiwaocqbwu.ap-northeast-2.rds.amazonaws.com:5432/burntz?sslmode=require&stringtype=unspecified"
+        },
+        { "name": "DB_USERNAME", "value": "root" },
+        { "name": "DB_PASSWORD", "value": "burntz1234" },
+        { "name": "SPRING_DATASOURCE_URL", "value": "jdbc:postgresql://burntz-db.cdgiwaocqbwu.ap-northeast-2.rds.amazonaws.com:5432/burntz?sslmode=require&stringtype=unspecified" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/burntz",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
