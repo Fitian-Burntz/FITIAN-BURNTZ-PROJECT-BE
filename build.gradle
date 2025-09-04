@@ -33,7 +33,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    //ai 추가 할 때 주석 해제
 //	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -41,6 +44,8 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+
+    // Swagger 사용을 위한 의존성
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
 }
