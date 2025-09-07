@@ -50,4 +50,6 @@ public abstract class BaseTime {
             this.updatedAt = LocalDateTime.now();
         }
     }
+
+    public boolean isDeleted() { return this.deletedYN == Yn.Y; }
 }

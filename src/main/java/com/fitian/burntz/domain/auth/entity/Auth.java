@@ -35,5 +35,13 @@ public class Auth extends BaseTime {
     private Member member; // 실제 Member 엔티티 타입으로 변경하세요
 
 
+    /**
+     * 리프레시 토큰 갱신 — updatedAt만 즉시 갱신
+     */
+    public void updateRefreshToken(String newRefreshToken) {
+        this.refreshToken = newRefreshToken;
+        setUpdatedAtToNow();          // BaseTime에 추가한 헬퍼 사용
+    }
+
 
 }
