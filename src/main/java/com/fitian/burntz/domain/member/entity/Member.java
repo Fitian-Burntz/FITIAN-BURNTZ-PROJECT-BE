@@ -1,42 +1,79 @@
 package com.fitian.burntz.domain.member.entity;
 
+import com.fitian.burntz.domain.auth.entity.Auth;
 import com.fitian.burntz.domain.member.member_enum.Gender;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import jdk.jfr.Enabled;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Member {
+@Table(name = "member",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"provider","member_id"}))
+public class Member extends BaseTime {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_pk")
     private Long memberPk;
 
-    @Column(name = "member_id", length = 50)
+    @Column(name = "member_id", length = 50, nullable = false)
     private String memberId;
 
-    @Column(name = "nickname", length = 50)
+    @Column(name = "nickname", length = 50, nullable = false)
     private String nickname;
 
-    @Column(name = "email", length = 100)
+    @Column(name = "email", length = 100, nullable = false)
     private String email;
 
-    @Column(name = "gender", length = 10)
+    @Column(name = "gender", length = 10, nullable = false)
     private Gender gender;
 
-//    @Column(name = "created_at")
-//    private LocalDateTime createdAt;
-//
-//    @Column(name = "updated_at")
-//    private LocalDateTime updatedAt;
-//
-//    @Column(name = "deleted_at")
-//    private String deletedAt;
+    // provider 추가 (google, apple 등)
+    @Column(name = "provider", length = 50, nullable = false)
+    private String provider;
+
+    // Member -> Auth 연관관계 추가 (초기화해서 NPE 방지)
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
+    private List<Auth> auths = new ArrayList<>();
+
+
+    /** 멤버 계정 생성 정적 메서드 **/
+    public static Member create(
+            String memberId, String nickname, String email, Gender gender, String provider){
+
+        return Member.builder()
+                .memberId(memberId)
+                .nickname(nickname)
+                .email(email)
+                .gender(gender)
+                .provider(provider)
+                .build();
+    }
+
+
+    /**
+     * Soft delete 처리 — 부모에 구현한 로직 재사용
+     * 그리고 연관된 Auth들도 soft-delete 처리
+     */
+    public void markDeleted() {
+        super.markDeleted();          // BaseTime.markDeleted()
+        // auths가 LAZY면 트랜잭션 내에서 접근해야 로드된다.
+        if (this.auths != null) {
+            this.auths.forEach(auth -> {
+                if (!auth.isDeleted()) {   // Auth에 isDeleted() 헬퍼가 있으면 더 안전
+                    auth.markDeleted();
+                }
+            });
+        }
+    }
+
 }
