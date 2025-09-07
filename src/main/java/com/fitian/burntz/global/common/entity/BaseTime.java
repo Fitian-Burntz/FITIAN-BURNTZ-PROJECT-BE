@@ -36,4 +36,18 @@ public abstract class BaseTime {
     public enum Yn {
         Y, N
     }
+
+    /** 업데이트 시간만 현재로 변경 **/
+    public void setUpdatedAtToNow()
+    {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** 데이터 삭제 표시 후 업데이트 시간 변경 **/
+    public void markDeleted() {
+        if (this.deletedYN != Yn.Y) {
+            this.deletedYN = Yn.Y;
+            this.updatedAt = LocalDateTime.now();
+        }
+    }
 }
