@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.auth.entity;
 
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "auth")
-public class Auth {
+public class Auth extends BaseTime {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,36 +34,6 @@ public class Auth {
     @JoinColumn(name = "member_pk")
     private Member member; // 실제 Member 엔티티 타입으로 변경하세요
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_yn", length = 1)
-    private String deletedYn; // "Y" / "N" 으로 사용
-
-
-    /**
-     * 리프레시 토큰만 갱신하는 편의 메서드 (mutable)
-     */
-    public void updateRefreshToken(String newRefreshToken) {
-        this.refreshToken = newRefreshToken;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-
-    /**
-     * 삭제 처리: deletedYn 을 "Y"로 변경하고 updatedAt을 현재 시각으로 갱신.
-     */
-    public void markDeleted() {
-        if (!"Y".equals(this.deletedYn)) {
-            this.deletedYn = "Y";
-            this.updatedAt = LocalDateTime.now();
-        }
-    }
 
 
 }
