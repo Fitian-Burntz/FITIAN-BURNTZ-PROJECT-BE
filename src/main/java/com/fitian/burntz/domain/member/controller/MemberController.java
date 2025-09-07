@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 
 @RestController
-public class TestController {
+public class MemberController {
 
     @GetMapping("/api/me")
     public Object me(Principal principal) {

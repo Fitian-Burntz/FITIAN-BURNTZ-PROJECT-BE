@@ -8,7 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
@@ -24,14 +23,17 @@ public class CustomUserDetails implements UserDetails {
         return member.getMemberPk();
     }
 
+    public String getMemberId() {return member.getMemberId();}
+
     @Override
     public String getPassword() {
         return ""; // 소셜 로그인 전용이므로 빈 문자열 허용
     }
 
+    //getUsername() 시 nickname 정보 반환
     @Override
     public String getUsername() {
-        return member.getMemberId();
+        return member.getNickname();
     }
 
 

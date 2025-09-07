@@ -3,11 +3,13 @@ package com.fitian.burntz.domain.auth.oauth2;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,17 +23,15 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
 
-    private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final MemberService memberService;
 
     @Value("${jwt.accessTokenExpirationTime}")
     private Long jwtAccessTokenExpirationTime;
@@ -42,8 +42,20 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        String provider = userRequest.getClientRegistration().getRegistrationId(); // "google" or "apple"
+        String provider = userRequest.getClientRegistration().getRegistrationId();
+        provider = provider == null ? "" : provider.toLowerCase(Locale.ROOT);
         Map<String,Object> attributes = oAuth2User.getAttributes();
+
+        //OAuth2AccessToken을 userRequest에서 꺼냄 ***
+        String rawAccessToken = null; // 실제 제공되는 OAuth2 access token 문자열
+        try {
+            if (userRequest.getAccessToken() != null) {
+                rawAccessToken = userRequest.getAccessToken().getTokenValue();
+            }
+        } catch (Exception e) {
+            log.warn("[OAuth2UserService] unable to read access token from userRequest", e);
+        }
+
 
         // memberId를 미리 선언(모든 분기에서 초기화 보장)
         String memberId = null;
@@ -51,9 +63,15 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         String name = null;
 
         if ("google".equals(provider)){
+            memberId = (String) attributes.get("sub"); // *** sub 우선 사용 ***
             email = (String) attributes.get("email");
             name = (String) attributes.get("name");
-            memberId = email;
+
+            // 안전 fallback
+            if (memberId == null || memberId.isBlank()) {
+                // 거의 발생하지 않지만 안전장치
+                memberId = UUID.randomUUID().toString();
+            }
         }
         else if ("apple".equals(provider)){
             //Apple은 userinfo endpoint 대신 id_token 에 정보가 담겨온다.
@@ -103,32 +121,10 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         }
 
 
-        //회원이 없으면 자동 가입
-        Member member = memberRepository.findByMemberId(memberId).orElse(null);
+        //직접 repository로 생성하지 않고 MemberService 사용하여 조회/생성 통일 ***
+        Member member = memberService.getOrCreateMember(provider, memberId, name, email);
 
-        if (member == null) {
-            // 람다 캡쳐 이슈 회피: 로컬 변수로 미리 준비
-            String signupName = (name != null) ? name : "소셜 유저";
-            String signupEmail = (email != null) ? email : "";
-            Gender signupGender = Gender.OTHERS; // enum 이름이 정확한지 확인하세요 (OTHER / OTHERS)
-
-            Member newMember = Member.create(
-                    memberId,
-                    signupName,
-                    signupEmail,
-                    signupGender
-            );
-
-            try {
-                member = memberRepository.save(newMember);
-            } catch (DataIntegrityViolationException ex) {
-                // 동시성으로 인해 다른 스레드가 동일 memberId로 이미 삽입했을 수 있음.
-                // 이 경우엔 DB에서 다시 조회해서 existing member를 사용
-                member = memberRepository.findByMemberId(memberId)
-                        .orElseThrow(() -> new RuntimeException("Failed to create member and no existing member found", ex));
-            }
-        }
-
+        // 인증 principal 및 JWT 생성
         CustomUserDetails principal = new CustomUserDetails(member);
 
         Authentication auth = new UsernamePasswordAuthenticationToken(
@@ -139,6 +135,20 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         String accessToken = jwtTokenProvider.generateToken(auth, jwtAccessTokenExpirationTime);
         String refreshToken = jwtTokenProvider.generateToken(auth, jwtRefreshTokenExpirationTime);
 
+        //로그. 그리고 userRequest에서 읽은 raw access token(원본 OAuth 토큰)도 attributes에 포함 ***
+        log.info("[OAuth2UserService] provider={} memberPk={} memberId={} -> generated accessToken(len={}), refreshToken(len={})",
+                provider, member.getMemberPk(), memberId,
+                accessToken != null ? accessToken.length() : 0,
+                refreshToken != null ? refreshToken.length() : 0
+        );
+
+        if (rawAccessToken != null) {
+            log.info("[OAuth2UserService] raw OAuth access token present (length={})", rawAccessToken.length());
+        } else {
+            log.info("[OAuth2UserService] raw OAuth access token NOT present from userRequest");
+        }
+
+
         Map<String, Object> customAttributes = new HashMap<>(attributes);
         customAttributes.put("accessToken", accessToken);
         customAttributes.put("refreshToken", refreshToken);
@@ -148,7 +158,7 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         return new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority("MEMBER")),
                 customAttributes,
-                "subject"
+                "memberPk"
         );
 
     }

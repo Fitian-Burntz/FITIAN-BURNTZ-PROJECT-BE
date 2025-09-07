@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Burntz</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body{font-family:Arial,Helvetica,sans-serif;padding:24px}
+        .btn{background:#1a73e8;color:white;padding:8px 12px;border-radius:6px;text-decoration:none;display:inline-block}
+        .btn-outline{background:white;color:#1a73e8;border:1px solid #1a73e8;padding:8px 12px;border-radius:6px;text-decoration:none;cursor:pointer}
+        .box{margin-top:16px;padding:12px;background:#f5f5f5;border-radius:6px;max-width:720px}
+        .controls{margin-top:12px}
+        .small{font-size:0.9em;color:#666}
+    </style>
+</head>
+<body>
+<h1>Burntz</h1>
+<p>OAuth 테스트:</p>
+
+<!-- 로그인은 anchor로 이동 -->
+<a id="google-login" class="btn" href="/oauth2/authorization/google">Google 로그인</a>
+<!-- 로그아웃 버튼 (초기에는 숨김) -->
+<button id="logout-btn" class="btn-outline" style="display:none;margin-left:8px">로그아웃</button>
+
+<div class="box" id="status">
+    <strong>로그인 상태</strong><br/>
+    <div id="principal">loading...</div>
+    <div id="details" class="small" style="margin-top:8px"></div>
+</div>
+
+<script>
+    (async function () {
+        const principalEl = document.getElementById('principal');
+        const detailsEl = document.getElementById('details');     // MODIFIED: 디버그 정보 영역 추가
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginAnchor = document.getElementById('google-login');
+
+        // --- MODIFIED: 유틸 - 서버 응답을 안전하게 파싱 (JSON 또는 text)
+        async function safeReadResponseBody(res) {
+            const ct = res.headers.get('content-type') || '';
+            try {
+                if (ct.includes('application/json')) {
+                    return JSON.stringify(await res.json());
+                } else {
+                    return await res.text();
+                }
+            } catch (e) {
+                console.warn('safeReadResponseBody parse failed', e);
+                try { return await res.text(); } catch (e2) { return ''; }
+            }
+        }
+
+        // 현재 인증 상태를 서버에서 읽어와 화면 업데이트
+        async function fetchMeAndUpdateUI() {
+            detailsEl.innerText = ''; // 초기화
+            try {
+                // 인증 쿠키 포함하려면 include 권장 (same-origin 환경이면 same-origin 도 괜찮음)
+                console.debug('[frontend] fetch /api/me (include credentials)');
+                const res = await fetch('/api/me', { credentials: 'include' }); // MODIFIED
+                const body = await safeReadResponseBody(res);
+                console.debug('[frontend] /api/me status=', res.status, 'body=', body);
+
+                if (res.ok) {
+                    // 서버가 username/email 또는 상세 JSON을 반환할 수 있으니 그대로 보여줌
+                    principalEl.innerText = 'principal: ' + (body || 'unknown');
+
+                    // 로그인 여부 판단: 서버가 빈값이나 "anonymous"를 반환하면 비로그인으로 처리
+                    const loggedIn = !!body && body.trim() !== '' && !/anonymous/i.test(body);
+                    // MODIFIED: 디버그 정보에 응답 상태/본문 표시
+                    detailsEl.innerText = 'debug: /api/me status=' + res.status + ' body=' + (body || '[empty]');
+                    toggleButtons(loggedIn);
+                } else {
+                    principalEl.innerText = 'principal: anonymous (status ' + res.status + ')';
+                    detailsEl.innerText = 'debug: /api/me failed status=' + res.status + ' body=' + body;
+                    toggleButtons(false);
+                }
+            } catch (err) {
+                console.error('[frontend] fetch /api/me failed', err);
+                principalEl.innerText = 'principal: anonymous (fetch error)';
+                detailsEl.innerText = 'debug: fetch error - see console';
+                toggleButtons(false);
+            }
+        }
+
+        // 버튼 표시 토글
+        function toggleButtons(loggedIn) {
+            if (loggedIn) {
+                logoutBtn.style.display = 'inline-block';
+                loginAnchor.style.display = 'none';
+            } else {
+                loginAnchor.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+            }
+        }
+
+        // 로그아웃 호출
+        async function logout() {
+            try {
+                console.debug('[frontend] POST /api/auth/logout (include credentials)');
+                const res = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include', // MODIFIED: 쿠키 전송/수신 위해 반드시 포함
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const body = await safeReadResponseBody(res);
+                console.debug('[frontend] /api/auth/logout ->', res.status, body);
+
+                if (res.ok) {
+                    principalEl.innerText = '로그아웃 완료';
+                    detailsEl.innerText = 'debug: logout ok';
+                    toggleButtons(false);
+                    // 서버에서 Set-Cookie로 삭제 처리했는지 확인하려면 잠깐 뒤에 상태 재조회
+                    setTimeout(fetchMeAndUpdateUI, 200);
+                } else {
+                    console.error('[frontend] logout failed', res.status, body);
+                    principalEl.innerText = 'logout failed (status ' + res.status + ')';
+                    detailsEl.innerText = 'debug: logout failed body=' + body;
+                }
+            } catch (e) {
+                console.error('[frontend] logout error', e);
+                principalEl.innerText = 'logout error';
+                detailsEl.innerText = 'debug: logout fetch error - see console';
+            }
+        }
+
+        logoutBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (!confirm('정말 로그아웃하시겠습니까?')) return;
+            logout();
+        });
+
+        // OAuth에서 리다이렉트되어 돌아왔는지 확인 (예: /index.html?memberPk=1)
+        function handleReturnedFromOAuth() {
+            const params = new URLSearchParams(window.location.search);
+            const memberPk = params.get('memberPk');
+            if (memberPk) {
+                // 우선 간단한 메시지 표시, 그 다음 서버의 인증 상태를 확인
+                principalEl.innerText = '로그인 완료: memberPk=' + memberPk;
+                detailsEl.innerText = 'debug: returned from oauth with memberPk';
+                // 쿼리 제거해서 URL 깔끔하게 유지
+                history.replaceState({}, '', '/index.html');
+                // 서버에서 쿠키/세션을 확인하여 실제 로그인 상태를 반영
+                setTimeout(fetchMeAndUpdateUI, 200);
+            } else {
+                // 평상시 로딩: 서버에 인증 정보가 있는지 확인
+                fetchMeAndUpdateUI();
+            }
+        }
+
+        // 초기 실행
+        handleReturnedFromOAuth();
+
+        // 개발중 편의: F12 콘솔에서 직접 상태 재조회 가능
+        window.__burntz_fetchMe = fetchMeAndUpdateUI;
+        window.__burntz_logout = logout;
+
+    })();
+</script>
+</body>
+</html>

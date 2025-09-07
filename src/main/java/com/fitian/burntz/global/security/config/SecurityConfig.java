@@ -2,11 +2,11 @@ package com.fitian.burntz.global.security.config;
 
 import com.fitian.burntz.domain.auth.oauth2.OAuth2LoginSuccessHandler;
 import com.fitian.burntz.domain.auth.oauth2.OAuth2UserServiceImpl;
+import com.fitian.burntz.global.security.core.CustomOidcUserService;
 import com.fitian.burntz.global.security.core.CustomUserDetailsService;
 import com.fitian.burntz.global.security.jwt.JwtTokenFilter;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,13 +21,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final CustomOidcUserService customOidcUserService;
     private final OAuth2UserServiceImpl oAuth2UserServiceImpl;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, OAuth2UserService oAuth2UserService) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(jwtTokenProvider, customUserDetailsService);
 
         http
@@ -40,12 +41,18 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/oauth2/**",
-                                "/login/**")
+                                "/login/**",
+                                "/api/me",
+                                "/api/auth/**"
+                        )
                         .permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
+                                .userInfoEndpoint(userInfo -> {
+                                    userInfo.userService(oAuth2UserServiceImpl);     // OAuth2 userinfo 처리 (non-OIDC)
+                                    userInfo.oidcUserService(customOidcUserService); // OIDC(id_token) 처리 (예: 구글)
+                                })
                         .successHandler(oAuth2LoginSuccessHandler)
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
