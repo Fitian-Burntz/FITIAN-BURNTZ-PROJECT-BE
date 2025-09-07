@@ -14,21 +14,30 @@
       ],
       "essential": true,
       "environment": [
-        {
-          "name": "DB_URL",
-          "value": "jdbc:postgresql://burntz-db.cdgiwaocqbwu.ap-northeast-2.rds.amazonaws.com:5432/burntz?sslmode=require&stringtype=unspecified"
-        },
-        { "name": "DB_USERNAME", "value": "root" },
-        { "name": "DB_PASSWORD", "value": "burntz1234" },
-        { "name": "SPRING_DATASOURCE_URL", "value": "jdbc:postgresql://burntz-db.cdgiwaocqbwu.ap-northeast-2.rds.amazonaws.com:5432/burntz?sslmode=require&stringtype=unspecified" }
+        { "name": "SPRING_PROFILES_ACTIVE", "value": "dev" },
+        { "name": "DB_URL", "value": "jdbc:postgresql://burntz-db.cdgiwaocqbwu.ap-northeast-2.rds.amazonaws.com:5432/burntz?sslmode=require&stringtype=unspecified"},
+        { "name": "DB_USERNAME", "value": "root"},
+        { "name": "DB_PASSWORD", "value": "burntz1234" }
       ],
+
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/burntz",
+          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/burntz-dev",
           "awslogs-region": "ap-northeast-2",
-          "awslogs-stream-prefix": "ecs"
+          "awslogs-stream-prefix": "ecs",
+          "mode": "non-blocking",
+          "max-buffer-size": "25m"
         }
+      },
+
+      "healthCheck": {
+        "retries": 3,
+        "command": ["CMD-SHELL","curl -fsS http://localhost:8080/actuator/health || exit 1"],
+        "timeout": 5,
+        "interval": 30,
+        "startPeriod": 60
       }
     }
   ]
