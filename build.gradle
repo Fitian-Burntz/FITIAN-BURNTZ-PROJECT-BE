@@ -62,6 +62,9 @@ dependencies {
 
     //Apple id_token 파싱을 위한 라이브러리
     implementation 'com.nimbusds:nimbus-jose-jwt:10.4.2'
+
+    // BouncyCastle (for PEM/PKCS8 parsing / ES256 signing) - 권장
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
 }
 
 dependencyManagement {

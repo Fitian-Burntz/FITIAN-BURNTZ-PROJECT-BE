@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/index.html",
+                                "/login-token-test2.html",
                                 "/css/**",
                                 "/js/**",
                                 "/oauth2/**",
