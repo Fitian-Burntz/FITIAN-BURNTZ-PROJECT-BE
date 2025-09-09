@@ -17,31 +17,27 @@ import java.util.Base64;
 public class JwtKey {
 
     /**
-     * 반드시 base64 로 인코딩된 64바이트(512비트) 키를 환경변수 또는 application.yml 의
-     * jwt.base64-secret 에 설정해야 합니다.
+     * application.yml / application.properties 의 jwt.secret 값을 그대로 사용.
+     * (짧아도 됨 → SHA-512 해싱으로 강제 64바이트 키로 변환)
      */
-    @Value("${jwt.base64-secret:}")
-    private String base64Secret;
+    @Value("${jwt.secret:}")
+    private String rawSecret;
 
     @Bean
     public SecretKey secretKey() {
-        if (base64Secret == null || base64Secret.isBlank()) {
-            throw new IllegalStateException("Missing jwt.base64-secret. Set a base64-encoded 64-byte key (e.g. openssl rand -base64 64).");
+        if (rawSecret == null || rawSecret.isBlank()) {
+            throw new IllegalStateException("Missing jwt.secret. 환경변수나 yml/properties에 jwt.secret 설정 필요.");
         }
 
-        byte[] keyBytes;
         try {
-            keyBytes = Base64.getDecoder().decode(base64Secret);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("jwt.base64-secret is not valid base64", e);
-        }
+            // 문자열 → SHA-512 다이제스트 (64 bytes)
+            MessageDigest digest = MessageDigest.getInstance("SHA-512");
+            byte[] keyBytes = digest.digest(rawSecret.getBytes(StandardCharsets.UTF_8));
 
-        // Keys.hmacShaKeyFor will validate length (HS512 needs >= 512 bits)
-        try {
+            // HS512에 적합한 Key 객체 생성
             return Keys.hmacShaKeyFor(keyBytes);
-        } catch (IllegalArgumentException e) {
-            // 명확한 에러 메시지로 운영자에게 안내
-            throw new IllegalStateException("jwt.base64-secret must decode to at least 64 bytes (512 bits) for HS512. Generate with: openssl rand -base64 64", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-512 알고리즘을 사용할 수 없음", e);
         }
     }
 }
