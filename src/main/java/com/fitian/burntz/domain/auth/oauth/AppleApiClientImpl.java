@@ -23,7 +23,6 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "spring.security.oauth2.client.registration.apple.client-id")
 public class AppleApiClientImpl implements AppleApiClient {
 
     @Value("${spring.security.oauth2.client.registration.apple.client-id}")
