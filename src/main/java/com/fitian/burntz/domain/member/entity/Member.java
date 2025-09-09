@@ -35,8 +35,9 @@ public class Member extends BaseTime {
     @Column(name = "email", length = 100, nullable = false)
     private String email;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 10, nullable = false)
-    private Gender gender;
+    private Gender gender = Gender.OTHERS;
 
     // provider 추가 (google, apple 등)
     @Column(name = "provider", length = 50, nullable = false)
@@ -50,13 +51,13 @@ public class Member extends BaseTime {
 
     /** 멤버 계정 생성 정적 메서드 **/
     public static Member create(
-            String memberId, String nickname, String email, Gender gender, String provider){
+            String memberId, String nickname, String email, String provider){
 
         return Member.builder()
                 .memberId(memberId)
                 .nickname(nickname)
                 .email(email)
-                .gender(gender)
+                .gender(Gender.OTHERS)
                 .provider(provider)
                 .build();
     }

@@ -20,10 +20,10 @@ public interface RefreshTokenService {
     void revokeRefreshToken(Long memberPk);
 
     /** 정확히 해당 리프레시 토큰만 삭제 (해시 매칭) */
-    boolean deleteByMemberAndToken(Long memberPk, String refreshToken);
+    boolean softDeleteByMemberAndToken(Long memberPk, String refreshToken);
 
     /** 해당 유저의 모든 리프레시 토큰 삭제 */
-    void deleteAllByMember(Long memberPk);
+    void softDeleteAllByMember(Long memberPk);
 
-    boolean deleteByMemberAndDeviceId(Long memberPk, String deviceId);
+    boolean softDeleteByMemberAndDeviceId(Long memberPk, String deviceId);
 }

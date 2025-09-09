@@ -1,14 +1,14 @@
 package com.fitian.burntz.domain.auth.oauth;
 
 import com.fitian.burntz.domain.auth.dto.OAuthUserInfo;
+import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.domain.member.service.MemberService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -16,12 +16,12 @@ public class OAuthServiceImpl implements OAuthService {
 
     private final AppleApiClient appleApiClient;
     private final GoogleApiClient googleApiClient;
+    private final MemberService memberService;
     private final MemberRepository memberRepository;
 
     @Override
     @Transactional
-    public Member findOrCreateUserBySocialToken(String token, String provider) {
-        // 기존(token) 기반 흐름은 필요시 유지
+    public MemberCreateResult findOrCreateUserBySocialToken(String token, String provider) {
         OAuthUserInfo userInfo = switch (provider.toLowerCase()) {
             case "apple" -> appleApiClient.getUserInfoFromIdToken(token);
             case "google" -> googleApiClient.getUserInfo(token);
@@ -32,45 +32,42 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public Member findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String provider) {
+    public MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String provider) {
         if (userInfo == null || userInfo.getMemberId() == null) {
             throw new IllegalArgumentException("Invalid userInfo");
         }
         String providerKey = provider.toLowerCase();
         String providerMemberId = userInfo.getMemberId();
 
-        Optional<Member> existingOpt = memberRepository.findByProviderAndMemberId(providerKey, providerMemberId);
-        if (existingOpt.isPresent()) {
-            Member existing = existingOpt.get();
+        // memberService에 위임 — MemberCreateResult 반환(생성 여부 포함)
+        MemberCreateResult createResult = memberService.getOrCreateMember(
+                providerKey,
+                providerMemberId,
+                userInfo.getNickname() != null ? userInfo.getNickname() : "",
+                userInfo.getEmail()
+        );
+
+        Member member = createResult.member();
+        boolean isNew = createResult.isNewMember();
+
+        // 기존 로직: 기존 사용자라면 프로필 갱신 처리
+        if (!isNew) {
             boolean changed = false;
             if (userInfo.getNickname() != null && !userInfo.getNickname().isBlank()
-                    && (existing.getNickname() == null || !existing.getNickname().equals(userInfo.getNickname()))) {
-                existing.updateProfileIfChanged(userInfo.getNickname(), null, null);
+                    && (member.getNickname() == null || !member.getNickname().equals(userInfo.getNickname()))) {
+                member.updateProfileIfChanged(userInfo.getNickname(), null, null);
                 changed = true;
             }
             if (userInfo.getEmail() != null && !userInfo.getEmail().isBlank()
-                    && (existing.getEmail() == null || !existing.getEmail().equals(userInfo.getEmail()))) {
-                existing.updateProfileIfChanged(null, userInfo.getEmail(), null);
+                    && (member.getEmail() == null || !member.getEmail().equals(userInfo.getEmail()))) {
+                member.updateProfileIfChanged(null, userInfo.getEmail(), null);
                 changed = true;
             }
-            if (changed) memberRepository.save(existing);
-            return existing;
+            if (changed) {
+                memberRepository.save(member);
+            }
         }
 
-        Member newMember = Member.create(
-                providerMemberId,
-                userInfo.getNickname() != null ? userInfo.getNickname() : "",
-                userInfo.getEmail(),
-                null,
-                providerKey
-        );
-
-        try {
-            return memberRepository.save(newMember);
-        } catch (DataIntegrityViolationException ex) {
-            Optional<Member> concurrent = memberRepository.findByProviderAndMemberId(providerKey, providerMemberId);
-            if (concurrent.isPresent()) return concurrent.get();
-            throw ex;
-        }
+        return createResult;
     }
 }

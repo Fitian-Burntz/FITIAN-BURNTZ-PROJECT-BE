@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.auth.oauth;
 
 import com.fitian.burntz.domain.auth.dto.OAuthUserInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -11,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class GoogleApiClientImpl implements GoogleApiClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -19,6 +21,10 @@ public class GoogleApiClientImpl implements GoogleApiClient {
     @Override
     @SuppressWarnings("unchecked")
     public OAuthUserInfo getUserInfo(String accessToken) {
+
+        // --- getUserInfo(String accessToken) : 호출 직전에 추가 ---
+        log.debug("ADDED LOG FOR DEBUGGING: GoogleApiClientImpl.getUserInfo - calling userinfo endpoint (accessToken present={})", accessToken != null);
+/// ///////////////////////
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(accessToken);
