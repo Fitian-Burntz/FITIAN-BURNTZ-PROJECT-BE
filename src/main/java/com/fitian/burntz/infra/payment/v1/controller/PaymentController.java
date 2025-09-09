@@ -7,6 +7,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+/**
+ * @author : 홍준표
+ * @packageName : com.fitian.burntz.infra.payment.v1.controller
+ * @fileName : PaymentController
+ * @date : 2025-09-09
+ * @description : revenuecat 결제 요청 이후 웹훅으로 결제 완료 데이터를 받는 컨트롤러
+ */
 
 @RestController
 @RequestMapping("/api/v1/payments")
