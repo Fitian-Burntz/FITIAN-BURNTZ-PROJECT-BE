@@ -1,9 +1,10 @@
-package com.fitian.burntz.domain.channel.controller;
+package com.fitian.burntz.domain.channel.v1.controller;
 
-import com.fitian.burntz.domain.channel.dto.ChannelCreateRequest;
+import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
 import com.fitian.burntz.domain.channel.service.ChannelService;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,15 +22,15 @@ import org.springframework.web.bind.annotation.RestController;
  */
 
 @RestController
-@RequestMapping("/api/channel")
+@RequestMapping("/api/v1/channels")
 @RequiredArgsConstructor
 public class ChannelController {
 
-    private ChannelService channelService;
+    private final ChannelService channelService;
 
     @PostMapping()
     public ResponseEntity<ApiResponse<Void>> createChannel(
-            @RequestBody ChannelCreateRequest request,
+            @Valid @RequestBody ChannelCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
         channelService.createChannel(request,  userDetails);
