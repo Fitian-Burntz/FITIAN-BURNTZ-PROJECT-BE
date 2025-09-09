@@ -52,6 +52,7 @@ public enum ErrorCode {
 
     // 404 Not Found
     NOT_FOUND(HttpStatus.NOT_FOUND, "NOT_FOUND", "요청한 자원이 존재하지 않습니다."),
+    BOX_NOT_FOUND(HttpStatus.NOT_FOUND, "BOX_NOT_FOUND", "해당 박스를 찾을 수 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."),
     USER_WITHDRAWN(HttpStatus.NOT_FOUND, "USER_WITHDRAWN", "탈퇴한 회원입니다."),
     PROVIDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROVIDER_NOT_FOUND", "소셜 provider를 찾을 수 없습니다."),
