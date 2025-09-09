@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>Token Login Test (App-style: no redirect)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Google Identity Services (ID Token용, redirect 불필요) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+        body { margin: 24px; }
+        .card { max-width: 980px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,.05); }
+        h1 { margin: 0 0 12px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full { grid-column: 1 / -1; }
+        label { font-size: 12px; color: #666; display:block; margin-bottom:6px; }
+        input, textarea, select { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
+        textarea { min-height: 140px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        button { padding: 10px 14px; border: 1px solid #ddd; background: #fff; border-radius: 10px; cursor: pointer; }
+        button:hover { background: #f8f8f8; }
+        .log { white-space: pre-wrap; background: #0b1020; color: #d9e1ff; padding: 12px; border-radius: 12px; min-height: 180px; }
+        .section { margin-top: 20px; padding-top: 8px; border-top: 1px dashed #e5e7eb; }
+        .hint { color: #555; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>앱 스타일 토큰 로그인 테스트 (Google / Apple)</h1>
+
+    <div class="row">
+        <div>
+            <label>BACKEND_BASE_URL</label>
+            <input id="backendUrl" value="http://localhost:8080" />
+            <div class="hint">예) http://localhost:8080</div>
+        </div>
+        <div>
+            <label>Provider</label>
+            <select id="provider">
+                <option value="google">google</option>
+                <option value="apple">apple</option>
+            </select>
+        </div>
+
+        <div class="full">
+            <label>Authorization: Bearer <em>ID_TOKEN</em></label>
+            <textarea id="idToken" placeholder="앱(네이티브)에서 받은 ID 토큰을 붙여넣으세요."></textarea>
+        </div>
+
+        <div>
+            <button id="send">➡️ /api/auth/login 로 전송</button>
+        </div>
+        <div>
+            <button id="clear">🧹 로그/토큰 초기화</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Google (선택) — 브라우저에서 바로 ID 토큰 받기</h2>
+        <div class="row">
+            <div>
+                <label>Google Web Client ID</label>
+                <input id="googleClientId" value="YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com" />
+                <div class="hint">
+                    버튼 클릭 → Google 팝업 → <code>credential</code>(ID 토큰) 수신 → 위 텍스트 영역에 자동 채움
+                </div>
+                <div style="margin-top:10px;">
+                    <button id="initGoogle">🔄 Google 버튼 초기화</button>
+                </div>
+            </div>
+            <div>
+                <div id="googleBtnArea" style="margin-top:28px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>응답 로그</h2>
+        <div class="log" id="log"></div>
+    </div>
+</div>
+
+<script>
+    const $ = (id) => document.getElementById(id);
+    const log = (...args) => {
+        const el = $('log');
+        el.textContent += args.map(a => (typeof a === 'string' ? a : JSON.stringify(a, null, 2))).join(' ') + '\n';
+        el.scrollTop = el.scrollHeight;
+    };
+
+    async function sendLogin() {
+        const base = $('backendUrl').value.replace(/\/+$/, '');
+        const provider = $('provider').value;
+        const token = $('idToken').value.trim();
+        if (!token) { alert('ID 토큰을 입력하세요.'); return; }
+
+        const url = `${base}/api/auth/login?Provider=${encodeURIComponent(provider)}`;
+        log(`→ POST ${url}`);
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const text = await res.text();
+        let json;
+        try { json = JSON.parse(text); } catch { json = { raw: text }; }
+
+        log(`← ${res.status}`);
+        log(json);
+
+        // 응답에서 토큰 페어 추출(필요시)
+        try {
+            const data = json.data || json;
+            const pair = data.jwtTokenPair || data.jwt || data.pair;
+            if (pair) {
+                window.__accessToken = pair.accessToken || pair.access_token;
+                window.__refreshToken = pair.refreshToken || pair.refresh_token;
+                log('~ extracted', {
+                    accessToken: (window.__accessToken || '').slice(0, 32) + '...',
+                    refreshToken: (window.__refreshToken || '').slice(0, 32) + '...'
+                });
+            }
+        } catch(e) { /* ignore */ }
+    }
+
+    $('send').addEventListener('click', sendLogin);
+    $('clear').addEventListener('click', () => {
+        $('idToken').value = '';
+        $('log').textContent = '';
+    });
+
+    // ===== Google: 브라우저에서 바로 ID 토큰 받기 (redirect 불필요) =====
+    function initGoogle() {
+        const clientId = $('googleClientId').value.trim();
+        if (!clientId) { alert('Google Web Client ID를 입력하세요.'); return; }
+
+        // 버튼 영역 비우고 다시 렌더
+        $('googleBtnArea').innerHTML = '<div id="g_id_signin"></div>';
+
+        // 콜백
+        window.handleGoogleCredential = (resp) => {
+            const jwt = resp?.credential || '';
+            if (jwt) {
+                $('provider').value = 'google';
+                $('idToken').value = jwt;
+                log('Google ID Token received (credential).');
+            } else {
+                log('Google: credential not found.');
+            }
+        };
+
+        try {
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: window.handleGoogleCredential,
+                auto_select: false,
+                ux_mode: 'popup'
+            });
+            google.accounts.id.renderButton(
+                $('g_id_signin'),
+                { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', text: 'signin_with' }
+            );
+            log('Google button ready.');
+        } catch (e) {
+            log('Google init error:', e?.message || e);
+        }
+    }
+
+    $('initGoogle').addEventListener('click', initGoogle);
+
+    // 초기: Google 스크립트가 로드되면 버튼 자동 초기화 시도
+    let gsiPoll = setInterval(() => {
+        if (window.google?.accounts?.id) { initGoogle(); clearInterval(gsiPoll); }
+    }, 300);
+    setTimeout(() => clearInterval(gsiPoll), 5000);
+</script>
+</body>
+</html>
