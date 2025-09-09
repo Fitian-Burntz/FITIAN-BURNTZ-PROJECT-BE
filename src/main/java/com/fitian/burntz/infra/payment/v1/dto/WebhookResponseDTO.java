@@ -38,7 +38,6 @@ public class WebhookResponseDTO {
     @JsonProperty("expiration_at_ms")
     private Long expirationAtMs;
 
-    @JsonProperty("price")
     private Double price;
 
     private String currency;

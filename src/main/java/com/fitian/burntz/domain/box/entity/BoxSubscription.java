@@ -19,6 +19,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * @author : 홍준표
+ * @packageName : com.fitian.burntz.domain.box.entity;
+ * @fileName : BoxSubscription
+ * @date : 2025-09-09
+ * @description : Box 구독 엔티티 입니다.
+ */
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BoxSubscription extends BaseTime {
