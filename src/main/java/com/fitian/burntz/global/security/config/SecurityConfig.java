@@ -43,7 +43,10 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/**",
                                 "/api/me",
-                                "/api/auth/**"
+                                "/api/auth/**",
+                                  //결제 테스트용
+                                "/api/v1/payments/**"
+
                         )
                         .permitAll()
                         .anyRequest().authenticated()
