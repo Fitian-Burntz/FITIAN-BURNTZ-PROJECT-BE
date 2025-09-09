@@ -1,5 +1,6 @@
 package com.fitian.burntz.global.security.core;
 
+import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -60,8 +61,10 @@ public class CustomOidcUserService extends OidcUserService {
         }
 
 
-        //MemberService 사용하여 조회/생성 통일 ***
-        Member member = memberService.getOrCreateMember(provider, memberId, name, email);
+        // MemberService 사용하여 조회/생성 통일 ***
+        MemberCreateResult createResult = memberService.getOrCreateMember(provider, memberId, name, email);
+        Member member = createResult.member();
+        boolean isNewMember = createResult.isNewMember();
 
         // 세션/인증용 CustomUserDetails와 Authentication 객체(토큰 생성용)
         CustomUserDetails principal = new CustomUserDetails(member);

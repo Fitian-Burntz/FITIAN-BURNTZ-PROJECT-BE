@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>Token Login Test (App-style: no redirect)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+        body { margin: 24px; }
+        .card { max-width: 1000px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,.05); }
+        h1 { margin: 0 0 12px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full { grid-column: 1 / -1; }
+        label { font-size: 12px; color: #666; display:block; margin-bottom:6px; }
+        input, textarea, select { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
+        textarea { min-height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        button { padding: 10px 14px; border: 1px solid #ddd; background: #fff; border-radius: 10px; cursor: pointer; }
+        button:hover { background: #f8f8f8; }
+        .log { white-space: pre-wrap; background: #0b1020; color: #d9e1ff; padding: 12px; border-radius: 12px; min-height: 220px; }
+        .section { margin-top: 20px; padding-top: 8px; border-top: 1px dashed #e5e7eb; }
+        .hint { color: #555; font-size: 13px; }
+        .btns { display:flex; gap:10px; flex-wrap:wrap; }
+        .pill { font-size:12px; padding:6px 10px; border-radius:20px; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        .token-box { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+        .small { font-size:12px; color:#666; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>앱 스타일 토큰 로그인 테스트 (Google / Apple)</h1>
+
+    <div class="row">
+        <div>
+            <label>BACKEND_BASE_URL</label>
+            <input id="backendUrl" value="http://localhost:8080" />
+            <div class="hint">예) http://localhost:8080</div>
+        </div>
+        <div>
+            <label>Provider</label>
+            <select id="provider">
+                <option value="google">google</option>
+                <option value="apple">apple</option>
+            </select>
+        </div>
+
+        <div class="full">
+            <label>Authorization: Bearer <em>ID_TOKEN</em></label>
+            <textarea id="idToken" placeholder="앱(네이티브)에서 받은 ID 토큰을 붙여넣으세요."></textarea>
+            <div class="hint">아래 Google 버튼으로 브라우저에서 즉시 ID 토큰을 발급받아 자동 입력할 수도 있습니다.</div>
+        </div>
+
+        <div>
+            <label>deviceId <strong>(로그아웃 시 필수)</strong></label>
+            <input id="deviceId" placeholder="직접 입력 또는 아래 버튼으로 memberPk+100" />
+            <div class="btns" style="margin-top:8px;">
+                <button id="useMp100" class="pill">memberPk+100 사용</button>
+                <button id="clearDeviceId" class="pill">deviceId 비우기</button>
+            </div>
+            <div class="hint">로그인/리프레시는 선택, <strong>로그아웃(단말 1대만) 시 반드시 포함</strong>. 테스트: 직전 로그인에서 받은 memberPk + 100</div>
+        </div>
+
+        <div></div>
+
+        <div class="btns full">
+            <button id="send">➡️ 로그인 (POST /api/auth/login)</button>
+            <button id="refresh">♻️ 리프레시 (POST /api/auth/refresh)</button>
+            <button id="logout">🚪 로그아웃 (POST /api/auth/logout)</button>
+            <button id="logoutAll">🚪 로그아웃-전체 (POST /api/auth/logout/all)</button>
+            <button id="clear">🧹 로그/토큰 초기화</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Token Control (수동 입력 / 복사)</h2>
+        <div class="row">
+            <div>
+                <label>Stored Access Token (자동으로 채워지는 값)</label>
+                <textarea id="storedAccessPreview" readonly class="mono" style="min-height:60px"></textarea>
+                <div class="btns" style="margin-top:8px;">
+                    <button id="copyStoredAccessToManual" class="pill">Stored → Manual</button>
+                    <button id="clearManualAccess" class="pill">Manual 비우기</button>
+                    <button id="useManualAsStoredAccess" class="pill">Manual → Stored</button>
+                </div>
+            </div>
+            <div>
+                <label>Stored Refresh Token (자동으로 채워지는 값)</label>
+                <textarea id="storedRefreshPreview" readonly class="mono" style="min-height:60px"></textarea>
+                <div class="btns" style="margin-top:8px;">
+                    <button id="copyStoredRefreshToManual" class="pill">Stored → Manual</button>
+                    <button id="clearManualRefresh" class="pill">Manual 비우기</button>
+                    <button id="useManualAsStoredRefresh" class="pill">Manual → Stored</button>
+                </div>
+            </div>
+
+            <div class="full">
+                <label>Manual Access Token (요청 시 이 값이 있으면 우선 사용)</label>
+                <textarea id="manualAccessToken" placeholder="수동으로 넣을 accessToken (선택)"></textarea>
+                <div class="hint small">Manual 값이 비어있으면 자동으로 저장된(access) 토큰을 사용합니다.</div>
+            </div>
+
+            <div class="full">
+                <label>Manual Refresh Token (요청 시 이 값이 있으면 우선 사용)</label>
+                <textarea id="manualRefreshToken" placeholder="수동으로 넣을 refreshToken (선택)"></textarea>
+                <div class="hint small">Manual 값이 비어있으면 자동으로 저장된(refresh) 토큰을 사용합니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Google (선택) — 브라우저에서 바로 ID 토큰 받기</h2>
+        <div class="row">
+            <div>
+                <label>Google Web Client ID</label>
+                <input id="googleClientId" value="YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com" />
+                <div class="hint">
+                    버튼 클릭 → Google 팝업 → <code>credential</code>(ID 토큰) 수신 → 위 텍스트 영역에 자동 채움
+                </div>
+                <div style="margin-top:10px;">
+                    <button id="initGoogle">🔄 Google 버튼 초기화</button>
+                </div>
+            </div>
+            <div>
+                <div id="googleBtnArea" style="margin-top:28px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>상태</h2>
+        <div class="mono">
+            accessToken (stored): <span id="accPreview"></span><br/>
+            refreshToken (stored): <span id="refPreview"></span><br/>
+            manualAccessToken: <span id="manAccPreview"></span><br/>
+            manualRefreshToken: <span id="manRefPreview"></span><br/>
+            last memberPk: <span id="mpkPreview"></span><br/>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>응답 로그</h2>
+        <div class="log" id="log"></div>
+    </div>
+</div>
+
+<script>
+    const $ = (id) => document.getElementById(id);
+    const log = (...args) => {
+        const el = $('log');
+        el.textContent += args.map(a => (typeof a === 'string' ? a : JSON.stringify(a, null, 2))).join(' ') + '\n';
+        el.scrollTop = el.scrollHeight;
+    };
+    const preview = () => {
+        $('accPreview').textContent = (window.__accessToken || '').slice(0, 32) + (window.__accessToken ? '...' : '');
+        $('refPreview').textContent = (window.__refreshToken || '').slice(0, 32) + (window.__refreshToken ? '...' : '');
+        $('storedAccessPreview').value = (window.__accessToken || '').slice(0, 256);
+        $('storedRefreshPreview').value = (window.__refreshToken || '').slice(0, 256);
+
+        $('manAccPreview').textContent = ($('manualAccessToken').value || '').slice(0,32) + ($('manualAccessToken').value ? '...' : '');
+        $('manRefPreview').textContent = ($('manualRefreshToken').value || '').slice(0,32) + ($('manualRefreshToken').value ? '...' : '');
+
+        $('mpkPreview').textContent = window.__memberPk ?? '(none)';
+    };
+
+    function buildUrl(path) {
+        const base = $('backendUrl').value.replace(/\/+$/, '');
+        return base + path;
+    }
+
+    // Helpers: pick token with manual override
+    function pickAccessTokenForRequest() {
+        const manual = $('manualAccessToken').value.trim();
+        if (manual) return manual;
+        return window.__accessToken || null;
+    }
+    function pickRefreshTokenForRequest() {
+        const manual = $('manualRefreshToken').value.trim();
+        if (manual) return manual;
+        return window.__refreshToken || null;
+    }
+
+    // ===== Login =====
+    async function sendLogin() {
+        const provider = $('provider').value;
+        const token = $('idToken').value.trim();
+        if (!token) { alert('ID 토큰을 입력하세요.'); return; }
+
+        const url = buildUrl(`/api/auth/login?Provider=${encodeURIComponent(provider)}`);
+        const deviceId = $('deviceId').value.trim() || null;
+
+        log(`→ POST ${url}`);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ deviceId })
+        });
+
+        const text = await res.text();
+        let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+        log(`← ${res.status}`); log(json);
+
+        try {
+            const data = json.data || json;
+            const pair = data.jwtTokenPair || data.jwt || data.pair;
+            if (pair) {
+                // stored tokens update
+                window.__accessToken = pair.accessToken || pair.access_token;
+                window.__refreshToken = pair.refreshToken || pair.refresh_token;
+            }
+            // memberPk 저장 (deviceId=memberPk+100 버튼에서 사용)
+            if (data.member?.memberPk != null) window.__memberPk = data.member.memberPk;
+            preview();
+        } catch(e) {}
+    }
+
+    // ===== Refresh =====
+    async function doRefresh() {
+        const refreshTokenToUse = pickRefreshTokenForRequest();
+        if (!refreshTokenToUse) { alert('refreshToken 없음. 먼저 로그인하거나 manual로 채우세요.'); return; }
+        const url = buildUrl('/api/auth/refresh');
+        const deviceId = $('deviceId').value.trim() || null;
+
+        log(`→ POST ${url} (using refreshToken: ${$('manualRefreshToken').value.trim() ? 'MANUAL' : (window.__refreshToken ? 'STORED' : 'NONE')})`);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${refreshTokenToUse}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ deviceId })
+        });
+
+        const text = await res.text();
+        let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+        log(`← ${res.status}`); log(json);
+
+        try {
+            const data = json.data || json;
+            if (data.accessToken) window.__accessToken = data.accessToken;
+            if (data.refreshToken) window.__refreshToken = data.refreshToken;
+            preview();
+        } catch(e) {}
+    }
+
+    // ===== Logout (current device) — requires refresh token & deviceId =====
+    async function doLogout() {
+        const refreshTokenToUse = pickRefreshTokenForRequest();
+        if (!refreshTokenToUse) { alert('refreshToken 없음. 먼저 로그인하거나 manual로 채우세요.'); return; }
+        const url = buildUrl('/api/auth/logout');
+        const deviceId = $('deviceId').value.trim();
+        if (!deviceId) { alert('deviceId가 필요합니다. (해당 기기만 로그아웃)'); return; }
+
+        log(`→ POST ${url} (using refreshToken: ${$('manualRefreshToken').value.trim() ? 'MANUAL' : (window.__refreshToken ? 'STORED' : 'NONE')})`);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${refreshTokenToUse}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ deviceId: Number(deviceId) })
+        });
+
+        const text = await res.text();
+        let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+        log(`← ${res.status}`); log(json);
+
+        // 로컬 토큰 비우기(선택)
+        window.__accessToken = null;
+        window.__refreshToken = null;
+        preview();
+    }
+
+    // ===== Logout all devices — can use access OR refresh in header =====
+    async function doLogoutAll() {
+        const token = $('manualAccessToken').value.trim() || $('manualRefreshToken').value.trim() || window.__accessToken || window.__refreshToken;
+        if (!token) { alert('토큰 없음. 먼저 로그인하거나 manual로 채우세요.'); return; }
+        const url = buildUrl('/api/auth/logout/all');
+
+        const used = $('manualAccessToken').value.trim() ? 'MANUAL_ACCESS'
+            : ($('manualRefreshToken').value.trim() ? 'MANUAL_REFRESH'
+                : (window.__accessToken ? 'STORED_ACCESS' : (window.__refreshToken ? 'STORED_REFRESH' : 'NONE')));
+
+        log(`→ POST ${url} (using ${used})`);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const text = await res.text();
+        let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+        log(`← ${res.status}`); log(json);
+
+        window.__accessToken = null;
+        window.__refreshToken = null;
+        preview();
+    }
+
+    // ===== Token copy/use helpers =====
+    $('copyStoredAccessToManual').addEventListener('click', () => {
+        $('manualAccessToken').value = window.__accessToken || '';
+        preview();
+    });
+    $('copyStoredRefreshToManual').addEventListener('click', () => {
+        $('manualRefreshToken').value = window.__refreshToken || '';
+        preview();
+    });
+    $('clearManualAccess').addEventListener('click', () => {
+        $('manualAccessToken').value = '';
+        preview();
+    });
+    $('clearManualRefresh').addEventListener('click', () => {
+        $('manualRefreshToken').value = '';
+        preview();
+    });
+    $('useManualAsStoredAccess').addEventListener('click', () => {
+        if (!$('manualAccessToken').value.trim()) { alert('Manual access token을 먼저 입력하세요.'); return; }
+        window.__accessToken = $('manualAccessToken').value.trim();
+        preview();
+    });
+    $('useManualAsStoredRefresh').addEventListener('click', () => {
+        if (!$('manualRefreshToken').value.trim()) { alert('Manual refresh token을 먼저 입력하세요.'); return; }
+        window.__refreshToken = $('manualRefreshToken').value.trim();
+        preview();
+    });
+
+    $('send').addEventListener('click', sendLogin);
+    $('refresh').addEventListener('click', doRefresh);
+    $('logout').addEventListener('click', doLogout);
+    $('logoutAll').addEventListener('click', doLogoutAll);
+
+    $('clear').addEventListener('click', () => {
+        $('idToken').value = '';
+        $('deviceId').value = '';
+        $('manualAccessToken').value = '';
+        $('manualRefreshToken').value = '';
+        $('log').textContent = '';
+        window.__accessToken = null;
+        window.__refreshToken = null;
+        window.__memberPk = null;
+        preview();
+    });
+
+    // ===== deviceId helpers =====
+    $('useMp100').addEventListener('click', () => {
+        if (window.__memberPk == null) {
+            alert('먼저 로그인해서 memberPk를 확보하세요.');
+            return;
+        }
+        $('deviceId').value = String(Number(window.__memberPk) + 100);
+    });
+    $('clearDeviceId').addEventListener('click', () => $('deviceId').value = '');
+
+    // ===== Google: 브라우저에서 바로 ID 토큰 받기 =====
+    function initGoogle() {
+        const clientId = $('googleClientId').value.trim();
+        if (!clientId) { alert('Google Web Client ID를 입력하세요.'); return; }
+
+        $('googleBtnArea').innerHTML = '<div id="g_id_signin"></div>';
+
+        window.handleGoogleCredential = (resp) => {
+            const jwt = resp?.credential || '';
+            if (jwt) {
+                $('provider').value = 'google';
+                $('idToken').value = jwt;
+                log('Google ID Token received (credential).');
+            } else {
+                log('Google: credential not found.');
+            }
+        };
+
+        try {
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: window.handleGoogleCredential,
+                auto_select: false,
+                ux_mode: 'popup'
+            });
+            google.accounts.id.renderButton(
+                $('g_id_signin'),
+                { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', text: 'signin_with' }
+            );
+            log('Google button ready.');
+        } catch (e) {
+            log('Google init error:', e?.message || e);
+        }
+    }
+
+    $('initGoogle').addEventListener('click', initGoogle);
+
+    // 초기: GSI 로드 감지 후 자동 초기화 시도
+    let gsiPoll = setInterval(() => {
+        if (window.google?.accounts?.id) { initGoogle(); clearInterval(gsiPoll); }
+    }, 300);
+    setTimeout(() => clearInterval(gsiPoll), 5000);
+
+    // 초기 상태
+    preview();
+</script>
+</body>
+</html>
