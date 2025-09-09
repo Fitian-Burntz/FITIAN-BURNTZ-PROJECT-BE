@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class WebhookResponseDTO {
+public class WebhookPurchaseResponse {
 
   @JsonProperty("api_version")
   private String apiVersion;
@@ -27,23 +27,19 @@ public class WebhookResponseDTO {
     private PaymentEventType type;
 
     @JsonProperty("app_user_id")
-    private String appUserId;
+    private String ownerMemberId;
 
     @JsonProperty("product_id")
     private String productId;
 
+    private PaymentEventType store;
+
     @JsonProperty("purchased_at_ms")
-    private Long purchasedAtMs;
+    private Long startedAt;
 
     @JsonProperty("expiration_at_ms")
-    private Long expirationAtMs;
+    private Long expiresAt;
 
     private Double price;
-
-    private String currency;
-
-    private String store;
-
-    private String environment;
   }
 }
