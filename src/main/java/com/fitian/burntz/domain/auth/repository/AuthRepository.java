@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.auth.entity.Auth;
 import com.fitian.burntz.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AuthRepository extends JpaRepository<Auth, Long> {
@@ -16,17 +17,13 @@ public interface AuthRepository extends JpaRepository<Auth, Long> {
      */
     Optional<Auth> findTopByMemberMemberPkOrderByAuthPkDesc(Long memberPk);
 
-    // 정확히 이 토큰(해시) 하나만 삭제
-    int deleteByMemberMemberPkAndRefreshToken(Long memberPk, String refreshToken);
-
-    // 해당 유저의 모든 토큰 삭제
-    void deleteByMemberMemberPk(Long memberPk);
-
-    Optional<Auth> findByMember_MemberPkAndDeviceId(Long memberPk, String deviceId);
-
     // (member_pk, refresh_token) 조합으로 존재 여부 확인
     boolean existsByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
 
-    int deleteByMemberMemberPkAndDeviceId(Long memberPk, String deviceId);
+    // 조회용 메서드들
+    Optional<Auth> findByMember_MemberPkAndDeviceId(Long memberPk, String deviceId);
 
+    List<Auth> findAllByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
+
+    List<Auth> findAllByMember_MemberPk(Long memberPk);
 }

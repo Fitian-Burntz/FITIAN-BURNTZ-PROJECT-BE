@@ -6,19 +6,23 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final AuthRepository authRepository;
     private final MemberRepository memberRepository;
+
 
     /**
      * 단순 SHA-256 해시 (운영에서는 추가적인 솔트/HMAC 또는 KMS 암호화 권장)
@@ -62,14 +66,29 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         auth.updateRefreshToken(hashed);
         authRepository.save(auth);
+
+        // ADDED LOG FOR DEBUGGING — 개발 디버깅용 로그입니다. 해시/토큰 원문은 절대 로그에 남기지 않습니다.
+        log.debug("ADDED LOG FOR DEBUGGING: saveOrUpdateRefreshToken memberPk={} deviceId={} storedHashPresent={}",
+                memberPk, did, hashed != null);
+        ///  ///////////
     }
 
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     public boolean validateRefreshTokenForMember(Long memberPk, String refreshToken) {
-        // 토큰 해시가 일치하는 행이 하나라도 있으면 true (기기 제한 X)
-        String incomingHash = hashToken(refreshToken);
-        return authRepository.existsByMember_MemberPkAndRefreshToken(memberPk, incomingHash);
+        try {
+            // 토큰 해시가 일치하는 행이 하나라도 있으면 true (기기 제한 X)
+            String incomingHash = hashToken(refreshToken);
+            boolean exists = authRepository.existsByMember_MemberPkAndRefreshToken(memberPk, incomingHash);
+
+            // ADDED LOG FOR DEBUGGING — 개발용. 토큰/해시 원문은 절대 찍지 않습니다.
+            log.debug("ADDED LOG FOR DEBUGGING: validateRefreshTokenForMember memberPk={} storedHashMatch={}", memberPk, exists);
+
+            return exists;
+        } catch (Exception ex) {
+            log.error("ADDED LOG FOR DEBUGGING: validateRefreshTokenForMember ERROR memberPk={} error={}", memberPk, ex.getMessage(), ex);
+            return false;
+        }
     }
 
     @Override
@@ -82,26 +101,76 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
 
+    /**
+     * 토큰 기준 삭제 → soft delete 방식으로 구현
+     * (DB에서 삭제하지 않고 해당 행의 refreshToken을 제거하고 markDeleted() 호출 후 저장)
+     */
     @Override
     @Transactional
-    public boolean deleteByMemberAndToken(Long memberPk, String refreshToken) {
+    public boolean softDeleteByMemberAndToken(Long memberPk, String refreshToken) {
         String hash = hashToken(refreshToken);
-        int affected = authRepository.deleteByMemberMemberPkAndRefreshToken(memberPk, hash);
-        return affected > 0;
+
+        // 조회
+        List<Auth> list = authRepository.findAllByMember_MemberPkAndRefreshToken(memberPk, hash);
+        if (list == null || list.isEmpty()) {
+            log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndToken memberPk={} found=0", memberPk);
+            return false;
+        }
+
+        // soft-delete 처리: refreshToken 제거 + markDeleted() (옵션)
+        for (Auth a : list) {
+            a.clearRefreshToken();   // sets refreshToken = null and updates updatedAt
+            a.markDeleted();         // optional: depends on BaseTime impl
+            authRepository.save(a);
+        }
+
+        log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndToken memberPk={} affected={}", memberPk, list.size());
+        return true;
     }
 
+    /**
+     * 모든 기기 삭제 (soft delete)
+     */
     @Override
     @Transactional
-    public void deleteAllByMember(Long memberPk) {
-        authRepository.deleteByMemberMemberPk(memberPk);
+    public void softDeleteAllByMember(Long memberPk) {
+        List<Auth> list = authRepository.findAllByMember_MemberPk(memberPk);
+        if (list == null || list.isEmpty()) {
+            log.debug("ADDED LOG FOR DEBUGGING: deleteAllByMember memberPk={} found=0", memberPk);
+            return;
+        }
 
+        for (Auth a : list) {
+            a.clearRefreshToken();
+            a.markDeleted(); // optional
+            authRepository.save(a);
+        }
+
+        log.debug("ADDED LOG FOR DEBUGGING: deleteAllByMember memberPk={} affected={}", memberPk, list.size());
     }
 
+    /**
+     * 기기 기준 삭제 (soft delete)
+     */
     @Override
     @Transactional
-    public boolean deleteByMemberAndDeviceId(Long memberPk, String deviceId) { // [ADDED]
-        int affected = authRepository.deleteByMemberMemberPkAndDeviceId(memberPk, deviceId.trim());
-        return affected > 0;
+    public boolean softDeleteByMemberAndDeviceId(Long memberPk, String deviceId) { // [CHANGED -> soft delete]
+        if (deviceId == null || deviceId.isBlank()) return false;
+        String did = deviceId.trim();
+
+        Optional<Auth> opt = authRepository.findByMember_MemberPkAndDeviceId(memberPk, did);
+        if (opt.isEmpty()) {
+            log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndDeviceId memberPk={} deviceId={} found=false", memberPk, did);
+            return false;
+        }
+
+        Auth auth = opt.get();
+        auth.clearRefreshToken();
+        auth.markDeleted(); // optional
+        authRepository.save(auth);
+
+        log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndDeviceId memberPk={} deviceId={} softDeleted=true", memberPk, did);
+        return true;
     }
 
 }

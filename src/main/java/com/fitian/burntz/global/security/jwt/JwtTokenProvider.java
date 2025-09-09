@@ -9,6 +9,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,6 +23,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtTokenProvider {
 
     private final SecretKey secretKey; // JwtKey @Bean 에서 주입
@@ -160,9 +162,18 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
+
+            // ADDED LOG FOR DEBUGGING — 개발 디버깅용 로그입니다. 운영 시 반드시 제거하세요.
+            log.debug("ADDED LOG FOR DEBUGGING: validateToken SUCCESS - subject={} expiresAt={}",
+                    claims.getSubject(), claims.getExpiration());
+            /// //////////////////////////
             String typ = claims.get(CLAIM_TOKEN_TYPE, String.class);
             return TOKEN_TYPE_REFRESH.equals(typ);
         } catch (JwtException | IllegalArgumentException e) {
+
+            // ADDED LOG FOR DEBUGGING — 개발 디버깅용 로그입니다. 운영 시 반드시 제거하세요.
+            log.info("ADDED LOG FOR DEBUGGING: validateToken FAILED - reason={}", e.getMessage());
+            ///  //////////////////////////////////
             return false;
         }
     }
