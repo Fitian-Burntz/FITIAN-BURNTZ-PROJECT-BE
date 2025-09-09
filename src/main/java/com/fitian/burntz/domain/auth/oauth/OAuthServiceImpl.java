@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class OAuthServiceImpl implements OAuthService {
 
-    private final AppleApiClient appleApiClient;
+//    private final AppleApiClient appleApiClient;
     private final GoogleApiClient googleApiClient;
     private final MemberService memberService;
     private final MemberRepository memberRepository;
@@ -23,7 +23,7 @@ public class OAuthServiceImpl implements OAuthService {
     @Transactional
     public MemberCreateResult findOrCreateUserBySocialToken(String token, String provider) {
         OAuthUserInfo userInfo = switch (provider.toLowerCase()) {
-            case "apple" -> appleApiClient.getUserInfoFromIdToken(token);
+//            case "apple" -> appleApiClient.getUserInfoFromIdToken(token);
             case "google" -> googleApiClient.getUserInfo(token);
             default -> throw new IllegalArgumentException("지원하지 않는 provider: " + provider);
         };

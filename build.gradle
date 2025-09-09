@@ -28,6 +28,10 @@ ext {
 	set('springAiVersion', "1.0.1")
 }
 
+
+
+
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
@@ -65,6 +69,11 @@ dependencies {
 
     // BouncyCastle (for PEM/PKCS8 parsing / ES256 signing) - 권장
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+
+
+
+
+
 }
 
 dependencyManagement {
