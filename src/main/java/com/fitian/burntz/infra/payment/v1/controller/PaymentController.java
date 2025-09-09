@@ -19,6 +19,7 @@ public class PaymentController {
     System.out.println("상품가격 :  = " + webhookResponseDTO.getEvent().getPrice() + "달러");
     System.out.println("구매처 = " + webhookResponseDTO.getEvent().getStore());
     System.out.println("구매자 아이디 = " + webhookResponseDTO.getEvent().getAppUserId());
+    System.out.println("이벤트 타입 = " + webhookResponseDTO.getEvent().getType().getValue());
     return ResponseEntity.ok().build();
   }
 
