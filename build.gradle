@@ -29,6 +29,21 @@ ext {
 }
 
 
+// 최상단 ext 블록(이미 있는 곳)에 추가
+ext {
+    set('httpcomponentsVersion', '5.2.1') // Spring Boot 3.5.5 과 호환되는 버전으로 맞춤
+}
+
+configurations.all {
+    resolutionStrategy {
+        // httpclient5 / httpcore5 / httpcore5-h2 버전을 강제 통일
+        force "org.apache.httpcomponents.client5:httpclient5:${httpcomponentsVersion}",
+                "org.apache.httpcomponents.core5:httpcore5:${httpcomponentsVersion}",
+                "org.apache.httpcomponents.core5:httpcore5-h2:${httpcomponentsVersion}"
+    }
+}
+
+
 
 
 
@@ -70,7 +85,9 @@ dependencies {
     // BouncyCastle (for PEM/PKCS8 parsing / ES256 signing) - 권장
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
 
-
+    implementation "org.apache.httpcomponents.client5:httpclient5:${httpcomponentsVersion}"
+    implementation "org.apache.httpcomponents.core5:httpcore5:${httpcomponentsVersion}"
+    implementation "org.apache.httpcomponents.core5:httpcore5-h2:${httpcomponentsVersion}"
 
 
 
