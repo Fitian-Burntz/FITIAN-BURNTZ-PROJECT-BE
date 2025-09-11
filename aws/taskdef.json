@@ -4,7 +4,8 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::209479269102:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::209479269102:role/ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::209479269102:role/ecs-task-role",
   "containerDefinitions": [
     {
       "name": "burntz",
@@ -38,8 +39,6 @@
           "awslogs-group": "/ecs/burntz-dev",
           "awslogs-region": "ap-northeast-2",
           "awslogs-stream-prefix": "ecs",
-          "mode": "non-blocking",
-          "max-buffer-size": "25m"
         }
       },
 

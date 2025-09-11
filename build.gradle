@@ -60,7 +60,7 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	//Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+//    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     //Apple id_token 파싱을 위한 라이브러리
     implementation 'com.nimbusds:nimbus-jose-jwt:10.4.2'
