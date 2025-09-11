@@ -50,7 +50,7 @@ jobs:
         run: aws sts get-caller-identity
 
       - name: Ensure ECR repo exists (debug)
-        run: aws ecr describe-repositories --repository-names burntz || echo "ECR repo not found"
+        run: aws ecr describe-repositories --repository-names burntz --region ${{ env.AWS_REGION }} || echo "ECR repo not found"
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -58,7 +58,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (buildx)
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -68,18 +68,35 @@ jobs:
             ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
             ${{ env.ECR_REPOSITORY }}:latest
 
-      - name: Render ECS task definition
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.TASK_DEF_PATH }}
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-      - name: Check rendered file
+      # ---------- Render task definition using jq (robust) ----------
+      - name: Install jq (for rendering)
         run: |
-          if [ -f rendered-taskdef.json ]; then
-            echo "rendered-taskdef.json exists"
-            sed -n '1,120p' rendered-taskdef.json
-          else
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Debug: show taskdef and container names
+        run: |
+          echo "TASK_DEF_PATH=${{ env.TASK_DEF_PATH }}"
+          echo "CONTAINER_NAME=${{ env.CONTAINER_NAME }}"
+          echo "---- task definition (preview) ----"
+          sed -n '1,200p' ${{ env.TASK_DEF_PATH }} || true
+          echo "---- container names in taskdef ----"
+          jq -r '.containerDefinitions[].name' ${{ env.TASK_DEF_PATH }} || true
+
+      - name: Render task definition (create rendered-taskdef.json)
+        run: |
+          IMG="${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
+          echo "Rendering image -> $IMG"
+          jq --arg img "$IMG" --arg cname "${{ env.CONTAINER_NAME }}" \
+            '( .containerDefinitions |= map( if .name == $cname then .image = $img else . end ) )' \
+            ${{ env.TASK_DEF_PATH }} > rendered-taskdef.json
+          echo "Rendered file size/preview:"
+          ls -la rendered-taskdef.json || true
+          sed -n '1,200p' rendered-taskdef.json || true
+
+      - name: Check rendered file exists
+        run: |
+          if [ ! -f rendered-taskdef.json ]; then
             echo "ERROR: rendered-taskdef.json missing" >&2
             ls -la
             exit 1
@@ -91,3 +108,4 @@ jobs:
           task-definition: rendered-taskdef.json
           service: ${{ env.SERVICE_NAME }}
           cluster: ${{ env.CLUSTER_NAME }}
+
