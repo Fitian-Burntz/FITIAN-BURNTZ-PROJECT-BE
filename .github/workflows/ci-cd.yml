@@ -1,5 +1,9 @@
 name: CI/CD → ECR → ECS (develop)
 
+permissions:
+  id-token: write
+  contents: read
+
 on:
   push:
     branches: ["develop"]
@@ -25,6 +29,16 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Print OIDC info (debug)
+        run: |
+          echo "EVENT: $GITHUB_EVENT_NAME"
+          echo "REF: $GITHUB_REF"
+          echo "REPO: $GITHUB_REPOSITORY"
+          echo "SHA: $GITHUB_SHA"
+          echo "EVENT PATH: $GITHUB_EVENT_PATH"
+          echo "---- event payload (first 200 lines) ----"
+          sed -n '1,200p' "$GITHUB_EVENT_PATH" || true
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
