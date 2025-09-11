@@ -68,20 +68,20 @@ jobs:
             ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
             ${{ env.ECR_REPOSITORY }}:latest
 
-      # ---------- Render task definition using jq (robust) ----------
       - name: Install jq (for rendering)
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
 
-      - name: Debug: show taskdef and container names
+      - name: "Debug: show taskdef and container names"
         run: |
           echo "TASK_DEF_PATH=${{ env.TASK_DEF_PATH }}"
           echo "CONTAINER_NAME=${{ env.CONTAINER_NAME }}"
           echo "---- task definition (preview) ----"
-          sed -n '1,200p' ${{ env.TASK_DEF_PATH }} || true
+          sed -n '1,200p' "${{ env.TASK_DEF_PATH }}" || true
           echo "---- container names in taskdef ----"
-          jq -r '.containerDefinitions[].name' ${{ env.TASK_DEF_PATH }} || true
+          jq -r '.containerDefinitions[].name' "${{ env.TASK_DEF_PATH }}" || true
+      
 
       - name: Render task definition (create rendered-taskdef.json)
         run: |
@@ -89,7 +89,7 @@ jobs:
           echo "Rendering image -> $IMG"
           jq --arg img "$IMG" --arg cname "${{ env.CONTAINER_NAME }}" \
             '( .containerDefinitions |= map( if .name == $cname then .image = $img else . end ) )' \
-            ${{ env.TASK_DEF_PATH }} > rendered-taskdef.json
+            "${{ env.TASK_DEF_PATH }}" > rendered-taskdef.json
           echo "Rendered file size/preview:"
           ls -la rendered-taskdef.json || true
           sed -n '1,200p' rendered-taskdef.json || true
@@ -108,4 +108,3 @@ jobs:
           task-definition: rendered-taskdef.json
           service: ${{ env.SERVICE_NAME }}
           cluster: ${{ env.CLUSTER_NAME }}
-
