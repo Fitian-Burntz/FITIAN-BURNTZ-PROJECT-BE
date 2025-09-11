@@ -58,10 +58,15 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	//Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     //Apple id_token 파싱을 위한 라이브러리
     implementation 'com.nimbusds:nimbus-jose-jwt:10.4.2'
+
+    // BouncyCastle (for PEM/PKCS8 parsing / ES256 signing) - 권장
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
 }
 
 dependencyManagement {

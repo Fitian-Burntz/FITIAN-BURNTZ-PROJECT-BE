@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.member.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fitian.burntz.domain.auth.entity.Auth;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -34,8 +35,9 @@ public class Member extends BaseTime {
     @Column(name = "email", length = 100, nullable = false)
     private String email;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 10, nullable = false)
-    private Gender gender;
+    private Gender gender = Gender.OTHERS;
 
     // provider 추가 (google, apple 등)
     @Column(name = "provider", length = 50, nullable = false)
@@ -43,20 +45,39 @@ public class Member extends BaseTime {
 
     // Member -> Auth 연관관계 추가 (초기화해서 NPE 방지)
     @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Auth> auths = new ArrayList<>();
+
+    // 멤버 -> 멤버 리스트 로 조회를 해야함
+    @OneToMany(mappedBy = "member")
+    @JsonManagedReference
+    private List<MemberList> memberLists = new ArrayList<>();
 
 
     /** 멤버 계정 생성 정적 메서드 **/
     public static Member create(
-            String memberId, String nickname, String email, Gender gender, String provider){
+            String memberId, String nickname, String email, String provider){
 
         return Member.builder()
                 .memberId(memberId)
                 .nickname(nickname)
                 .email(email)
-                .gender(gender)
+                .gender(Gender.OTHERS)
                 .provider(provider)
                 .build();
+    }
+
+    // Member 엔티티 내부에 추가
+    public void updateProfileIfChanged(String nickname, String email, Gender gender) {
+        if (nickname != null && !nickname.isBlank() && !nickname.equals(this.nickname)) {
+            this.nickname = nickname;
+        }
+        if (email != null && !email.isBlank() && !email.equals(this.email)) {
+            this.email = email;
+        }
+        if (gender != null && gender != this.gender) {
+            this.gender = gender;
+        }
     }
 
 
@@ -75,5 +96,7 @@ public class Member extends BaseTime {
             });
         }
     }
+
+
 
 }
