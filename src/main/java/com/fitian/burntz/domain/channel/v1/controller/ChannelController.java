@@ -6,7 +6,6 @@ import com.fitian.burntz.domain.channel.service.ChannelService;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelInviteRequest;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelLeaveRequest;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelListResponse;
-import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -67,7 +66,16 @@ public class ChannelController {
     public ApiResponse<Void> deleteParticipant(
             @Valid @RequestBody ChannelLeaveRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
-        channelService.deleteParticipant(request, userDetails);
+        boolean ok = channelService.deleteParticipant(request, userDetails);
+        if(!ok) return ApiResponse.failure("내보내기에 실패했습니다.");
         return ApiResponse.success(null, "채널 내보내기 완료.");
+    }
+
+    @DeleteMapping("/deleteChannel")
+    public ApiResponse<Void> deleteChanel(
+            @Valid @RequestBody ChannelLeaveRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails ) {
+
+        return ApiResponse.success(null, "채널 삭제 완료.");
     }
 }

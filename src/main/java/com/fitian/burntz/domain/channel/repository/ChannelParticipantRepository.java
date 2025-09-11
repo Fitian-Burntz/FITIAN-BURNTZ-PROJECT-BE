@@ -4,7 +4,9 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.channel.entity.Channel;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,4 +27,12 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
 
     @Query("select p.memberPk from ChannelParticipant p where p.channel = :channel and p.deletedYn = false")
     List<Long> findMemberPksByChannel(@Param("channel") Channel channel);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ChannelParticipant c " +
+            "SET c.deletedYN = :yn, c.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE c.channelParticipantPk = :pk")
+    int markDeletedByPk(@Param("pk") Long pk, @Param("yn") BaseTime.Yn yn);
+
+    boolean existsByMemberAndChannel_ChannelPkAndDeletedYN(Member member, Long channelPk, BaseTime.Yn deletedYN);
 }
