@@ -48,6 +48,10 @@ public class Member extends BaseTime {
     @JsonManagedReference
     private List<Auth> auths = new ArrayList<>();
 
+    // 멤버 -> 멤버 리스트 로 조회를 해야함
+    @OneToMany(mappedBy = "member")
+    private List<MemberList> memberLists = new ArrayList<>();
+
 
     /** 멤버 계정 생성 정적 메서드 **/
     public static Member create(
