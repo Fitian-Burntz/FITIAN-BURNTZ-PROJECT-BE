@@ -50,6 +50,7 @@ public class Member extends BaseTime {
 
     // 멤버 -> 멤버 리스트 로 조회를 해야함
     @OneToMany(mappedBy = "member")
+    @JsonManagedReference
     private List<MemberList> memberLists = new ArrayList<>();
 
 
