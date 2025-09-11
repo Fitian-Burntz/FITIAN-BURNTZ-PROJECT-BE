@@ -38,7 +38,7 @@
           "awslogs-create-group": "true",
           "awslogs-group": "/ecs/burntz-dev",
           "awslogs-region": "ap-northeast-2",
-          "awslogs-stream-prefix": "ecs",
+          "awslogs-stream-prefix": "ecs"
         }
       },
 
