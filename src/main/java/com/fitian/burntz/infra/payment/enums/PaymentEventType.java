@@ -1,6 +1,11 @@
 package com.fitian.burntz.infra.payment.enums;
 
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum PaymentEventType {
   TEST("TEST", "RevenueCat 대시보드를 통해 발행된 테스트 이벤트입니다."),
   INITIAL_PURCHASE("INITIAL_PURCHASE", "새로운 구독을 구매했습니다."),
@@ -23,13 +28,6 @@ public enum PaymentEventType {
   private final String value;
   private final String description;
 
-  PaymentEventType(String value, String description) {
-    this.value = value;
-    this.description = description;
-  }
-
-  public String getValue() { return value; }
-  public String getDescription() { return description; }
 
 
 }
