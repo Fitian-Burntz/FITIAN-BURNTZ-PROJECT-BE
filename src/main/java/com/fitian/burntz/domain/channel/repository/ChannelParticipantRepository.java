@@ -25,7 +25,7 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
     @Query("select cp.channel from ChannelParticipant cp where cp.member = :member and cp.channel.box = :box")
     List<Channel> findChannelsByMemberAndBox(@Param("member") Member member, @Param("box") Box box);
 
-    @Query("select p.memberPk from ChannelParticipant p where p.channel = :channel and p.deletedYn = false")
+    @Query("select p.member.memberPk from ChannelParticipant p where p.channel = :channel and p.deletedYN = 'N'")
     List<Long> findMemberPksByChannel(@Param("channel") Channel channel);
 
     @Modifying(clearAutomatically = true)
