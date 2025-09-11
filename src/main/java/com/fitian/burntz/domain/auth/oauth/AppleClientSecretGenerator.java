@@ -4,6 +4,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,11 +24,13 @@ import java.util.Date;
  *
  * 출력: client_secret (compact JWT) 를 stdout 로 출력합니다. (application.properties에 복붙하거나 CI에 주입)
  */
+@Slf4j
 public class AppleClientSecretGenerator {
+
 
     public static void main(String[] args) throws Exception {
         if (args.length < 4) {
-            System.err.println("Usage: AppleClientSecretGenerator <TEAM_ID> <CLIENT_ID> <KEY_ID> <PRIVATE_KEY_P8_PATH>");
+            log.error("Usage: AppleClientSecretGenerator <TEAM_ID> <CLIENT_ID> <KEY_ID> <PRIVATE_KEY_P8_PATH>");
             System.exit(2);
         }
         String teamId = args[0];
@@ -35,7 +38,15 @@ public class AppleClientSecretGenerator {
         String keyId = args[2];
         Path p8Path = Path.of(args[3]);
 
-        String jwt = generateClientSecret(teamId, clientId, keyId, Files.readString(p8Path));
+        String pemContent = Files.readString(p8Path);
+
+        // p8 파일 경로 정보 정도만 로그(원문 X)
+        log.debug("Generating client_secret for teamId='{}' clientId='{}' keyId='{}' using p8Path='{}'",
+                teamId, clientId, keyId, p8Path.toAbsolutePath());
+
+        String jwt = generateClientSecret(teamId, clientId, keyId, pemContent);
+
+        // 개발용: stdout으로만 출력 (로그에 원문을 남기지 않음)
         System.out.println(jwt);
     }
 
@@ -60,6 +71,7 @@ public class AppleClientSecretGenerator {
                 .build();
 
         Instant now = Instant.now();
+
         // Apple: 만료기간은 최대 6개월(권장: 6개월 이하)
         Instant exp = now.plusSeconds(60L * 60L * 24L * 160L); // 예: 160일 (운영에서 적절히 조정)
 

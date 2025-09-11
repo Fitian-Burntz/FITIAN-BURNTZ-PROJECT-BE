@@ -4,7 +4,7 @@ public interface RefreshTokenService {
     /**
      * 신규 생성: memberPk 기준으로 새 Auth 생성 (기본 deviceId null)
      */
-    void create(Long memberPk, String refreshToken);
+//    void create(Long memberPk, String refreshToken);
 
     /**
      * 멤버의 refresh token을 갱신(또는 새로 생성)

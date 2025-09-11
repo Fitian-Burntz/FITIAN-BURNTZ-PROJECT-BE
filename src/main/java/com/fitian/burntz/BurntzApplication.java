@@ -6,10 +6,7 @@ import org.springframework.boot.autoconfigure.http.client.HttpClientAutoConfigur
 import org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication(exclude = {
-        HttpClientAutoConfiguration.class,
-        RestClientAutoConfiguration.class
-})
+@SpringBootApplication
 @EnableJpaAuditing
 public class BurntzApplication {
 
