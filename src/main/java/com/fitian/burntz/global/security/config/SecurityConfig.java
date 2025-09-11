@@ -37,7 +37,9 @@ public class SecurityConfig {
                                 "/api/me",
                                 "/api/auth/**",
                                 //결제 테스트용
-                                "/api/v1/payments/**"
+                                "/api/v1/payments/**",
+                                //ECS 헬스체크
+                                "/actuator/health", "/actuator/health/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
