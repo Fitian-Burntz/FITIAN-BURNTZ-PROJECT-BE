@@ -38,18 +38,18 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         }
     }
 
-    @Override
-    @Transactional
-    public void create(Long memberPk, String refreshToken) {
-        Member member = memberRepository.findById(memberPk)
-                .orElseThrow(() -> new IllegalArgumentException("No such member: " + memberPk));
-
-        String hashed = hashToken(refreshToken);
-
-        // 도메인 정적 팩토리 사용 — 직접 setter 사용 없음
-        Auth auth = Auth.createForMember(member, hashed, "default");
-        authRepository.save(auth);
-    }
+//    @Override
+//    @Transactional
+//    public void create(Long memberPk, String refreshToken) {
+//        Member member = memberRepository.findById(memberPk)
+//                .orElseThrow(() -> new IllegalArgumentException("No such member: " + memberPk));
+//
+//        String hashed = hashToken(refreshToken);
+//
+//        // 도메인 정적 팩토리 사용 — 직접 setter 사용 없음
+//        Auth auth = Auth.createForMember(member, hashed, "default");
+//        authRepository.save(auth);
+//    }
 
     @Override
     @Transactional
@@ -67,10 +67,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         auth.updateRefreshToken(hashed);
         authRepository.save(auth);
 
-        // ADDED LOG FOR DEBUGGING — 개발 디버깅용 로그입니다. 해시/토큰 원문은 절대 로그에 남기지 않습니다.
-        log.debug("ADDED LOG FOR DEBUGGING: saveOrUpdateRefreshToken memberPk={} deviceId={} storedHashPresent={}",
+        // 개발 디버깅용 로그(원문 X): 저장 여부만 노출
+        log.debug("saveOrUpdateRefreshToken: memberPk={} deviceId={} storedHashPresent={}",
                 memberPk, did, hashed != null);
-        ///  ///////////
     }
 
     @Override
@@ -81,12 +80,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             String incomingHash = hashToken(refreshToken);
             boolean exists = authRepository.existsByMember_MemberPkAndRefreshToken(memberPk, incomingHash);
 
-            // ADDED LOG FOR DEBUGGING — 개발용. 토큰/해시 원문은 절대 찍지 않습니다.
-            log.debug("ADDED LOG FOR DEBUGGING: validateRefreshTokenForMember memberPk={} storedHashMatch={}", memberPk, exists);
+            // 개발용 로그(원문 X)
+            log.debug("validateRefreshTokenForMember: memberPk={} storedHashMatch={}", memberPk, exists);
 
             return exists;
-        } catch (Exception ex) {
-            log.error("ADDED LOG FOR DEBUGGING: validateRefreshTokenForMember ERROR memberPk={} error={}", memberPk, ex.getMessage(), ex);
+        } catch (Exception e) {
+            log.error("validateRefreshTokenForMember ERROR memberPk={} error={}", memberPk, e.getMessage(), e);
             return false;
         }
     }
@@ -113,7 +112,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         // 조회
         List<Auth> list = authRepository.findAllByMember_MemberPkAndRefreshToken(memberPk, hash);
         if (list == null || list.isEmpty()) {
-            log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndToken memberPk={} found=0", memberPk);
+            log.debug("deleteByMemberAndToken memberPk={} found=0", memberPk);
             return false;
         }
 
@@ -124,7 +123,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             authRepository.save(a);
         }
 
-        log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndToken memberPk={} affected={}", memberPk, list.size());
+        log.debug("deleteByMemberAndToken memberPk={} affected={}", memberPk, list.size());
         return true;
     }
 
@@ -136,7 +135,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void softDeleteAllByMember(Long memberPk) {
         List<Auth> list = authRepository.findAllByMember_MemberPk(memberPk);
         if (list == null || list.isEmpty()) {
-            log.debug("ADDED LOG FOR DEBUGGING: deleteAllByMember memberPk={} found=0", memberPk);
+            log.debug("deleteAllByMember memberPk={} found=0", memberPk);
             return;
         }
 
@@ -146,7 +145,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             authRepository.save(a);
         }
 
-        log.debug("ADDED LOG FOR DEBUGGING: deleteAllByMember memberPk={} affected={}", memberPk, list.size());
+        log.debug("deleteAllByMember memberPk={} affected={}", memberPk, list.size());
     }
 
     /**
@@ -160,7 +159,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         Optional<Auth> opt = authRepository.findByMember_MemberPkAndDeviceId(memberPk, did);
         if (opt.isEmpty()) {
-            log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndDeviceId memberPk={} deviceId={} found=false", memberPk, did);
+            log.debug("deleteByMemberAndDeviceId memberPk={} deviceId={} found=false", memberPk, did);
             return false;
         }
 
@@ -169,7 +168,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         auth.markDeleted(); // optional
         authRepository.save(auth);
 
-        log.debug("ADDED LOG FOR DEBUGGING: deleteByMemberAndDeviceId memberPk={} deviceId={} softDeleted=true", memberPk, did);
+        log.debug("deleteByMemberAndDeviceId memberPk={} deviceId={} softDeleted=true", memberPk, did);
         return true;
     }
 

@@ -31,7 +31,10 @@ public class MemberServiceImpl implements MemberService {
 
         provider = provider.trim().toLowerCase(Locale.ROOT);
         memberId = memberId.trim();
-        name = (name == null || name.isBlank()) ? "socialUser" : name;
+
+        // name은 외부값을 사용하지 않고 항상 기본값으로 설정
+        name = "nickname_unset";
+
         email = (email == null) ? "" : email;
 
         // 1) 조회

@@ -12,6 +12,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,9 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AppleApiClientImpl implements AppleApiClient {
+
 
     @Value("${spring.security.oauth2.client.registration.apple.client-id}")
     private String appleClientId;
@@ -35,6 +38,7 @@ public class AppleApiClientImpl implements AppleApiClient {
 
     private synchronized JWKSource<SecurityContext> getJwkSource() throws Exception {
         if (jwkSource == null) {
+            log.debug("Initializing RemoteJWKSet from url={}", appleJwksUrl);
             ResourceRetriever resourceRetriever = new DefaultResourceRetriever(2000, 2000);
             jwkSource = new RemoteJWKSet<>(new URL(appleJwksUrl), resourceRetriever);
         }
@@ -54,32 +58,41 @@ public class AppleApiClientImpl implements AppleApiClient {
 
             // 검증: issuer, audience, expiry
             String issuer = claims.getIssuer();
+            log.debug("Apple id_token claims: iss='{}', aud={}, exp={}", issuer, claims.getAudience(), claims.getExpirationTime());
+
             if (!"https://appleid.apple.com".equals(issuer) && !"https://appleid.apple.com/".equals(issuer)) {
+                log.warn("Invalid Apple issuer: {}", issuer);
                 throw new IllegalArgumentException("Invalid Apple issuer: " + issuer);
             }
 
             List<String> aud = claims.getAudience();
             if (aud == null || !aud.contains(appleClientId)) {
+                log.warn("Invalid audience for Apple id_token. expected='{}' got='{}'", appleClientId, aud);
                 throw new IllegalArgumentException("Invalid audience for Apple id_token");
             }
 
             Date exp = claims.getExpirationTime();
             if (exp == null || new Date().after(exp)) {
+                log.warn("Apple id_token is expired or missing exp: exp={}", exp);
                 throw new IllegalArgumentException("Apple id_token is expired");
             }
 
             String sub = claims.getSubject();
             String email = claims.getStringClaim("email");
+            Object emailVerified = claims.getClaim("email_verified");
+
+            log.info("Apple id_token validated: sub='{}' email='{}' email_verified='{}'", sub, email == null ? "(none)" : email, emailVerified);
 
             return OAuthUserInfo.builder()
                     .memberId(sub)
                     .email(email)
-                    .emailVerified(null)
+                    .emailVerified(emailVerified == null ? null : Boolean.valueOf(String.valueOf(emailVerified)))
                     .nickname(null)
                     .build();
         } catch (IllegalArgumentException iae) {
             throw iae;
         } catch (Exception ex) {
+            log.error("Failed to validate Apple id_token", ex);
             throw new RuntimeException("Failed to validate Apple id_token", ex);
         }
     }
