@@ -1,8 +1,7 @@
-package com.fitian.burntz.domain.box.entity;
+package com.fitian.burntz.domain.member.entity;
 
+import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
-import com.fitian.burntz.domain.box.enums.MemberRole;
-import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;

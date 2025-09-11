@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.member.service;
 
+import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,45 +22,47 @@ public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
 
-    /**
-     * provider/memberId 는 서비스 호출 이전에 정규화되어 들어오는 것을 권장.
-     * (하지만 이 메서드 내에서도 간단한 정규화/검사 수행)
-     */
     @Override
     @Transactional
-    public Member getOrCreateMember(String provider, String memberId, String name, String email) {
-        // 방어 코드: null -> 빈 문자열 또는 소문자 정규화
+    public MemberCreateResult getOrCreateMember(String provider, String memberId, String name, String email) {
+        // 방어적 정규화
         Objects.requireNonNull(provider, "provider must not be null");
         Objects.requireNonNull(memberId, "memberId must not be null");
 
         provider = provider.trim().toLowerCase(Locale.ROOT);
         memberId = memberId.trim();
+        name = (name == null || name.isBlank()) ? "socialUser" : name;
+        email = (email == null) ? "" : email;
 
-        // 먼저 조회
-        var opt = memberRepository.findByProviderAndMemberId(provider, memberId);
+        // 1) 조회
+        Optional<Member> opt = memberRepository.findByProviderAndMemberId(provider, memberId);
         if (opt.isPresent()) {
-            return opt.get();
+            log.debug("[MemberService] existing member found provider={} memberId={}", provider, memberId);
+            return new MemberCreateResult(opt.get(), false);
         }
 
-        // 새 멤버 준비
-        Member newMember = Member.create(
-                memberId,
-                (name != null && !name.isBlank()) ? name : "socialUser",
-                (email != null) ? email : "",
-                Gender.OTHERS,
-                provider
-        );
-
+        // 2) 새 멤버 생성 — Member.create 내부에서 gender 기본값 설정됨
+        Member newMember = Member.create(memberId, name, email, provider);
 
         try {
-            Member saved = memberRepository.save(newMember);
+            // saveAndFlush로 즉시 PK 확보
+            Member saved = memberRepository.saveAndFlush(newMember);
             log.info("[MemberProvision] created member pk={} provider={} memberId={}", saved.getMemberPk(), provider, memberId);
-            return saved;
+
+            // 생성 후 후처리 훅(필요시 구현)
+            afterMemberCreated(saved);
+
+            return new MemberCreateResult(saved, true);
         } catch (DataIntegrityViolationException ex) {
-            // 동시성으로 다른 스레드가 먼저 insert 했을 가능성 -> 재조회
+            // 동시성: 누군가 먼저 만들었을 가능성 -> 재조회
             log.warn("[MemberProvision] concurrent insert detected for {}/{}. re-querying...", provider, memberId);
             return memberRepository.findByProviderAndMemberId(provider, memberId)
+                    .map(m -> new MemberCreateResult(m, false))
                     .orElseThrow(() -> new RuntimeException("Failed to create member and no existing member found", ex));
         }
+    }
+
+    private void afterMemberCreated(Member saved) {
+        // 온보딩/이벤트/초기 설정 등 (비동기 처리 권장)
     }
 }

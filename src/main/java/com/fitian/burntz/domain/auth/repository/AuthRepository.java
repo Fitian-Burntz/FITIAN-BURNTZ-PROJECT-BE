@@ -4,10 +4,26 @@ import com.fitian.burntz.domain.auth.entity.Auth;
 import com.fitian.burntz.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AuthRepository extends JpaRepository<Auth, Long> {
     Optional<Auth> findByMember(Member member);
     Optional<Auth> findByDeviceIdAndMember(String deviceId, Member member);
     void deleteByMember(Member member);
+
+    /**
+     * 주어진 memberPk로 가장 최근(가장 큰 authPk) Auth 레코드 조회
+     */
+    Optional<Auth> findTopByMemberMemberPkOrderByAuthPkDesc(Long memberPk);
+
+    // (member_pk, refresh_token) 조합으로 존재 여부 확인
+    boolean existsByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
+
+    // 조회용 메서드들
+    Optional<Auth> findByMember_MemberPkAndDeviceId(Long memberPk, String deviceId);
+
+    List<Auth> findAllByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
+
+    List<Auth> findAllByMember_MemberPk(Long memberPk);
 }
