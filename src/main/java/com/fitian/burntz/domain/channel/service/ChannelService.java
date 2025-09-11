@@ -7,6 +7,8 @@ import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
 import com.fitian.burntz.domain.channel.entity.Channel;
 import com.fitian.burntz.domain.channel.repository.ChannelRepository;
+import com.fitian.burntz.domain.channel.v1.dto.ChannelInviteRequest;
+import com.fitian.burntz.domain.channel.v1.dto.ChannelLeaveRequest;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelListResponse;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -16,6 +18,7 @@ import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,8 +63,6 @@ public class ChannelService {
         Box box = boxRepository.findById(boxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
-        List<Channel> channelList = participantRepository.findChannelsByMemberAndBox(member, box);
-
         return participantRepository.findChannelsByMemberAndBox(member, box)
                 .stream()
                 .map(c -> ChannelListResponse.builder()
@@ -76,7 +77,48 @@ public class ChannelService {
     public List<ChannelParticipant> getParticipants(CustomUserDetails userDetails, Long channelPk) {
         Channel channel = channelRepository.findById(channelPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
+
         //채널 참여중인지 검증 필요
+
         return participantRepository.findByChannel(channel);
+    }
+
+    public void inviteParticipants(ChannelInviteRequest request, CustomUserDetails userDetails) {
+
+        //채널 참여중인지 검증 필요
+
+        Channel channel = channelRepository.findById(request.getChannelPk())
+                .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
+
+        //해당 채널의 참여자 목록 Pk
+        List<Long> participantsPk = participantRepository.findMemberPksByChannel(channel);
+
+        List<Long> toInsert = request.getMemberPks()
+                .stream().filter(memberPk -> !participantsPk.contains(memberPk))
+                .toList();
+
+        List<ChannelParticipant> insertList = new ArrayList<>();
+
+        for(Long memberPk : toInsert) {
+            Member member = memberRepository.findById(memberPk)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+            ChannelParticipant p = ChannelParticipant.builder()
+                    .channel(channel)
+                    .member(member)
+                    .build();
+            insertList.add(p);
+        }
+
+        participantRepository.saveAll(insertList);
+    }
+
+    public void deleteParticipant(ChannelLeaveRequest request, CustomUserDetails userDetails) {
+
+        Channel channel = participantRepository.findById(request.getParticipantPk())
+                        .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND)).getChannel();
+
+        //요청자가 해당 박스의 관리자인지 검증해야함.
+
+        participantRepository.deleteById(request.getParticipantPk());
     }
 }

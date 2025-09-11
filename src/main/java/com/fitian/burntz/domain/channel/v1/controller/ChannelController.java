@@ -3,6 +3,8 @@ package com.fitian.burntz.domain.channel.v1.controller;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
 import com.fitian.burntz.domain.channel.service.ChannelService;
+import com.fitian.burntz.domain.channel.v1.dto.ChannelInviteRequest;
+import com.fitian.burntz.domain.channel.v1.dto.ChannelLeaveRequest;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelListResponse;
 import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.response.ApiResponse;
@@ -29,7 +31,6 @@ import java.util.List;
 public class ChannelController {
 
     private final ChannelService channelService;
-    private final MemberService memberService;
 
     @PostMapping()
     public ApiResponse<Void> createChannel(
@@ -52,5 +53,21 @@ public class ChannelController {
             @PathVariable Long channelPk,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
         return ResponseEntity.ok(ApiResponse.success(channelService.getParticipants(userDetails, channelPk),"채널 참여자 목록 반환 완료."));
+    }
+
+    @PostMapping("/inviteParticipants")
+    public ApiResponse<Void> inviteParticipants(
+            @Valid @RequestBody ChannelInviteRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails ) {
+        channelService.inviteParticipants(request, userDetails);
+        return ApiResponse.success(null, "채널 초대 완료.");
+    }
+
+    @DeleteMapping("/deleteParticipant")
+    public ApiResponse<Void> deleteParticipant(
+            @Valid @RequestBody ChannelLeaveRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails ) {
+        channelService.deleteParticipant(request, userDetails);
+        return ApiResponse.success(null, "채널 내보내기 완료.");
     }
 }
