@@ -74,6 +74,16 @@ jobs:
           task-definition: ${{ env.TASK_DEF_PATH }}
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+      - name: Check rendered file
+        run: |
+          if [ -f rendered-taskdef.json ]; then
+            echo "rendered-taskdef.json exists"
+            sed -n '1,120p' rendered-taskdef.json
+          else
+            echo "ERROR: rendered-taskdef.json missing" >&2
+            ls -la
+            exit 1
+          fi
 
       - name: Deploy to ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
