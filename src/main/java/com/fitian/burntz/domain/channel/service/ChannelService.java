@@ -18,12 +18,15 @@ import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
+import com.google.cloud.firestore.Firestore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +47,7 @@ public class ChannelService {
     private final MemberRepository memberRepository;
     private final ChannelParticipantRepository participantRepository;
     private final MemberListRepository memberListRepository;
+    private final Firestore firestore;
 
     public void createChannel(ChannelCreateRequest request, CustomUserDetails userDetails) {
 
@@ -61,6 +65,26 @@ public class ChannelService {
                 .build();
 
         channelRepository.save(channel);
+
+        //Firebase에 채널 생성
+        try {
+            Map<String, Object> data = new HashMap<>();
+            data.put("channelName", request.getChannelName());
+            data.put("type", request.getType());
+            data.put("memberUids", request.getMemberPks());
+            data.put("createdBy",userDetails.getMemberPk());
+            data.put("createdAt", com.google.cloud.Timestamp.now());
+
+            firestore.collection("boxes")
+                    .document(request.getBoxCode())
+                    .collection("channels")
+                    .document(request.getChannelId())
+                    .set(data);
+        } catch (Exception e) {
+            throw new RuntimeException("Firestore 채널 문서 생성 실패", e);
+        }
+
+
     }
 
     public List<ChannelListResponse> getChannels(CustomUserDetails userDetails, Long boxPk) {
@@ -119,6 +143,16 @@ public class ChannelService {
         }
 
         participantRepository.saveAll(insertList);
+
+        try {
+            firestore.collection("boxes")
+                    .document(channel.getBox().getBoxCode())
+                    .collection("channels")
+                    .document(channel.getChannelId())
+                    .update("memberUids",com.google.cloud.firestore.FieldValue.arrayUnion(toInsert.toArray()));
+        } catch ( Exception e) {
+            throw new RuntimeException("Firestore 참여자 추가 실패", e);
+        }
     }
 
     public boolean deleteParticipant(ChannelLeaveRequest request, CustomUserDetails userDetails) {
@@ -138,6 +172,17 @@ public class ChannelService {
         }
 
         int updated = participantRepository.markDeletedByPk(request.getParticipantPk(), BaseTime.Yn.Y);
+
+        try {
+            firestore.collection("boxes")
+                    .document(channel.getBox().getBoxCode())
+                    .collection("channels")
+                    .document(channel.getChannelId())
+                    .update("memberUids",com.google.cloud.firestore.FieldValue.arrayUnion(request.getParticipantPk()));
+        } catch ( Exception e) {
+            throw new RuntimeException("Firestore 참여자 제거 실패", e);
+        }
+
         return updated > 0;
     }
 }
