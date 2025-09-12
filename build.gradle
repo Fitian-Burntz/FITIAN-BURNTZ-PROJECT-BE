@@ -67,6 +67,9 @@ dependencies {
 
     // BouncyCastle (for PEM/PKCS8 parsing / ES256 signing) - 권장
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+
+	//Firebase Cloud Messaging
+	implementation 'com.google.firebase:firebase-admin:9.6.0'
 }
 
 dependencyManagement {
