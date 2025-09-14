@@ -4,7 +4,8 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::209479269102:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::209479269102:role/ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::209479269102:role/ecs-task-role",
   "containerDefinitions": [
     {
       "name": "burntz",
@@ -12,23 +13,32 @@
       "portMappings": [
         { "containerPort": 8080, "protocol": "tcp" }
       ],
-      "essential": true,
       "environment": [
         { "name": "SPRING_PROFILES_ACTIVE", "value": "dev" },
-        { "name": "DB_URL", "value": "jdbc:postgresql://burntz-db.cdgiwaocqbwu.ap-northeast-2.rds.amazonaws.com:5432/burntz?sslmode=require&stringtype=unspecified"},
-        { "name": "DB_USERNAME", "value": "root"},
-        { "name": "DB_PASSWORD", "value": "burntz1234" }
+        { "name": "REDIS_HOST", "value": "master.burntz-redis-rg.xsiurc.apn2.cache.amazonaws.com" },
+        { "name": "REDIS_PORT", "value": "6379" },
+        { "name": "SPRING_DATA_REDIS_SSL_ENABLED", "value": "true" },
+        { "name": "SPRING_DATA_REDIS_USERNAME", "value": "default" },
+        { "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED", "value": "true" }
       ],
+      "secrets": [
+        { "name": "REDIS_AUTH_TOKEN", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/redis/auth-token-nXhrnR" },
+        { "name": "DB_URL", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/db-url-cWPpJX" },
+        { "name": "DB_USERNAME", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/db-username-jzQFgu" },
+        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/db-password-JdqhY1" },
+        { "name" : "BURNTZ_DEV_GOOGLE_CLIENT_ID", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/google_client_id-pJFqcn"  },
+        { "name" : "BURNTZ_DEV_GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/google_client_secret-9uPnmo"  },
+        { "name" : "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/jwt_secret-P9VNkQ"  }
 
+      ],
+      "essential": true,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-create-group": "true",
           "awslogs-group": "/ecs/burntz-dev",
           "awslogs-region": "ap-northeast-2",
-          "awslogs-stream-prefix": "ecs",
-          "mode": "non-blocking",
-          "max-buffer-size": "25m"
+          "awslogs-stream-prefix": "ecs"
         }
       },
 
