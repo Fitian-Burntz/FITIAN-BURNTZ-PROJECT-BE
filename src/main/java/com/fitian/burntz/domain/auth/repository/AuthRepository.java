@@ -1,29 +1,69 @@
 package com.fitian.burntz.domain.auth.repository;
 
 import com.fitian.burntz.domain.auth.entity.Auth;
-import com.fitian.burntz.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface AuthRepository extends JpaRepository<Auth, Long> {
-    Optional<Auth> findByMember(Member member);
-    Optional<Auth> findByDeviceIdAndMember(String deviceId, Member member);
-    void deleteByMember(Member member);
 
-    /**
-     * 주어진 memberPk로 가장 최근(가장 큰 authPk) Auth 레코드 조회
-     */
+    // 기존 편의 메서드
     Optional<Auth> findTopByMemberMemberPkOrderByAuthPkDesc(Long memberPk);
 
-    // (member_pk, refresh_token) 조합으로 존재 여부 확인
     boolean existsByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
-
-    // 조회용 메서드들
-    Optional<Auth> findByMember_MemberPkAndDeviceId(Long memberPk, String deviceId);
 
     List<Auth> findAllByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
 
-    List<Auth> findAllByMember_MemberPk(Long memberPk);
+    // -------------------------------------------------
+    // Native upsert (Postgres) - ON CONFLICT 사용
+    // -------------------------------------------------
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+      INSERT INTO burntz.auth (member_pk, device_id, refresh_token, created_at, updated_at, deleted_yn)
+      VALUES (:memberPk, :deviceId, :refreshToken, now(), now(), 'N')
+      ON CONFLICT (member_pk, device_id)
+      DO UPDATE SET refresh_token = EXCLUDED.refresh_token, updated_at = now(), deleted_yn = 'N'
+      """, nativeQuery = true)
+    void upsertAuth(@Param("memberPk") Long memberPk,
+                    @Param("deviceId") String deviceId,
+                    @Param("refreshToken") String refreshToken);
+
+    // -------------------------------------------------
+    // Native 조회 (JOIN 제거) — member_pk 칼럼 직접 사용 (성능용)
+    // -------------------------------------------------
+    @Query(value = "SELECT a.* FROM burntz.auth a WHERE a.member_pk = :memberPk AND a.refresh_token = :refreshToken AND a.deleted_yn = 'N' LIMIT 1", nativeQuery = true)
+    Optional<Auth> findFirstByMemberPkAndRefreshTokenNative(@Param("memberPk") Long memberPk,
+                                                            @Param("refreshToken") String refreshToken);
+
+    @Query(value = "SELECT COUNT(1) FROM burntz.auth a WHERE a.member_pk = :memberPk AND a.refresh_token = :refreshToken AND a.deleted_yn = 'N'", nativeQuery = true)
+    int countByMemberPkAndRefreshTokenNative(@Param("memberPk") Long memberPk,
+                                             @Param("refreshToken") String refreshToken);
+
+    default boolean existsByMemberPkAndRefreshTokenNative(Long memberPk, String refreshToken) {
+        return countByMemberPkAndRefreshTokenNative(memberPk, refreshToken) > 0;
+    }
+
+    @Query(value = "SELECT a.* FROM burntz.auth a WHERE a.member_pk = :memberPk AND a.refresh_token = :refreshToken", nativeQuery = true)
+    List<Auth> findAllByMemberPkAndRefreshTokenNative(@Param("memberPk") Long memberPk,
+                                                      @Param("refreshToken") String refreshToken);
+
+    // -------------------------------------------------
+    // Bulk soft-delete (native) — device 단위
+    // -------------------------------------------------
+    @Modifying(clearAutomatically = true)
+    @Query(value = "UPDATE burntz.auth SET refresh_token = NULL, deleted_yn = 'Y', updated_at = now() WHERE member_pk = :memberPk AND device_id = :deviceId", nativeQuery = true)
+    int softDeleteByMemberPkAndDeviceIdNative(@Param("memberPk") Long memberPk, @Param("deviceId") String deviceId);
+
+    // -------------------------------------------------
+    // Bulk soft-delete (native) — 모든 기기
+    // -------------------------------------------------
+    @Modifying(clearAutomatically = true)
+    @Query(value = "UPDATE burntz.auth SET refresh_token = NULL, deleted_yn = 'Y', updated_at = now() WHERE member_pk = :memberPk", nativeQuery = true)
+    int softDeleteAllByMemberPkNative(@Param("memberPk") Long memberPk);
 }
