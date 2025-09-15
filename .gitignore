@@ -42,4 +42,8 @@ out/
 /src/main/resources/.env
 
 .env
+
 serviceAccountKey.json
+
+## p8 ##
+AuthKey_2BFQ5GRNKH.p8

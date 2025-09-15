@@ -15,17 +15,24 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Table(
         name = "auth",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"member_pk", "device_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"member_pk", "device_id"}),
+        indexes = {
+                @Index(name = "idx_auth_member_pk", columnList = "member_pk"),
+                @Index(name = "idx_auth_member_refresh", columnList = "member_pk, refresh_token")
+        }
 )
 public class Auth extends BaseTime {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @ToString.Include
     @Column(name = "auth_pk")
     private Long authPk;
 
+    @ToString.Include
     @Column(name = "device_id", length = 100, nullable = false)
     private String deviceId;
 
@@ -34,10 +41,11 @@ public class Auth extends BaseTime {
 
     // Member 엔티티가 있으면 연관관계로 매핑 (지연 로딩)
     // 없으면 Long memberPk 로 대체 가능
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JsonBackReference(value = "member-auth") //페어링 이름 지정
+    @ToString.Exclude
     @JoinColumn(name = "member_pk")
-    private Member member; // 실제 Member 엔티티 타입으로 변경하세요
+    private Member member;
 
     /**
      * 리프레시 토큰 갱신 — updatedAt만 즉시 갱신
@@ -59,7 +67,7 @@ public class Auth extends BaseTime {
      * 정적 팩토리 메서드: Member 연관관계로 새로운 Auth 생성
      * (도메인 규칙이 생기면 여기서 검증/초기화 처리)
      */
-    public static Auth createForMember(Member member, String hashedRefreshToken, String deviceId) {
+    public static Auth create(Member member, String hashedRefreshToken, String deviceId) {
         return Auth.builder()
                 .member(member)
                 .refreshToken(hashedRefreshToken)

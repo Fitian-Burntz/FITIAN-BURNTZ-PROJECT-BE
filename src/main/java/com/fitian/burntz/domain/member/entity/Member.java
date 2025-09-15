@@ -36,6 +36,7 @@ public class Member extends BaseTime {
     private String email;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     @Column(name = "gender", length = 10, nullable = false)
     private Gender gender = Gender.OTHERS;
 
@@ -45,12 +46,16 @@ public class Member extends BaseTime {
 
     // Member -> Auth 연관관계 추가 (초기화해서 NPE 방지)
     @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference(value = "member-auth")
+    @Builder.Default
+    @ToString.Exclude
     private List<Auth> auths = new ArrayList<>();
 
     // 멤버 -> 멤버 리스트 로 조회를 해야함
     @OneToMany(mappedBy = "member")
     @JsonManagedReference
+    @Builder.Default
+    @ToString.Exclude
     private List<MemberList> memberLists = new ArrayList<>();
 
 
