@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClassesJoinRequest {
+public class ClassesJoinCancelRequest {
 
     @NotBlank(message = "classesPK must not be blank")
     private Long classesPK;
