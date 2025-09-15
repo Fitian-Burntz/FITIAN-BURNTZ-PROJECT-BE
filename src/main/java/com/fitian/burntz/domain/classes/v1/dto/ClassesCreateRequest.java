@@ -1,4 +1,4 @@
-package com.fitian.burntz.domain.classes.dto;
+package com.fitian.burntz.domain.classes.v1.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
