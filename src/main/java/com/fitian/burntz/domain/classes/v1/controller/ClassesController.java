@@ -1,7 +1,8 @@
-package com.fitian.burntz.domain.classes.controller;
+package com.fitian.burntz.domain.classes.v1.controller;
 
-import com.fitian.burntz.domain.classes.dto.ClassesCreateRequest;
-import com.fitian.burntz.domain.classes.dto.ClassesSearchRequest;
+import com.fitian.burntz.domain.classes.v1.dto.ClassesCreateRequest;
+import com.fitian.burntz.domain.classes.v1.dto.ClassesJoinRequest;
+import com.fitian.burntz.domain.classes.v1.dto.ClassesSearchRequest;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.service.ClassesService;
 import com.fitian.burntz.global.common.response.ApiResponse;
@@ -42,5 +43,13 @@ public class ClassesController {
 
         classesService.createClasses(requestList, userDetails);
         return ApiResponse.success(null,"수업 개설 완료.");
+    }
+
+    @PostMapping("/joinClass")
+    public ApiResponse<Void> joinClass(
+            @Valid @RequestBody ClassesJoinRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classesService.joinClass(request, userDetails);
+        return ApiResponse.success(null,"수업 참여 완료.");
     }
 }
