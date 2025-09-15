@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.auth.service;
 
+import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,5 +14,5 @@ public interface AuthService {
 
     void logoutAllDevices(String anyToken);
 
-    Map<String, Object> refreshTokenBased(String refreshToken, String deviceId);
+    AuthTokenResponse refreshTokenBased(String refreshToken, String deviceId);
 }

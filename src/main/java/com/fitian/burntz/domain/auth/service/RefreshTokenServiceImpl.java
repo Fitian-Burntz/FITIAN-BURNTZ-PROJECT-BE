@@ -4,9 +4,14 @@ import com.fitian.burntz.domain.auth.entity.Auth;
 import com.fitian.burntz.domain.auth.repository.AuthRepository;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.ValidationException;
+import com.fitian.burntz.global.security.core.CustomUserDetails;
+import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -22,6 +27,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final AuthRepository authRepository;
     private final MemberRepository memberRepository;
+    private final JwtTokenProvider jwtTokenProvider; // 토큰 검증용 주입
 
     /**
      * 단순 SHA-256 해시 (운영에서는 추가적인 솔트/HMAC 또는 KMS 암호화 권장)
@@ -80,7 +86,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     /**
-     * 토큰 기준 삭제 (soft delete) — bulk native update로 변경
+     * 토큰 기준 삭제 (soft delete) — 엔티티 루프 사용
      */
     @Override
     @Transactional
@@ -92,7 +98,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             return false;
         }
 
-        // 기존 개별 save 대신 bulk update 권장(여기선 엔티티 접근 유지)
         for (Auth a : list) {
             a.clearRefreshToken();
             a.markDeleted();
@@ -125,5 +130,53 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         int affected = authRepository.softDeleteByMemberPkAndDeviceIdNative(memberPk, did);
         log.debug("deleteByMemberAndDeviceId memberPk={} deviceId={} affected={}", memberPk, did, affected);
         return affected > 0;
+    }
+
+    // ------------------- 여기서 토큰 검증 책임을 집중 -------------------
+
+    /**
+     * AuthServiceImpl에서 사용하던 헬퍼(토큰 원문 검증 + DB 일치 검증)를 여기로 옮겼습니다.
+     * - 클레임 기반으로 리프레시 토큰인지 확인 (jwtTokenProvider.isRefreshToken)
+     * - 서명/만료 등 기본 검증 (jwtTokenProvider.validateToken)
+     * - 토큰에서 memberPk 추출 (jwtTokenProvider.getMemberPkFromRefreshToken)
+     * - DB 저장 해시와 일치하는지 검사 (validateRefreshTokenForMember)
+     *
+     * ValidationException(ErrorCode.*) 을 던져 호출자가 통일된 예외 정책을 받도록 합니다.
+     */
+    @Override
+    public RefreshTokenService.ValidationResult validateRefreshTokenAndDevice(String refreshToken, String deviceId) throws ValidationException {
+        Long memberPk = getMemberPkFromValidRefreshToken(refreshToken);
+
+        if (deviceId == null || deviceId.isBlank()) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+        return new RefreshTokenService.ValidationResult(memberPk, deviceId.trim());
+    }
+
+    /**
+     * private helper: refreshToken 원문 검증 및 DB 일치 확인
+     */
+    @Transactional(Transactional.TxType.SUPPORTS)
+    private Long getMemberPkFromValidRefreshToken(String refreshToken) throws ValidationException {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
+        }
+        // 클레임 기반 검사: token_type 등 확인
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new ValidationException(ErrorCode.TOKEN_INVALID);
+        }
+        // 서명/만료 검사
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new ValidationException(ErrorCode.TOKEN_INVALID);
+        }
+        Long memberPk = jwtTokenProvider.getMemberPkFromRefreshToken(refreshToken);
+        if (memberPk == null) {
+            throw new ValidationException(ErrorCode.TOKEN_INVALID);
+        }
+        // DB에 저장된 해시와 일치하는지 검사
+        if (!validateRefreshTokenForMember(memberPk, refreshToken)) {
+            throw new ValidationException(ErrorCode.TOKEN_INVALID);
+        }
+        return memberPk;
     }
 }

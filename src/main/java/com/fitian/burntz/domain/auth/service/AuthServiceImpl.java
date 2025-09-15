@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.auth.service;
 
+import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.JwtTokenPair;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import com.fitian.burntz.domain.member.dto.MemberCreateResult;
@@ -79,11 +80,11 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public void logoutCurrentDevice(String refreshToken, String deviceId) {
-        ValidationResult vr = validateRefreshTokenAndDeviceId(refreshToken, deviceId);
+        // 검증 책임을 RefreshTokenService로 이동
+        RefreshTokenService.ValidationResult vr = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
 
         boolean deleted = refreshTokenService.softDeleteByMemberAndDeviceId(vr.memberPk(), vr.deviceId());
         if (!deleted) {
-            // 기존 핸들러로 404 처리되도록 ValidationException 사용
             throw new ValidationException(ErrorCode.DEVICE_NOT_FOUND);
         }
 
@@ -114,10 +115,10 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
-    public Map<String, Object> refreshTokenBased(String refreshToken, String deviceId) {
-        ValidationResult vr = validateRefreshTokenAndDeviceId(refreshToken, deviceId);
+    public AuthTokenResponse refreshTokenBased(String refreshToken, String deviceId) {
+        RefreshTokenService.ValidationResult validationResult = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
 
-        Member member = memberRepository.findById(vr.memberPk())
+        Member member = memberRepository.findById(validationResult.memberPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         CustomUserDetails principal = new CustomUserDetails(member);
@@ -126,51 +127,20 @@ public class AuthServiceImpl implements AuthService{
         String newAccessToken = jwtTokenProvider.generateAccessToken(auth, jwtAccessTokenExpirationTime);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(auth, jwtRefreshTokenExpirationTime);
 
-        refreshTokenService.saveOrUpdateRefreshToken(vr.memberPk(), newRefreshToken, vr.deviceId());
+        refreshTokenService.saveOrUpdateRefreshToken(validationResult.memberPk(), newRefreshToken, validationResult.deviceId());
 
-        if (log.isDebugEnabled()) {
-            log.debug("refreshTokenBased success memberPk={} deviceId={} newRefreshHashPrefix={}",
-                    vr.memberPk(), vr.deviceId(), SecureLogUtil.sha256Prefix(newRefreshToken, 8));
+        JwtTokenPair pair = JwtTokenPair.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .accessTokenExpiresIn(jwtAccessTokenExpirationTime / 1000)
+                .refreshTokenExpiresIn(jwtRefreshTokenExpirationTime / 1000)
+                .build();
+
+        return AuthTokenResponse.builder()
+                .jwtTokenPair(pair)
+                .memberPk(validationResult.memberPk())
+                .deviceId(validationResult.deviceId())
+                .build();
         }
 
-        return Map.of(
-                "accessToken", newAccessToken,
-                "accessTokenExpiresIn", jwtAccessTokenExpirationTime / 1000,
-                "refreshToken", newRefreshToken,
-                "refreshTokenExpiresIn", jwtRefreshTokenExpirationTime / 1000,
-                "memberPk", vr.memberPk(),
-                "deviceId", vr.deviceId()
-        );
     }
-
-    // ---------- private helpers ----------
-    private Long requireValidRefreshTokenAndGetMemberPk(String refreshToken) {
-        if (refreshToken == null || refreshToken.isBlank()) {
-            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
-        }
-        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
-        Long memberPk = jwtTokenProvider.getMemberPkFromRefreshToken(refreshToken);
-        if (memberPk == null) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
-        if (!refreshTokenService.validateRefreshTokenForMember(memberPk, refreshToken)) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
-        return memberPk;
-    }
-
-    private ValidationResult validateRefreshTokenAndDeviceId(String refreshToken, String deviceId) {
-        Long memberPk = requireValidRefreshTokenAndGetMemberPk(refreshToken);
-        if (deviceId == null || deviceId.isBlank()) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-        return new ValidationResult(memberPk, deviceId.trim());
-    }
-
-    private static record ValidationResult(Long memberPk, String deviceId) {}
-}
