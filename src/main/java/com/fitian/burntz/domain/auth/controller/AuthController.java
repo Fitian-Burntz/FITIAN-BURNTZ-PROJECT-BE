@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.auth.controller;
 
+import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import com.fitian.burntz.domain.auth.service.AuthService;
 import com.fitian.burntz.global.common.response.ApiResponse;
@@ -64,8 +65,8 @@ public class AuthController {
         String refreshToken = extractBearer(authorization, body);
         String deviceId = (body != null) ? body.get("deviceId") : null;
 
-        Map<String, Object> resp = authService.refreshTokenBased(refreshToken, deviceId);
-        return ResponseEntity.ok(ApiResponse.success(resp));
+        AuthTokenResponse response = authService.refreshTokenBased(refreshToken, deviceId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // helper: 헤더 우선, 없으면 body의 "refreshToken" 사용

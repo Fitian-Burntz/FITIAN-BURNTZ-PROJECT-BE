@@ -34,24 +34,6 @@ public interface AuthRepository extends JpaRepository<Auth, Long> {
                     @Param("deviceId") String deviceId,
                     @Param("refreshToken") String refreshToken);
 
-    // -------------------------------------------------
-    // Native 조회 (JOIN 제거) — member_pk 칼럼 직접 사용 (성능용)
-    // -------------------------------------------------
-    @Query(value = "SELECT a.* FROM burntz.auth a WHERE a.member_pk = :memberPk AND a.refresh_token = :refreshToken AND a.deleted_yn = 'N' LIMIT 1", nativeQuery = true)
-    Optional<Auth> findFirstByMemberPkAndRefreshTokenNative(@Param("memberPk") Long memberPk,
-                                                            @Param("refreshToken") String refreshToken);
-
-    @Query(value = "SELECT COUNT(1) FROM burntz.auth a WHERE a.member_pk = :memberPk AND a.refresh_token = :refreshToken AND a.deleted_yn = 'N'", nativeQuery = true)
-    int countByMemberPkAndRefreshTokenNative(@Param("memberPk") Long memberPk,
-                                             @Param("refreshToken") String refreshToken);
-
-    default boolean existsByMemberPkAndRefreshTokenNative(Long memberPk, String refreshToken) {
-        return countByMemberPkAndRefreshTokenNative(memberPk, refreshToken) > 0;
-    }
-
-    @Query(value = "SELECT a.* FROM burntz.auth a WHERE a.member_pk = :memberPk AND a.refresh_token = :refreshToken", nativeQuery = true)
-    List<Auth> findAllByMemberPkAndRefreshTokenNative(@Param("memberPk") Long memberPk,
-                                                      @Param("refreshToken") String refreshToken);
 
     // -------------------------------------------------
     // Bulk soft-delete (native) — device 단위

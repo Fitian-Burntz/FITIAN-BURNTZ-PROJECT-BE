@@ -104,13 +104,15 @@ public class JwtTokenProvider {
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
-        // [CHANGED] token_type 포함된 생성기 사용
+        //token_type 포함된 생성기 사용
         String accessToken  = generateAccessToken(authentication, jwtAccessTokenExpirationTime);
         String refreshToken = generateRefreshToken(authentication, jwtRefreshTokenExpirationTime);
 
         return JwtTokenPair.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .accessTokenExpiresIn(jwtAccessTokenExpirationTime / 1000)   // 밀리초 -> 초
+                .refreshTokenExpiresIn(jwtRefreshTokenExpirationTime / 1000) // 밀리초 -> 초
                 .build();
     }
 
