@@ -10,12 +10,6 @@ public interface RefreshTokenService {
 
     void saveOrUpdateRefreshToken(Long memberPk, String newRefreshToken, String deviceId);
 
-    boolean validateRefreshTokenForMember(Long memberPk, String refreshToken);
-
-    void revokeRefreshToken(Long memberPk);
-
-    boolean softDeleteByMemberAndToken(Long memberPk, String refreshToken);
-
     void softDeleteAllByMember(Long memberPk);
 
     boolean softDeleteByMemberAndDeviceId(Long memberPk, String deviceId);
