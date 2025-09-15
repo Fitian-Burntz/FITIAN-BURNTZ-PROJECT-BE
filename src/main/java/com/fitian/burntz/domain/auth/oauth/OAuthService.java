@@ -15,6 +15,6 @@ public interface OAuthService {
 //    Member findOrCreateUserBySocialToken(String token, String provider);
 
     // 새로 추가: 이미 검증된 OAuthUserInfo 를 전달하여 멤버 조회/생성
-    MemberCreateResult findOrCreateUserBySocialToken(String token, String provider);
-    MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String provider);
+    MemberCreateResult findOrCreateUserBySocialToken(String token, String deviceId, String provider);
+    MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider);
 }
