@@ -4,7 +4,7 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.classes.v1.dto.ClassesCreateRequest;
-import com.fitian.burntz.domain.classes.v1.dto.ClassesJoinRequest;
+import com.fitian.burntz.domain.classes.v1.dto.ClassesJoinCancelRequest;
 import com.fitian.burntz.domain.classes.v1.dto.ClassesSearchRequest;
 import com.fitian.burntz.domain.classes.entity.ClassParticipant;
 import com.fitian.burntz.domain.classes.entity.Classes;
@@ -79,10 +79,13 @@ public class ClassesService {
         classesRepository.saveAll(classesList);
     }
 
-    public void joinClass(ClassesJoinRequest request, CustomUserDetails userDetails) {
-        //존재하는 회원인지 검증
-        boolean exist = memberListRepository.existsByBoxBoxPkAndMemberPkAndDeletedYN(request.getBoxPK(), userDetails.getMemberPk(), BaseTime.Yn.N);
-        if(!exist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+    public void joinClass(ClassesJoinCancelRequest request, CustomUserDetails userDetails) {
+        //해당 박스에 존재하는 회원인지 검증
+        boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberPkAndDeletedYN(request.getBoxPK(), userDetails.getMemberPk(), BaseTime.Yn.N);
+        if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+        //해당 수업에 참여중인지 검증
+        boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberMemberPkAndDeletedYN(request.getClassesPK(), userDetails.getMemberPk(), BaseTime.Yn.N);
+        if(isInClass) throw new ValidationException(ErrorCode.DUPLICATED_USER);
 
         Classes classes = classesRepository.findById(request.getClassesPK())
                 .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
@@ -95,5 +98,16 @@ public class ClassesService {
                 .build();
 
         participantRepository.save(cp);
+    }
+
+    public void cancelClass(ClassesJoinCancelRequest request, CustomUserDetails userDetails) {
+        //해당 박스에 존재하는 회원인지 검증
+        boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberPkAndDeletedYN(request.getBoxPK(), userDetails.getMemberPk(), BaseTime.Yn.N);
+        if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+        //해당 수업에 참여중인지 검증
+        ClassParticipant participant = participantRepository.findByClassesClassesPkAndMemberMemberPkAndDeletedYN(request.getClassesPK(), userDetails.getMemberPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        participant.markDeleted();
     }
 }
