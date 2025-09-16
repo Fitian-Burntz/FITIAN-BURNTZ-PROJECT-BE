@@ -39,7 +39,11 @@ public class SecurityConfig {
                                 //결제 테스트용
                                 "/api/v1/payments/**",
                                 //ECS 헬스체크
-                                "/actuator/health", "/actuator/health/**"
+                                "/actuator/health", "/actuator/health/**",
+
+                                // 스웨거
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
