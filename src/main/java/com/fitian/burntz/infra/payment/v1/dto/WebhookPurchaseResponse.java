@@ -28,6 +28,9 @@ public class WebhookPurchaseResponse {
   public static class Event {
     private PaymentEventType type;
 
+    @JsonProperty("subscriber_attributes")
+    private SubscriberAttributes subscriberAttributes;
+
     @JsonProperty("app_user_id")
     private String ownerMemberId;
 
@@ -43,5 +46,21 @@ public class WebhookPurchaseResponse {
     private Long expiresAt;
 
     private Double price;
+  }
+
+  @Getter
+  @Setter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class SubscriberAttributes {
+    private BoxPk boxPk;
+  }
+
+  @Getter
+  @Setter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class BoxPk {
+    private String value;
   }
 }
