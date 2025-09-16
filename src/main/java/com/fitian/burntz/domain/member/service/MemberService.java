@@ -1,8 +1,10 @@
 package com.fitian.burntz.domain.member.service;
 
-import com.fitian.burntz.domain.member.dto.MemberCreateResult;
-import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
+import com.fitian.burntz.domain.member.dto.MemberDto;
 
 public interface MemberService {
-    MemberCreateResult getOrCreateMember(String provider, String memberId, String name, String email);
+    MemberCreateResponse getOrCreateMember(String provider, String memberId, String name, String email);
+
+    MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender);
 }

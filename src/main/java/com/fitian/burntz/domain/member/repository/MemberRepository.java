@@ -10,11 +10,12 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    Optional<Member> findByEmail(String email);
     Optional<Member> findByProviderAndMemberId(String provider, String memberId);
 
+    //닉네임 중복 체크
+    boolean existsByNickname(String nickname);
 
-    /** 멤버와 연관된 Auth 모두 찾기 **/
-    @Query("select m from Member m left join fetch m.auths where m.memberPk = :id")
-    Optional<Member> findByIdWithAuths(@Param("id") Long id);
+    Optional<Member> findByNickname(String nickname);
+
 }
+
