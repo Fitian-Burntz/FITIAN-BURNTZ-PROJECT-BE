@@ -112,8 +112,38 @@ public class ClassesService {
         participant.markDeleted();
     }
 
-    public List<ClassParticipant> getMembersByClassPk(ClassesIdentifierRequest request, CustomUserDetails userDetails) {
-        List<ClassParticipant> list = new ArrayList<>();
-        return list;
+    public List<ClassParticipantResponse> getMembersByClassPk(ClassesIdentifierRequest request, CustomUserDetails userDetails) {
+        boolean exist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
+        if(!exist) throw new ValidationException(ErrorCode.USER_NOT_FOUND);
+        return participantRepository.findResponsesByClassesPkAndDeletedYN(request.getClassesPk(), BaseTime.Yn.N);
+    }
+
+    public void updateClass(ClassesUpdateRequest request, CustomUserDetails userDetails) {
+        //회원 등급 검증
+        MemberRole role = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        if(role == MemberRole.GUEST || role == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
+        Classes classes = classesRepository.findById(request.getClassesPk())
+                .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
+
+        classes.updateFrom(request);
+    }
+
+    public void deleteClass(ClassesIdentifierRequest request, CustomUserDetails userDetails) {
+        //회원 등급 검증
+        MemberRole role = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        if(role == MemberRole.GUEST || role == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
+        Classes classes = classesRepository.findById(request.getClassesPk())
+                .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
+
+        classes.markDeleted();
+
+        List<ClassParticipant> cpList = participantRepository.findByClassesClassesPkAndDeletedYN(request.getClassesPk(), BaseTime.Yn.N);
+        for(ClassParticipant cp : cpList) {
+            cp.markDeleted();
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.classes.v1.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,11 +19,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(name = "ClassesIdentifierRequest", description = "단일 수업 식별 요청")
 public class ClassesIdentifierRequest {
 
-    @NotBlank(message = "classesPK must not be blank")
-    private Long classesPK;
+    @NotNull(message = "classesPk must not be blank")
+    @Schema(description = "클래스 PK", example = "123")
+    private Long classesPk;
 
-    @NotBlank(message = "boxPK must not be blank")
-    private Long boxPK;
+    @NotNull(message = "boxPk must not be blank")
+    @Schema(description = "박스 PK", example = "1")
+    private Long boxPk;
 }
