@@ -24,7 +24,7 @@ public class ClassParticipant extends BaseTime {
     private Long classParticipantPk;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_pk", nullable = false)
+    @JoinColumn(name = "classes_pk", nullable = false)
     private Classes classes;
 
     @ManyToOne(fetch = FetchType.LAZY)
