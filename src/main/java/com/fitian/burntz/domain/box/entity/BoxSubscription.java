@@ -5,6 +5,7 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.infra.payment.enums.PaymentStore;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -28,6 +29,7 @@ import lombok.NoArgsConstructor;
  */
 
 @Getter
+@Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BoxSubscription extends BaseTime {
 
@@ -49,40 +51,34 @@ public class BoxSubscription extends BaseTime {
 
   private LocalDateTime startedAt;
 
-  private LocalDateTime expiresAt;
-
-  private LocalDateTime cancelledAt;
-
-  private LocalDateTime refundedAt;
+  private LocalDateTime expiredAt;
 
   private Double price;
 
   @Builder
   private BoxSubscription(Member member, String productId,
       PaymentStore store, SubscriptionStatus status,
-      LocalDateTime startedAt, LocalDateTime expiresAt,
-      LocalDateTime cancelledAt, LocalDateTime refundedAt, Double price) {
+      LocalDateTime startedAt, LocalDateTime expiredAt,
+      Double price) {
     this.member = member;
     this.productId = productId;
     this.store = store;
     this.status = status;
     this.startedAt = startedAt;
-    this.expiresAt = expiresAt;
-    this.cancelledAt = cancelledAt;
-    this.refundedAt = refundedAt;
+    this.expiredAt = expiredAt;
     this.price = price;
   }
 
   public static BoxSubscription of(Member member, String productId,
       PaymentStore store, SubscriptionStatus status,
-      LocalDateTime startedAt, LocalDateTime expiresAt, Double price) {
+      LocalDateTime startedAt, LocalDateTime expiredAt, Double price) {
     return BoxSubscription.builder()
         .member(member)
         .productId(productId)
         .store(store)
         .status(status)
         .startedAt(startedAt)
-        .expiresAt(expiresAt)
+        .expiredAt(expiredAt)
         .price(price)
         .build();
   }
