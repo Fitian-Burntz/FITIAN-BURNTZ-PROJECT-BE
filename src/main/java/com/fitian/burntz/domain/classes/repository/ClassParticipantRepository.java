@@ -22,9 +22,9 @@ public interface ClassParticipantRepository extends JpaRepository<ClassParticipa
     Optional<ClassParticipant> findByClassesClassesPkAndMemberMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
 
     @Query("SELECT new com.fitian.burntz.domain.classes.v1.dto.ClassParticipantResponse("
-            + " cp.classParticipantPk, cp.classesPk, cp.memberPk, cp.createdAt ) "
+            + " cp.classParticipantPk, cp.classes.classesPk, cp.member.memberPk, cp.createdAt ) "
             + "FROM ClassParticipant cp "
-            + "WHERE cp.classesPk = :classesPk AND cp.deletedYN = :deletedYN")
+            + "WHERE cp.classes.classesPk = :classesPk AND cp.deletedYN = :deletedYN")
     List<ClassParticipantResponse> findResponsesByClassesPkAndDeletedYN(
             @Param("classesPk") Long classesPk,
             @Param("deletedYN") BaseTime.Yn deletedYN);
