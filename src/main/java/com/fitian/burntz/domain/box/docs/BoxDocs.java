@@ -20,7 +20,7 @@ public interface BoxDocs {
               value =
                   """
                       {
-                          "message: Test API"
+                          "message": "Test API"
                       }
                   """
           )
