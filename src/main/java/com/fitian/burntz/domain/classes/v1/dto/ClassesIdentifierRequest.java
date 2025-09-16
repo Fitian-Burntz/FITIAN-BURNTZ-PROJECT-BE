@@ -11,14 +11,14 @@ import lombok.NoArgsConstructor;
  * @packageName : com.fitian.burntz.domain.classes.dto
  * @fileName : ClassesJoinRequest
  * @date : 2025-09-15
- * @description : 수업 참여 DTO 입니다.
+ * @description : 수업 공통 DTO 입니다.
  */
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClassesJoinRequest {
+public class ClassesIdentifierRequest {
 
     @NotBlank(message = "classesPK must not be blank")
     private Long classesPK;
