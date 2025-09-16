@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.classes.v1.controller;
 
+import com.fitian.burntz.domain.classes.docs.ClassesDocs;
 import com.fitian.burntz.domain.classes.v1.dto.*;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.service.ClassesService;
@@ -23,11 +24,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/classes")
 @RequiredArgsConstructor
-public class ClassesController {
+public class ClassesController implements ClassesDocs {
 
     private final ClassesService classesService;
 
     @GetMapping()
+    @Override
     public ResponseEntity<ApiResponse<List<Classes>>> getClasses(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ClassesSearchRequest request) {
@@ -35,6 +37,7 @@ public class ClassesController {
     }
 
     @PostMapping()
+    @Override
     public ApiResponse<Void> createClasses(
             @Valid @RequestBody List<ClassesCreateRequest> requestList,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -44,6 +47,7 @@ public class ClassesController {
     }
 
     @PostMapping("/joinClass")
+    @Override
     public ApiResponse<Void> joinClass(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -52,6 +56,7 @@ public class ClassesController {
     }
 
     @PostMapping("/cancelClass")
+    @Override
     public ApiResponse<Void> cancelClass(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -60,6 +65,7 @@ public class ClassesController {
     }
 
     @PostMapping("/getClassParticipant")
+    @Override
     public ResponseEntity<ApiResponse<List<ClassParticipantResponse>>> getMembersByClassNo(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -67,6 +73,7 @@ public class ClassesController {
     }
 
     @PostMapping("/update")
+    @Override
     public ApiResponse<Void> updateClass(
             @Valid @RequestBody ClassesUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -75,6 +82,7 @@ public class ClassesController {
     }
 
     @PostMapping("/delete")
+    @Override
     public ApiResponse<Void> deleteClass(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
