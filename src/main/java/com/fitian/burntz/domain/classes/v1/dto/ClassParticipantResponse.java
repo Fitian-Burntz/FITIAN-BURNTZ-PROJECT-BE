@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 /**
  * @author : 김관중
  * @packageName : com.fitian.burntz.domain.classes.v1.dto
@@ -21,4 +23,5 @@ public class ClassParticipantResponse {
     private Long classParticipantPk;
     private Long classesPk;
     private Long memberPk;
+    private LocalDateTime createdAt;
 }
