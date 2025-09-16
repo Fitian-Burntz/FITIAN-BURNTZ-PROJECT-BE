@@ -24,8 +24,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ClassesCreateRequest {
 
-    @NotBlank(message = "boxPK must not be blank")
-    private Long boxPK;
+    @NotBlank(message = "boxPk must not be blank")
+    private Long boxPk;
 
     @NotNull(message = "classDate must not be blank")
     @JsonFormat(pattern = "yyyy-MM-dd")
