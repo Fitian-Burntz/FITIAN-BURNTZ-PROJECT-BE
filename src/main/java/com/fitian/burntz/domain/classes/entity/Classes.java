@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * @author : 선순주
@@ -24,8 +23,8 @@ import java.time.LocalDateTime;
 public class Classes extends BaseTime {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "class_pk")
-    private Long classPk;
+    @Column(name = "classes_pk")
+    private Long classesPk;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "box_pk", nullable = false)
