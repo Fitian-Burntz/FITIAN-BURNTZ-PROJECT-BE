@@ -24,8 +24,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ClassesSearchRequest {
 
-    @NotBlank(message = "boxPK must not be blank")
-    private Long boxPK;
+    @NotBlank(message = "boxPk must not be blank")
+    private Long boxPk;
 
     @NotNull(message = "startDate must not be blank")
     @JsonFormat(pattern = "yyyy-MM-dd")
