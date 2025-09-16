@@ -1,18 +1,17 @@
 package com.fitian.burntz.domain.member.service;
 
-import com.fitian.burntz.domain.member.dto.MemberCreateResult;
+import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
+import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.ValidationException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -26,10 +25,10 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     @Transactional
-    public MemberCreateResult getOrCreateMember(String provider, String memberId, String nickname, String email) {
+    public MemberCreateResponse getOrCreateMember(String provider, String memberId, String nickname, String email) {
         Optional<Member> existing = memberRepository.findByProviderAndMemberId(provider, memberId);
         if (existing.isPresent()) {
-            return new MemberCreateResult(existing.get(), false);
+            return new MemberCreateResponse(existing.get(), false);
         }
 
         // 기존 동작을 유지: nickname, email이 null이면 fallback 값 사용
@@ -41,12 +40,71 @@ public class MemberServiceImpl implements MemberService {
 
         try {
             Member saved = memberRepository.save(newMember);
-            return new MemberCreateResult(saved, true);
+            return new MemberCreateResponse(saved, true);
         } catch (DataIntegrityViolationException dive) {
             // 동시성으로 다른 트랜잭션이 생성했을 가능성 -> 재조회
             Member saved = memberRepository.findByProviderAndMemberId(provider, memberId)
                     .orElseThrow(() -> dive); // 예외 재던지기
-            return new MemberCreateResult(saved, false);
+            return new MemberCreateResponse(saved, false);
         }
     }
+
+    /**
+     * 컨트롤러에서 memberPk를 직접 전달하는 버전 (권장)
+     */
+
+    @Override
+    @Transactional
+    public MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender) {
+        if (memberPk == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        Member member = memberRepository.findById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        boolean changed = false;
+
+        // 닉네임 처리 (null이면 변경 안함)
+        if (newNickname != null) {
+            String trimmed = newNickname.trim();
+            if (trimmed.isEmpty()) {
+                throw new ValidationException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+
+            if (!trimmed.equals(member.getNickname())) {
+                // 중복 허용: 더 이상 existsByNickname 체크하지 않음
+                member.updateMemberProfile(trimmed, null, null);
+                changed = true;
+            }
+        }
+
+        // 성별 처리 (null이면 변경 안함)
+        if (newGender != null) {
+            String g = newGender.trim().toUpperCase();
+            if (g.isEmpty()) {
+                throw new ValidationException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+
+            Gender genderEnum;
+            try {
+                genderEnum = Gender.valueOf(g);
+            } catch (IllegalArgumentException ex) {
+                throw new ValidationException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+
+            if (member.getGender() == null || !member.getGender().equals(genderEnum)) {
+                member.updateMemberProfile(null, null, genderEnum);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            memberRepository.save(member);
+        }
+
+        return MemberDto.from(member);
+    }
+
+
 }

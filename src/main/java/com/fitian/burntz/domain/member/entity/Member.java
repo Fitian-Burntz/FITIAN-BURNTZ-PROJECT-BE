@@ -5,10 +5,8 @@ import com.fitian.burntz.domain.auth.entity.Auth;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
-import jdk.jfr.Enabled;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,24 +70,30 @@ public class Member extends BaseTime {
                 .build();
     }
 
-    // Member 엔티티 내부에 추가
-    public void updateProfileIfChanged(String nickname, String email, Gender gender) {
+    /** Member 정보 업데이트 **/
+    public boolean updateMemberProfile(String nickname, String email, Gender gender) {
+
+        boolean changed = false;
+
         if (nickname != null && !nickname.isBlank() && !nickname.equals(this.nickname)) {
             this.nickname = nickname;
+            changed = true;
         }
         if (email != null && !email.isBlank() && !email.equals(this.email)) {
             this.email = email;
+            changed = true;
         }
         if (gender != null && gender != this.gender) {
             this.gender = gender;
+            changed = true;
         }
+        return changed;
     }
-
 
     /**
      * Soft delete 처리 — 부모에 구현한 로직 재사용
-     * 그리고 연관된 Auth들도 soft-delete 처리
-     */
+     * 그리고 연관된 Auth들도 soft-delete 처리 **/
+
     public void markDeleted() {
         super.markDeleted();          // BaseTime.markDeleted()
         // auths가 LAZY면 트랜잭션 내에서 접근해야 로드된다.

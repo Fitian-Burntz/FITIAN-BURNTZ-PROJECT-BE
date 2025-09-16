@@ -3,7 +3,7 @@ package com.fitian.burntz.domain.auth.service;
 import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.JwtTokenPair;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
-import com.fitian.burntz.domain.member.dto.MemberCreateResult;
+import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -17,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +51,7 @@ public class AuthServiceImpl implements AuthService{
                     deviceId);
         }
 
-        MemberCreateResult createResult;
+        MemberCreateResponse createResult;
         try {
             createResult = oAuthService.findOrCreateUserBySocialToken(socialToken, deviceId, provider);
         } catch (IllegalArgumentException iae) {
