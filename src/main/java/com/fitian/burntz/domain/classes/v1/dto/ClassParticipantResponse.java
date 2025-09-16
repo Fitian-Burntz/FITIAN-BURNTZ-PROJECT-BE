@@ -1,6 +1,5 @@
 package com.fitian.burntz.domain.classes.v1.dto;
 
-import com.fitian.burntz.domain.classes.entity.Classes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,5 +19,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ClassParticipantResponse {
     private Long classParticipantPk;
-    private Classes classes;
+    private Long classesPk;
+    private Long memberPk;
 }
