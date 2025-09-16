@@ -22,9 +22,11 @@ public class GoogleApiClientImpl implements GoogleApiClient {
     @SuppressWarnings("unchecked")
     public OAuthUserInfo getUserInfo(String accessToken) {
 
-        // --- getUserInfo(String accessToken) : 호출 직전에 추가 ---
-        log.debug("ADDED LOG FOR DEBUGGING: GoogleApiClientImpl.getUserInfo - calling userinfo endpoint (accessToken present={})", accessToken != null);
-/// ///////////////////////
+        // 절대 토큰 원문을 로그에 남기지 않습니다. (필요시 sha256Prefix 로그만)
+        if (accessToken == null) {
+            throw new IllegalArgumentException("accessToken required");
+        }
+
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(accessToken);

@@ -9,6 +9,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -21,25 +23,25 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public MemberCreateResult findOrCreateUserBySocialToken(String token, String provider) {
+    public MemberCreateResult findOrCreateUserBySocialToken(String token, String deviceId, String provider) {
         OAuthUserInfo userInfo = switch (provider.toLowerCase()) {
             case "apple" -> appleApiClient.getUserInfoFromIdToken(token);
             case "google" -> googleApiClient.getUserInfo(token);
             default -> throw new IllegalArgumentException("지원하지 않는 provider: " + provider);
         };
-        return findOrCreateUserByUserInfo(userInfo, provider);
+        return findOrCreateUserByUserInfo(userInfo, deviceId, provider);
     }
 
     @Override
     @Transactional
-    public MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String provider) {
+    public MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider) {
         if (userInfo == null || userInfo.getMemberId() == null) {
             throw new IllegalArgumentException("Invalid userInfo");
         }
         String providerKey = provider.toLowerCase();
         String providerMemberId = userInfo.getMemberId();
 
-        // memberService에 위임 — MemberCreateResult 반환(생성 여부 포함)
+        // 변경: 직접 memberRepository로 먼저 조회하지 않고 getOrCreate 호출만 함
         MemberCreateResult createResult = memberService.getOrCreateMember(
                 providerKey,
                 providerMemberId,

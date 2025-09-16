@@ -1,16 +1,18 @@
 package com.fitian.burntz.domain.auth.service;
 
+import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
+import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.Map;
+
 public interface AuthService {
+    LoginResponse loginWithSocial(String socialToken, String provider, String deviceId);
 
-    /** 로그아웃 처리: 세션 무효화, SecurityContext 정리, 쿠키 만료 등 **/
-    void logout(HttpServletRequest request, HttpServletResponse response);
+    void logoutCurrentDevice(String refreshToken, String deviceId);
 
-    // refresh token 저장/검증/무효화 관련 메서드
-    void saveOrUpdateRefreshToken(Long memberPk, String rawRefreshToken, String deviceId);
-    boolean validateRefreshTokenForMember(Long memberPk, String rawRefreshToken);
-    void revokeRefreshToken(Long memberPk, String deviceId);
-    void revokeAllRefreshTokensForMember(Long memberPk);
+    void logoutAllDevices(String anyToken);
+
+    AuthTokenResponse refreshTokenBased(String refreshToken, String deviceId);
 }

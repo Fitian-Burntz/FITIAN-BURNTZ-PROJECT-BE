@@ -75,7 +75,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 if ("accessToken".equals(cookie.getName())) {
                     String token = cookie.getValue();
                     if (StringUtils.hasText(token)) {
-                        log.debug("[JwtTokenFilter] token read from cookie, length={}", token.length());
                         return token;
                     }
                 }
@@ -88,7 +87,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             return bearer.substring(7);
         }
 
-        //쿠키 기반으로 읽고 싶으면 여기 확장
         return null;
     }
 }

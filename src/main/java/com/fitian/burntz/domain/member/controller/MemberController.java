@@ -8,8 +8,4 @@ import java.security.Principal;
 @RestController
 public class MemberController {
 
-    @GetMapping("/api/me")
-    public Object me(Principal principal) {
-        return principal != null ? principal.getName() : "anonymous";
-    }
 }
