@@ -61,4 +61,24 @@ public class SwaggerConfig {
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
+
+    // 박스 API 그룹
+    @Bean
+    public GroupedOpenApi boxApi() {
+        return GroupedOpenApi.builder()
+            .group("📦 박스 API")
+            .pathsToMatch("/api/v1/boxes/**")
+            .addOpenApiCustomizer(jwtSecurityCustomizer())
+            .build();
+    }
+
+    // 클래스 API 그룹
+    @Bean
+    public GroupedOpenApi classesApi() {
+        return GroupedOpenApi.builder()
+                .group("📦 클래스 API")
+                .pathsToMatch("/api/v1/classes/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
 }

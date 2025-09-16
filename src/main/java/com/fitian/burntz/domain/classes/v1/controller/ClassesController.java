@@ -1,9 +1,7 @@
 package com.fitian.burntz.domain.classes.v1.controller;
 
-import com.fitian.burntz.domain.classes.entity.ClassParticipant;
-import com.fitian.burntz.domain.classes.v1.dto.ClassesCreateRequest;
-import com.fitian.burntz.domain.classes.v1.dto.ClassesIdentifierRequest;
-import com.fitian.burntz.domain.classes.v1.dto.ClassesSearchRequest;
+import com.fitian.burntz.domain.classes.docs.ClassesDocs;
+import com.fitian.burntz.domain.classes.v1.dto.*;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.service.ClassesService;
 import com.fitian.burntz.global.common.response.ApiResponse;
@@ -26,11 +24,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/classes")
 @RequiredArgsConstructor
-public class ClassesController {
+public class ClassesController implements ClassesDocs {
 
     private final ClassesService classesService;
 
     @GetMapping()
+    @Override
     public ResponseEntity<ApiResponse<List<Classes>>> getClasses(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ClassesSearchRequest request) {
@@ -38,6 +37,7 @@ public class ClassesController {
     }
 
     @PostMapping()
+    @Override
     public ApiResponse<Void> createClasses(
             @Valid @RequestBody List<ClassesCreateRequest> requestList,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -47,6 +47,7 @@ public class ClassesController {
     }
 
     @PostMapping("/joinClass")
+    @Override
     public ApiResponse<Void> joinClass(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -55,6 +56,7 @@ public class ClassesController {
     }
 
     @PostMapping("/cancelClass")
+    @Override
     public ApiResponse<Void> cancelClass(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -63,9 +65,28 @@ public class ClassesController {
     }
 
     @PostMapping("/getClassParticipant")
-    public ResponseEntity<ApiResponse<List<ClassParticipant>>> getMembersByClassNo(
+    @Override
+    public ResponseEntity<ApiResponse<List<ClassParticipantResponse>>> getMembersByClassNo(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.success(classesService.getMembersByClassPk(request, userDetails)));
+    }
+
+    @PostMapping("/update")
+    @Override
+    public ApiResponse<Void> updateClass(
+            @Valid @RequestBody ClassesUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classesService.updateClass(request, userDetails);
+        return ApiResponse.success(null, "수업 변경 완료.");
+    }
+
+    @PostMapping("/delete")
+    @Override
+    public ApiResponse<Void> deleteClass(
+            @Valid @RequestBody ClassesIdentifierRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classesService.deleteClass(request, userDetails);
+        return ApiResponse.success(null, "수업 삭제 완료.");
     }
 }

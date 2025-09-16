@@ -41,7 +41,11 @@ public class SecurityConfig {
                                 //ECS 헬스체크
                                 "/actuator/health", "/actuator/health/**",
                                 //wod(임시로 permitAll)
-                                "api/v1/boxes/**"
+                                "api/v1/boxes/**",
+
+                                // 스웨거
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
