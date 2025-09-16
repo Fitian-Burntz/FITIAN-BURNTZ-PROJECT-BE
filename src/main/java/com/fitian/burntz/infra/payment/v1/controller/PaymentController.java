@@ -1,5 +1,6 @@
 package com.fitian.burntz.infra.payment.v1.controller;
 
+import com.fitian.burntz.infra.payment.service.PaymentService;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PaymentController {
 
-  @PostMapping("/webhook")
-  public ResponseEntity<?> handleWebhook(@RequestBody WebhookPurchaseResponse webhookPurchaseResponse) {
+  private final PaymentService paymentService;
+
+  @PostMapping("/webhook/purchase")
+  public ResponseEntity<?> handlePuchaseWebhook(@RequestBody WebhookPurchaseResponse webhookPurchaseResponse) {
+    paymentService.handlePuchaseWebhook(webhookPurchaseResponse);
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/webhook/cancel")
+  public ResponseEntity<?> handleCancelWebhook(@RequestBody WebhookPurchaseResponse webhookPurchaseResponse) {
     System.out.println("상품코드 :  = " + webhookPurchaseResponse.getEvent().getProductId());
     System.out.println("상품가격 :  = " + webhookPurchaseResponse.getEvent().getPrice() + "달러");
     System.out.println("구매처 = " + webhookPurchaseResponse.getEvent().getStore());
@@ -29,6 +38,8 @@ public class PaymentController {
     System.out.println("이벤트 타입 = " + webhookPurchaseResponse.getEvent().getType().getValue());
     return ResponseEntity.ok().build();
   }
+
+
 
 
 

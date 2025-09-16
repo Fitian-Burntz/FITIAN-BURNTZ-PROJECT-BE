@@ -1,7 +1,9 @@
 package com.fitian.burntz.infra.payment.v1.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fitian.burntz.infra.payment.enums.PaymentEventType;
+import com.fitian.burntz.infra.payment.enums.PaymentStore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,7 +34,7 @@ public class WebhookPurchaseResponse {
     @JsonProperty("product_id")
     private String productId;
 
-    private PaymentEventType store;
+    private PaymentStore store;
 
     @JsonProperty("purchased_at_ms")
     private Long startedAt;
