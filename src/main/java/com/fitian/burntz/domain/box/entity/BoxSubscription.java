@@ -5,6 +5,7 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.infra.payment.enums.PaymentStore;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -28,6 +29,7 @@ import lombok.NoArgsConstructor;
  */
 
 @Getter
+@Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BoxSubscription extends BaseTime {
 
