@@ -20,9 +20,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ClassesIdentifierRequest {
 
-    @NotBlank(message = "classesPK must not be blank")
-    private Long classesPK;
+    @NotBlank(message = "classesPk must not be blank")
+    private Long classesPk;
 
-    @NotBlank(message = "boxPK must not be blank")
-    private Long boxPK;
+    @NotBlank(message = "boxPk must not be blank")
+    private Long boxPk;
 }
