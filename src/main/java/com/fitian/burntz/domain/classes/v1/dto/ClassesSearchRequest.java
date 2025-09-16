@@ -1,7 +1,7 @@
 package com.fitian.burntz.domain.classes.v1.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,16 +22,20 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(name = "ClassesSearchRequest", description = "수업 검색 요청")
 public class ClassesSearchRequest {
 
-    @NotBlank(message = "boxPk must not be blank")
+    @NotNull(message = "boxPk must not be blank")
+    @Schema(description = "박스 PK", example = "1")
     private Long boxPk;
 
     @NotNull(message = "startDate must not be blank")
+    @Schema(description = "검색 시작 일자", example = "2025-09-16")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
 
     @NotNull(message = "endDate must not be blank")
+    @Schema(description = "검색 종료 일자", example = "2025-09-30")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 }
