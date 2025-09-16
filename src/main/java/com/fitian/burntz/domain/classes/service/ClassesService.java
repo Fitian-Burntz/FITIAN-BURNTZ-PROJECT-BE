@@ -117,7 +117,7 @@ public class ClassesService {
 
     public void updateClass(ClassesUpdateRequest request, CustomUserDetails userDetails) {
         //회원 등급 검증
-        MemberRole role = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPK(), BaseTime.Yn.N)
+        MemberRole role = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
         if(role == MemberRole.GUEST || role == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
