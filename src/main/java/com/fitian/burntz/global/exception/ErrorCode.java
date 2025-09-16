@@ -58,6 +58,7 @@ public enum ErrorCode {
     CLASS_NOT_FOUND(HttpStatus.NOT_FOUND, "CLASS_NOT_FOUND", "해당 수업을 찾을 수 없습니다."),
     USER_WITHDRAWN(HttpStatus.NOT_FOUND, "USER_WITHDRAWN", "탈퇴한 회원입니다."),
     PROVIDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROVIDER_NOT_FOUND", "소셜 provider를 찾을 수 없습니다."),
+    DEVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_NOT_FOUND", "해당 기기를 찾을 수 없습니다."),
 
     // 405 Method Not Allowed
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "허용되지 않은 HTTP 메서드입니다."),
@@ -65,6 +66,8 @@ public enum ErrorCode {
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
     UNKNOWN_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "UNKNOWN_ERROR", "예기치 못한 오류가 발생했습니다.");
+
+
 
     private final HttpStatus httpStatus;
     private final String code;

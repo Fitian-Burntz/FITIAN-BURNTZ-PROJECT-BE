@@ -67,7 +67,7 @@ public class JwtTokenProvider {
         Map<String, Object> claims = new HashMap<>();
         claims.put("memberPk", principal.getMemberPk());
         claims.put("memberId", principal.getMemberId());
-        claims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS); // [ADDED]
+        claims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS);
 
         return Jwts.builder()
                 .setSubject(String.valueOf(principal.getMemberPk()))
@@ -104,13 +104,15 @@ public class JwtTokenProvider {
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
-        // [CHANGED] token_type 포함된 생성기 사용
+        //token_type 포함된 생성기 사용
         String accessToken  = generateAccessToken(authentication, jwtAccessTokenExpirationTime);
         String refreshToken = generateRefreshToken(authentication, jwtRefreshTokenExpirationTime);
 
         return JwtTokenPair.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .accessTokenExpiresIn(jwtAccessTokenExpirationTime / 1000)   // 밀리초 -> 초
+                .refreshTokenExpiresIn(jwtRefreshTokenExpirationTime / 1000) // 밀리초 -> 초
                 .build();
     }
 
@@ -163,22 +165,22 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token)
                     .getBody();
 
-            // ADDED LOG FOR DEBUGGING — 개발 디버깅용 로그입니다. 운영 시 반드시 제거하세요.
-            log.debug("ADDED LOG FOR DEBUGGING: validateToken SUCCESS - subject={} expiresAt={}",
-                    claims.getSubject(), claims.getExpiration());
-            /// //////////////////////////
+            // 로그: 토큰 원문 X, subject/expiry 만 기록 (디버깅 용도)
+            if (log.isDebugEnabled()) {
+                log.debug("validateToken SUCCESS - subject={} expiresAt={}", claims.getSubject(), claims.getExpiration());
+            }
+
             String typ = claims.get(CLAIM_TOKEN_TYPE, String.class);
             return TOKEN_TYPE_REFRESH.equals(typ);
         } catch (JwtException | IllegalArgumentException e) {
-
-            // ADDED LOG FOR DEBUGGING — 개발 디버깅용 로그입니다. 운영 시 반드시 제거하세요.
-            log.info("ADDED LOG FOR DEBUGGING: validateToken FAILED - reason={}", e.getMessage());
-            ///  //////////////////////////////////
+            if (log.isDebugEnabled()) {
+                log.debug("validateToken FAILED - reason={}", e.getMessage());
+            }
             return false;
         }
     }
 
-    // [ADDED] 리프레시 토큰에서 memberPk 뽑기(명시적 용도)
+    // 리프레시 토큰에서 memberPk 뽑기(명시적 용도)
     public Long getMemberPkFromRefreshToken(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
