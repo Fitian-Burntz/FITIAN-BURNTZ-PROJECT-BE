@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum SubscriptionStatus {
 
   ACTIVE("ACTIVE", "활성"),
-  EXPIRED("EXPIREC", "만료"),
+  EXPIRED("EXPIRED", "만료"),
   CANCELLED("CANCELLED", "취소"),
   REFUNDED("REFUNDED", "환불"),
   PENDING("PENDING", "보류");
