@@ -1,9 +1,6 @@
 package com.fitian.burntz.domain.classes.v1.controller;
 
-import com.fitian.burntz.domain.classes.entity.ClassParticipant;
-import com.fitian.burntz.domain.classes.v1.dto.ClassesCreateRequest;
-import com.fitian.burntz.domain.classes.v1.dto.ClassesIdentifierRequest;
-import com.fitian.burntz.domain.classes.v1.dto.ClassesSearchRequest;
+import com.fitian.burntz.domain.classes.v1.dto.*;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.service.ClassesService;
 import com.fitian.burntz.global.common.response.ApiResponse;
@@ -63,9 +60,25 @@ public class ClassesController {
     }
 
     @PostMapping("/getClassParticipant")
-    public ResponseEntity<ApiResponse<List<ClassParticipant>>> getMembersByClassNo(
+    public ResponseEntity<ApiResponse<List<ClassParticipantResponse>>> getMembersByClassNo(
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.success(classesService.getMembersByClassPk(request, userDetails)));
+    }
+
+    @PostMapping("/update")
+    public ApiResponse<Void> updateClass(
+            @Valid @RequestBody ClassesUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classesService.updateClass(request, userDetails);
+        return ApiResponse.success(null, "수업 변경 완료.");
+    }
+
+    @PostMapping("/delete")
+    public ApiResponse<Void> deleteClass(
+            @Valid @RequestBody ClassesIdentifierRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classesService.deleteClass(request, userDetails);
+        return ApiResponse.success(null, "수업 삭제 완료.");
     }
 }
