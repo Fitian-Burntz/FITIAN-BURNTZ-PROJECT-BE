@@ -23,7 +23,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WodResponse {
+    @Schema(description = "wod Pk")
     private Long wodPk;
+    @Schema(description = "box Pk")
     private Long boxPk;
     @NotNull
     @Schema(description = "wod 제목")

@@ -9,7 +9,10 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.domain.record.entity.Record;
+import com.fitian.burntz.domain.record.repository.RecordRepository;
 import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
+import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.repository.WodRespository;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -17,10 +20,9 @@ import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
@@ -40,29 +42,31 @@ public class RecordService {
     private final MemberListRepository memberListRepository;
     private final ClassesRepository classesRepository;
     private final MemberRepository memberRepository;
+    private final RecordRepository recordRepository;
 
     /*
     * record 생성
     * */
     @Transactional
     public void createRecord(RecordCreateRequest req, Long boxPk, Long wodPk, Long ClassesPk ,Long memberPk){
+        //wod 조회를 wodPk가 아니라 box, date로 체크하기
         /* 체험하러 온 사람이 있을 수도 있다 -> 일일체험자는 memberPk가 null이면서 name 필드에 값이 들어감.
         * box에 등록된 사람이라면 memberPk에 값이 들어가고, name필드에 null이 들어감.
         * 클래스 1번 당 운동기록 1개
         * */
 
-        //1. 박스 유효성 검증
-        Box box = requireActiveBox(boxPk);
-
-        //2. wod 존재 및 소속 검증(wod가 box에 속하는지)
-        Wod wod = requireWodInBox(wodPk, boxPk);
-
-        //3. classes 존재 및 소속 검증
-        Classes classes = requireClassesInBox(ClassesPk,boxPk);
-
-        //4. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
+        //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
         requireManagerOrOwner(memberPk, boxPk);
 
+        //2. 박스 유효성 검증
+        Box box = requireActiveBox(boxPk);
+
+        //3. wod 존재 및 소속 검증(wod가 box에 속하는지)
+        Wod wod = requireWodInBox(wodPk, boxPk);
+
+        //4. classes 존재 및 소속 검증
+        Classes classes = requireClassesInBox(ClassesPk,boxPk);
+        
         //5. memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
         if (req.getMemberPk() != null && req.getNickname() != null && !req.getNickname().isBlank()) {
             throw new ValidationException(ErrorCode.DUPLICATED_NICKNAME_MEMBERPK);
@@ -71,25 +75,42 @@ public class RecordService {
             throw new ValidationException(ErrorCode.EMPTY_NICKNAME_MEMBERPK);
         }
 
-        //6. 대상 멤버 검증(회원일 경우)
+        //6. 대상 멤버 검증(회원일 경우) - 해당 box에 존재하는 member인지 확인
         Member targetMember = null;
         if (req.getMemberPk() != null) {
-            boolean exists = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, req.getMemberPk(), BaseTime.Yn.N);
-            if (!exists) throw new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX);
+            targetMember = requireMemberInBox(req.getMemberPk(), boxPk);
 
             targetMember = memberRepository.findById(req.getMemberPk())
                     .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
         }
 
-        //7. 운동기록이 작성될 유저가 특정 클래스에 이미 운동기록이 작성되어 있는지 확인(클래스 1번당 운동기록 1개)
+        //7. 운동기록이 작성될 유저가 특정 클래스에 이미 운동기록이 작성되어 있는지 확인(클래스 1번당 운동기록 1개)->memberPk를 가진 필드만 확인
+        if(req.getMemberPk() != null){
+            if(requireRecordInClasses(ClassesPk, memberPk)){
+                throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
+            }
+        }
+
+        //엔티티 저장 (아 운동종류별로 뭐 저장할지 분기 나눠야할듯?)
+        Record record = req.toEntity(wod,classes,targetMember);
+
+        //동시성 대비
+        try {
+            recordRepository.save(record);
+        } catch (DataIntegrityViolationException ex) {
+            // DB 유니크 제약 위반 등 동시성 문제로 인해 발생할 수 있음
+            throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
+        }
+    }
 
 
-        //
-
-
-
+    /*
+     * record 목록 조회
+     * */
+    public RecordResponse getRecord(Long boxPk, Long WodPk, Long ClassesPk, Long memberPk){
 
     }
+
 
     /*
      * 유효성 검증 헬퍼 메서드
@@ -128,5 +149,26 @@ public class RecordService {
         return classesRepository.findByClassesPkAndBoxBoxPkAndDeletedYN(ClassesPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(()-> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
     }
+
+    //대상 멤버 검증(회원일 경우) - 해당 box에 존재하는 member인지 확인
+    private Member requireMemberInBox(Long memberPk, Long boxPk) {
+        // memberList 엔티티에서 해당 멤버가 box에 속하는지 확인하고 Member를 가져오는 패턴
+        MemberList memberList = memberListRepository
+                .findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
+
+        Member member = memberList.getMember();
+        if (member == null) { // 안전장치
+            throw new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX);
+        }
+        return member;
+    }
+
+    //운동기록이 작성될 유저가 특정 클래스에 이미 운동기록이 작성되어 있는지 확인(클래스 1번당 운동기록 1개)->memberPk를 가진 필드만 확인
+    private boolean requireRecordInClasses(Long ClassesPk, Long memberPk){
+        return recordRepository.existsByClassesClassesPkAndMemberMemberPkAndDeletedYN(ClassesPk, memberPk, BaseTime.Yn.N);
+    }
+    
+    
 
 }

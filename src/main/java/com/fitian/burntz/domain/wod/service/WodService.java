@@ -75,7 +75,7 @@ public class WodService {
         //1. 박스 유효성 검증
         Box box = requireActiveBox(boxPk);
 
-        //2. 해당 멤버가 box에 추가되어 있는지 확인 --> box에 추가되어있는 회원들만 볼수있는게 맞나?(물어보기)
+        //2. 해당 멤버가 box에 추가되어 있는지 확인
         boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N);
         if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
