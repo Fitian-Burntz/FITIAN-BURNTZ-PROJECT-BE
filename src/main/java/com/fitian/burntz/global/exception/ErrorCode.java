@@ -15,6 +15,7 @@ public enum ErrorCode {
     WOD_ALREADY_EXISTS(HttpStatus.BAD_REQUEST,"WOD_ALREADY_EXISTS","이미 해당 날짜의 WOD가 존재합니다."),
     DUPLICATED_NICKNAME_MEMBERPK(HttpStatus.BAD_REQUEST,"DUPLICATED_NICKNAME_MEMBERPK","memberPk와 nickname을 동시에 지정할 수 없습니다."),
     EMPTY_NICKNAME_MEMBERPK(HttpStatus.BAD_REQUEST,"EMPTY_NICKNAME_MEMBERPK","member와 nickname 중 하나는 반드시 필요합니다."),
+    ALREADY_EXISTS_RECORD_FOR_CLASS(HttpStatus.BAD_REQUEST,"ALREADY_EXISTS_RECORD_FOR_CLASS", "이미 해당 Class에 운동기록이 존재합니다."),
 
     // 400 Bad Request 파일 관련 에러코드
     UNSUPPORTED_FILE_FORMAT(HttpStatus.BAD_REQUEST, "UNSUPPORTED_FILE_FORMAT", "지원하지 않는 파일 형식입니다."),
