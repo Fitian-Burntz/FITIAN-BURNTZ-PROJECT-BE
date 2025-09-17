@@ -35,8 +35,11 @@ public class Record extends BaseTime {
     private Classes classes;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_pk", nullable = false)
+    @JoinColumn(name = "member_pk")
     private Member member;
+
+    @Column(name = "nickname", length = 50)
+    private String nickname;
 
     @Column(name = "level", length = 50)
     private String level;

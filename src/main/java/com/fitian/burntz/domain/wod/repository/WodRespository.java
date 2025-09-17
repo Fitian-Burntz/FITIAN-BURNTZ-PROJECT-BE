@@ -24,5 +24,9 @@ public interface WodRespository extends JpaRepository<Wod, Long> {
     //해당 날짜의 wod 존재 여부 확인
     boolean existsByBoxAndWodDateAndDeletedYN(Box box, LocalDate wodDate, BaseTime.Yn deletedYN);
 
+    //wod 존재 및 소속 검증(wod가 box에 속하는지)
+    Optional<Wod> findByWodPkAndBoxBoxPkAndDeletedYN(Long wodPk, Long boxPk, BaseTime.Yn deletedYN);
+
+
 
  }
