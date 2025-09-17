@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.channel.v1.controller;
 
+import com.fitian.burntz.domain.channel.docs.ChannelDocs;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
 import com.fitian.burntz.domain.channel.service.ChannelService;
@@ -27,11 +28,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/channels")
 @RequiredArgsConstructor
-public class ChannelController {
+public class ChannelController implements ChannelDocs {
 
     private final ChannelService channelService;
 
     @PostMapping()
+    @Override
     public ApiResponse<Void> createChannel(
             @Valid @RequestBody ChannelCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
@@ -40,6 +42,7 @@ public class ChannelController {
     }
 
     @GetMapping()
+    @Override
     public ResponseEntity<ApiResponse<List<ChannelListResponse>>> getChannels(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam Long boxPk) {
@@ -48,6 +51,7 @@ public class ChannelController {
 
 
     @GetMapping("/{channelPk}/participants")
+    @Override
     public ResponseEntity<ApiResponse<List<ChannelParticipant>>> getParticipants(
             @PathVariable Long channelPk,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
@@ -55,6 +59,7 @@ public class ChannelController {
     }
 
     @PostMapping("/inviteParticipants")
+    @Override
     public ApiResponse<Void> inviteParticipants(
             @Valid @RequestBody ChannelInviteRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
@@ -63,6 +68,7 @@ public class ChannelController {
     }
 
     @DeleteMapping("/deleteParticipant")
+    @Override
     public ApiResponse<Void> deleteParticipant(
             @Valid @RequestBody ChannelLeaveRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
@@ -72,6 +78,7 @@ public class ChannelController {
     }
 
     @DeleteMapping("/deleteChannel")
+    @Override
     public ApiResponse<Void> deleteChanel(
             @Valid @RequestBody ChannelLeaveRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
