@@ -9,6 +9,7 @@ import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.repository.ClassParticipantRepository;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -52,14 +53,14 @@ public class ClassesService {
     public void createClasses(List<ClassesCreateRequest> requestList, CustomUserDetails userDetails) {
 
         //회원 등급 검증
-        MemberRole role = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), requestList.get(0).getBoxPk(), BaseTime.Yn.N)
-               .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
-       if(role == MemberRole.GUEST || role == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+        MemberList list = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), requestList.get(0).getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        if(list.getRole() == MemberRole.GUEST || list.getRole() == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
-       Box box = boxRepository.findById(requestList.get(0).getBoxPk())
-               .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+        Box box = boxRepository.findById(requestList.get(0).getBoxPk())
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
-       List<Classes> classesList = new ArrayList<>();
+        List<Classes> classesList = new ArrayList<>();
 
         for (ClassesCreateRequest classesCreateRequest : requestList) {
             Classes classes = Classes.builder()
@@ -117,9 +118,10 @@ public class ClassesService {
 
     public void updateClass(ClassesUpdateRequest request, CustomUserDetails userDetails) {
         //회원 등급 검증
-        MemberRole role = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+        MemberList list = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
-        if(role == MemberRole.GUEST || role == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+        if(list.getRole() == MemberRole.GUEST || list.getRole() == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
 
         Classes classes = classesRepository.findById(request.getClassesPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
@@ -129,9 +131,9 @@ public class ClassesService {
 
     public void deleteClass(ClassesIdentifierRequest request, CustomUserDetails userDetails) {
         //회원 등급 검증
-        MemberRole role = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+        MemberList list = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
-        if(role == MemberRole.GUEST || role == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+        if(list.getRole() == MemberRole.GUEST || list.getRole() == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
         Classes classes = classesRepository.findById(request.getClassesPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
