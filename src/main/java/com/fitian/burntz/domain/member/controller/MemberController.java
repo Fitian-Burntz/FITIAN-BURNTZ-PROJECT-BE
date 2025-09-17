@@ -33,4 +33,15 @@ public class MemberController {
     }
 
 
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<MemberDto>> removeMember(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails){
+
+        Long memberPk = customUserDetails.getMemberPk();
+
+        MemberDto removeResponse = memberService.removeMember(memberPk);
+
+        return ResponseEntity.ok(ApiResponse.success(removeResponse,
+                "Your membership withdrawal has been completed."));
+    }
 }
