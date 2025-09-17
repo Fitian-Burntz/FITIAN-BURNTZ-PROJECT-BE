@@ -76,8 +76,18 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi classesApi() {
         return GroupedOpenApi.builder()
-                .group("📦 클래스 API")
+                .group("🕘 클래스 API")
                 .pathsToMatch("/api/v1/classes/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // 채널 API 그룹
+    @Bean
+    public GroupedOpenApi channelApi() {
+        return GroupedOpenApi.builder()
+                .group("💬 채널 API")
+                .pathsToMatch("/api/v1/channels/**")
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
