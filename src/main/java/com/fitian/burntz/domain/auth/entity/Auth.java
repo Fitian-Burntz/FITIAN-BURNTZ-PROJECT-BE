@@ -83,8 +83,4 @@ public class Auth extends BaseTime {
         setUpdatedAtToNow();
     }
 
-    @Override
-    public void markDeleted() {
-        super.markDeleted();
-    }
 }

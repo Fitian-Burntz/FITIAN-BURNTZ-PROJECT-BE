@@ -94,6 +94,7 @@ public class Member extends BaseTime {
      * Soft delete 처리 — 부모에 구현한 로직 재사용
      * 그리고 연관된 Auth들도 soft-delete 처리 **/
 
+    @Override
     public void markDeleted() {
         super.markDeleted();          // BaseTime.markDeleted()
         // auths가 LAZY면 트랜잭션 내에서 접근해야 로드된다.
@@ -101,6 +102,19 @@ public class Member extends BaseTime {
             this.auths.forEach(auth -> {
                 if (!auth.isDeleted()) {   // Auth에 isDeleted() 헬퍼가 있으면 더 안전
                     auth.markDeleted();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void markNotDeleted() {
+        super.markNotDeleted();
+
+        if (this.auths != null) {
+            this.auths.forEach(auth -> {
+                if (auth.isDeleted()) {   // Auth에 isDeleted() 헬퍼가 있으면 더 안전
+                    auth.markNotDeleted();
                 }
             });
         }

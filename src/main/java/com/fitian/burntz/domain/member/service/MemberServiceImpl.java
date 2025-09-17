@@ -27,8 +27,18 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public MemberCreateResponse getOrCreateMember(String provider, String memberId, String nickname, String email) {
         Optional<Member> existing = memberRepository.findByProviderAndMemberId(provider, memberId);
+
         if (existing.isPresent()) {
-            return new MemberCreateResponse(existing.get(), false);
+            Member existingMember = existing.get();
+
+            // 탈퇴(soft-delete) 상태면 복구 처리 (단, 기존 필드 보정은 하지 않음)
+            if (existingMember.isDeleted()) {
+                existingMember.markNotDeleted(); // deletedYn = 'N', updatedAt 초기화만 수행
+                Member savedMember = memberRepository.save(existingMember);
+                return new MemberCreateResponse(savedMember, false);
+            }
+
+            return new MemberCreateResponse(existingMember, false);
         }
 
         // 기존 동작을 유지: nickname, email이 null이면 fallback 값 사용
@@ -39,13 +49,13 @@ public class MemberServiceImpl implements MemberService {
         Member newMember = Member.create(memberId, safeNickname, safeEmail, provider);
 
         try {
-            Member saved = memberRepository.save(newMember);
-            return new MemberCreateResponse(saved, true);
+            Member savedMember = memberRepository.save(newMember);
+            return new MemberCreateResponse(savedMember, true);
         } catch (DataIntegrityViolationException dive) {
             // 동시성으로 다른 트랜잭션이 생성했을 가능성 -> 재조회
-            Member saved = memberRepository.findByProviderAndMemberId(provider, memberId)
+            Member savedMember = memberRepository.findByProviderAndMemberId(provider, memberId)
                     .orElseThrow(() -> dive); // 예외 재던지기
-            return new MemberCreateResponse(saved, false);
+            return new MemberCreateResponse(savedMember, false);
         }
     }
 
@@ -106,5 +116,16 @@ public class MemberServiceImpl implements MemberService {
         return MemberDto.from(member);
     }
 
+
+    @Override
+    @Transactional
+    public MemberDto removeMember(Long memberPk) {
+        Member member = memberRepository.findById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        member.markDeleted();
+
+        return MemberDto.from(member);
+    }
 
 }
