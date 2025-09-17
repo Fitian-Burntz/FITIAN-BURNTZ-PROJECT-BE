@@ -13,6 +13,8 @@ public enum ErrorCode {
     DUPLICATED_USER(HttpStatus.BAD_REQUEST, "DUPLICATED_USER", "이미 등록된 사용자입니다."),
     DUPLICATED_NICKNAME(HttpStatus.BAD_REQUEST, "DUPLICATED_NICKNAME", "이미 등록된 닉네임입니다."),
     WOD_ALREADY_EXISTS(HttpStatus.BAD_REQUEST,"WOD_ALREADY_EXISTS","이미 해당 날짜의 WOD가 존재합니다."),
+    DUPLICATED_NICKNAME_MEMBERPK(HttpStatus.BAD_REQUEST,"DUPLICATED_NICKNAME_MEMBERPK","memberPk와 nickname을 동시에 지정할 수 없습니다."),
+    EMPTY_NICKNAME_MEMBERPK(HttpStatus.BAD_REQUEST,"EMPTY_NICKNAME_MEMBERPK","member와 nickname 중 하나는 반드시 필요합니다."),
 
     // 400 Bad Request 파일 관련 에러코드
     UNSUPPORTED_FILE_FORMAT(HttpStatus.BAD_REQUEST, "UNSUPPORTED_FILE_FORMAT", "지원하지 않는 파일 형식입니다."),
