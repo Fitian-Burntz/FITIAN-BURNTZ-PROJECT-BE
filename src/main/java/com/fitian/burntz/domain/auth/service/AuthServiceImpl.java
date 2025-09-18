@@ -3,7 +3,7 @@ package com.fitian.burntz.domain.auth.service;
 import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.JwtTokenPair;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
-import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
+import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -51,9 +52,9 @@ public class AuthServiceImpl implements AuthService{
                     deviceId);
         }
 
-        MemberCreateResponse createResult;
+        MemberCreateResult memberCreateResult;
         try {
-            createResult = oAuthService.findOrCreateUserBySocialToken(socialToken, deviceId, provider);
+            memberCreateResult = oAuthService.findOrCreateUserBySocialToken(socialToken, deviceId, provider);
         } catch (IllegalArgumentException iae) {
             // 예: provider가 없을 때 등 - OAuthService에서 IllegalArgumentException을 던진다면 적절한 ErrorCode로 변환
             throw new ValidationException(ErrorCode.PROVIDER_NOT_FOUND);
@@ -62,8 +63,8 @@ public class AuthServiceImpl implements AuthService{
             throw new ValidationException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        Member member = createResult.member();
-        boolean isNewMember = createResult.isNewMember();
+        Member member = memberCreateResult.member();
+        boolean isNewMember = memberCreateResult.isNewMember();
 
         JwtTokenPair pair = jwtTokenProvider.createTokenPair(member);
         refreshTokenService.saveOrUpdateRefreshToken(member.getMemberPk(), pair.getRefreshToken(), deviceId);
@@ -97,19 +98,11 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
-    public void logoutAllDevices(String token) {
-        if (token == null || token.isBlank()) {
-            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
-        }
-        if (!jwtTokenProvider.validateToken(token)) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
+    public void logoutAllDevices(String refreshToken) {
+        // refresh 토큰 정보 일치, DB 존재, JWT 검증 수행
+        Long memberPk = refreshTokenService.getMemberPkFromValidRefreshToken(refreshToken);
 
-        Long memberPk = jwtTokenProvider.getMemberPkFromToken(token);
-        if (memberPk == null) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
-
+        // soft-deleted 처리
         refreshTokenService.softDeleteAllByMember(memberPk);
 
         if (log.isDebugEnabled()) {
@@ -125,7 +118,7 @@ public class AuthServiceImpl implements AuthService{
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         CustomUserDetails principal = new CustomUserDetails(member);
-        var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
         String newAccessToken = jwtTokenProvider.generateAccessToken(auth, jwtAccessTokenExpirationTime);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(auth, jwtRefreshTokenExpirationTime);

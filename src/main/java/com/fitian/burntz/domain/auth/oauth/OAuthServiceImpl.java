@@ -1,7 +1,7 @@
 package com.fitian.burntz.domain.auth.oauth;
 
 import com.fitian.burntz.domain.auth.dto.OAuthUserInfo;
-import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
+import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.member.service.MemberService;
@@ -21,7 +21,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public MemberCreateResponse findOrCreateUserBySocialToken(String token, String deviceId, String provider) {
+    public MemberCreateResult findOrCreateUserBySocialToken(String token, String deviceId, String provider) {
         OAuthUserInfo userInfo = switch (provider.toLowerCase()) {
             case "apple" -> appleApiClient.getUserInfoFromIdToken(token);
             case "google" -> googleApiClient.getUserInfo(token);
@@ -32,7 +32,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public MemberCreateResponse findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider) {
+    public MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider) {
         if (userInfo == null || userInfo.getMemberId() == null) {
             throw new IllegalArgumentException("Invalid userInfo");
         }
@@ -40,15 +40,15 @@ public class OAuthServiceImpl implements OAuthService {
         String providerMemberId = userInfo.getMemberId();
 
         // 변경: 직접 memberRepository로 먼저 조회하지 않고 getOrCreate 호출만 함
-        MemberCreateResponse createResult = memberService.getOrCreateMember(
+        MemberCreateResult memberCreateResult = memberService.getOrCreateMember(
                 providerKey,
                 providerMemberId,
                 userInfo.getNickname() != null ? userInfo.getNickname() : "",
                 userInfo.getEmail()
         );
 
-        Member member = createResult.member();
-        boolean isNew = createResult.isNewMember();
+        Member member = memberCreateResult.member();
+        boolean isNew = memberCreateResult.isNewMember();
 
         // 기존 로직: 기존 사용자라면 프로필 갱신 처리
         if (!isNew) {
@@ -68,6 +68,6 @@ public class OAuthServiceImpl implements OAuthService {
             }
         }
 
-        return createResult;
+        return memberCreateResult;
     }
 }
