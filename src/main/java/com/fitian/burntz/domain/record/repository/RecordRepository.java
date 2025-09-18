@@ -27,8 +27,9 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
 
     //해당 날짜의 전체 record 반환
     @Query("select r from Record r left join fetch r.member left join fetch r.classes where r.wod = :wod and r.deletedYN = 'N'")
-    List<Record> findAllByWodWithMemberAndClasses(@Param("wod") Wod wod,@Param("deletedYN") BaseTime.Yn deletedYN);
+    List<Record> findAllByWodWithMemberAndClasses(@Param("wod") Wod wod, @Param("deletedYN") BaseTime.Yn deletedYN);
 
+    //해당 레코드 존재여부 확인(wod,box 소속)
     @Query("select r from Record r " +
             "join fetch r.wod w " +
             "join fetch w.box b " +

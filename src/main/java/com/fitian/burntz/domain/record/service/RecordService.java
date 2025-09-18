@@ -62,10 +62,7 @@ public class RecordService {
         //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
         requireManagerOrOwner(memberPk, boxPk);
 
-        //2. 박스 유효성 검증
-        Box box = requireActiveBox(boxPk);
-
-        //3. wod 유효성 검증 : box+date로 조회
+        //2. wod 유효성 검증 : box+date로 조회
         Wod wod = requireActiveWod(boxPk, date);
 
         //4. classes 존재 및 소속 검증
@@ -142,62 +139,48 @@ public class RecordService {
         //3. wod 유효성 검증 : box+date로 조회
         Wod wod = requireActiveWod(boxPk, date);
 
-//        //4. classes 존재 및 소속 검증
-//        Classes classes = requireClassesInBox(req.getClassesPk(), boxPk);
 
-        Record record = recordRepository.findById(recordPk)
+        // 4. 대상 레코드 조회 (Wod & Box fetch)
+        Record record = recordRepository.findByIdWithWodAndBox(recordPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
 
-        Member memberToSet = null;
-        boolean willChangeMember = false;
+        // 5. path의 box/date와 일치하는지 검증
+        Long recordBoxPk = record.getWod().getBox().getBoxPk();
+        LocalDate recordDate = record.getWod().getWodDate();
+        if (!recordBoxPk.equals(boxPk) || !recordDate.equals(date)) {
+            throw new ValidationException(ErrorCode.INVALID_REQUEST);
+        }
 
-        if (req.getMemberPk() != null) {
-            // memberPk가 주어지면 해당 멤버로 교체 (예외 처리 포함)
-            memberToSet = memberRepository.findById(req.getMemberPk())
-                    .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
-            willChangeMember = true;
-        } else if (Boolean.TRUE.equals(req.getClearMember())) {
-            // 명시적 제거 요청
-            memberToSet = null;
-            willChangeMember = true;
-        } // else: 변경없음
-
-        // 닉네임 처리 규칙:
-        // - memberPk가 주어지면 nickname 무시(자동 null)
-        // - clearMember == true 이면 nickname이 null이든 값이든 '명시적' 처리 (null이면 삭제)
-        // - 그 외 경우 nickname != null 이면 변경, null 이면 변경 없음
-
+        // 5. targetMember (null 허용) 및 nickname 결정 (null => 변경 없음)
+        Member targetMember = null;
         String nicknameToSet = null;
-        boolean nicknameExplicitChange = false;
-
 
         if (req.getMemberPk() != null) {
-            nicknameToSet = null;
-            nicknameExplicitChange = true; // member로 바꾸니 nickname을 명시적으로 null로 설정
-        } else if (Boolean.TRUE.equals(req.getClearMember())) {
-            // 명시적 제거 시 nickname도 명시적으로 처리 (값 있으면 그 값, 없으면 null)
-            nicknameToSet = req.getNickname(); // may be null -> means clear nickname
-            nicknameExplicitChange = true;
-        } else if (req.getNickname() != null) {
-            // 부분 업데이트로 nickname만 바꾸려는 경우
-            nicknameToSet = req.getNickname();
-            nicknameExplicitChange = true;
+            // memberPk가 있으면 해당 member로 변경 (검증: 존재 + box 소속)
+            targetMember = memberRepository.findById(req.getMemberPk())
+                    .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
+
+            boolean inBox = memberListRepository
+                    .existsByMemberMemberPkAndBoxBoxPkAndDeletedYN(targetMember.getMemberPk(), boxPk, BaseTime.Yn.N);
+            if (!inBox) {
+                throw new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX);
+            }
+
+            // 회원으로 설정하면 해당 회원의 nickname으로 덮어씀
+            nicknameToSet = targetMember.getNickname();
+        } else {
+            // memberPk == null => 비회원으로 전환 또는 유지
+            if (req.getNickname() != null) {
+                // 클라이언트가 명시적으로 nickname을 보내면 그 값으로 변경(빈 문자열도 허용)
+                nicknameToSet = req.getNickname();
+            }
+            // nicknameToSet == null -> nickname 변경 없음
         }
-        // 이제 엔티티로 위임 (엔티티는 willChangeMember/ nicknameExplicitChange를 알고 있어야 함)
-        record.update(
-                /*member*/ memberToSet,
-                /*willChangeMember*/ willChangeMember,
-                /*nickname*/ nicknameToSet,
-                /*nicknameExplicitChange*/ nicknameExplicitChange,
-                req.getLevel(),
-                req.getRound(),
-                req.getReps(),
-                req.getTime(),
-                req.getResult(),
-                req.getTeam(),
-                req.getMemo()
-            );
-        }
+
+        //  DTO.applyTo 호출
+        req.applyTo(record, targetMember, nicknameToSet);
+
+    }
 
     /*
     * Record 삭제
@@ -213,18 +196,12 @@ public class RecordService {
         //3. wod 유효성 검증 : box+date로 조회
         Wod wod = requireActiveWod(boxPk, date);
 
-        //4. classes 존재 및 소속 검증
-        // Classes classes = requireClassesInBox(req.getClassesPk(), boxPk);
-
         Record record = recordRepository.findById(recordPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
 
         //delete
         record.markDeleted();
     }
-
-
-
 
 
     /*
@@ -283,7 +260,4 @@ public class RecordService {
     private boolean requireRecordInClasses(Long ClassesPk, Long memberPk){
         return recordRepository.existsByClassesClassesPkAndMemberMemberPkAndDeletedYN(ClassesPk, memberPk, BaseTime.Yn.N);
     }
-    
-    
-
 }
