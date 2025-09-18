@@ -1,24 +1,25 @@
 package com.fitian.burntz.domain.member.service;
 
 import com.fitian.burntz.domain.auth.service.RefreshTokenService;
-import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
+import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
@@ -28,8 +29,7 @@ public class MemberServiceImpl implements MemberService {
      * provider + memberId 조합으로 조회 후 없으면 생성. 동시성 발생 시 DataIntegrityViolationException을 잡아 재조회하여 정상화.
      */
     @Override
-    @Transactional
-    public MemberCreateResponse getOrCreateMember(String provider, String memberId, String nickname, String email) {
+    public MemberCreateResult getOrCreateMember(String provider, String memberId, String nickname, String email) {
         Optional<Member> existing = memberRepository.findByProviderAndMemberId(provider, memberId);
 
         if (existing.isPresent()) {
@@ -39,10 +39,10 @@ public class MemberServiceImpl implements MemberService {
             if (existingMember.isDeleted()) {
                 existingMember.markNotDeleted(); // deletedYn = 'N', updatedAt 초기화만 수행
                 Member savedMember = memberRepository.save(existingMember);
-                return new MemberCreateResponse(savedMember, false);
+                return new MemberCreateResult(savedMember, false);
             }
 
-            return new MemberCreateResponse(existingMember, false);
+            return new MemberCreateResult(existingMember, false);
         }
 
         // 기존 동작을 유지: nickname, email이 null이면 fallback 값 사용
@@ -54,12 +54,12 @@ public class MemberServiceImpl implements MemberService {
 
         try {
             Member savedMember = memberRepository.save(newMember);
-            return new MemberCreateResponse(savedMember, true);
+            return new MemberCreateResult(savedMember, true);
         } catch (DataIntegrityViolationException dive) {
             // 동시성으로 다른 트랜잭션이 생성했을 가능성 -> 재조회
             Member savedMember = memberRepository.findByProviderAndMemberId(provider, memberId)
                     .orElseThrow(() -> dive); // 예외 재던지기
-            return new MemberCreateResponse(savedMember, false);
+            return new MemberCreateResult(savedMember, false);
         }
     }
 
@@ -68,7 +68,6 @@ public class MemberServiceImpl implements MemberService {
      */
 
     @Override
-    @Transactional
     public MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender) {
         if (memberPk == null) {
             throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
@@ -120,7 +119,6 @@ public class MemberServiceImpl implements MemberService {
 
 
     @Override
-    @Transactional
     public MemberDto removeMember(Long memberPk) {
         Member member = memberRepository.findById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
@@ -139,6 +137,12 @@ public class MemberServiceImpl implements MemberService {
         Member savedMember = memberRepository.save(member);
 
         return MemberDto.from(savedMember);
+    }
+
+    /** 가장 마지막으로 방문한 Box PK 정보 멤버에 업데이트 **/
+    @Override
+    public void updateLastVisitedBox(Long memberPk, Long boxPk) {
+        memberRepository.updateLastVisitedBoxPk(memberPk, boxPk);
     }
 
 }
