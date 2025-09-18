@@ -19,7 +19,7 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    @PostMapping
+    @PutMapping
     public ResponseEntity<ApiResponse<MemberDto>> updateMemberInfo(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(required = false) String nickname,
