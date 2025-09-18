@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.member.service;
 
+import com.fitian.burntz.domain.auth.service.RefreshTokenService;
 import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -9,6 +10,7 @@ import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +18,11 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * provider + memberId 조합으로 조회 후 없으면 생성. 동시성 발생 시 DataIntegrityViolationException을 잡아 재조회하여 정상화.
@@ -84,8 +88,7 @@ public class MemberServiceImpl implements MemberService {
 
             if (!trimmed.equals(member.getNickname())) {
                 // 중복 허용: 더 이상 existsByNickname 체크하지 않음
-                member.updateMemberProfile(trimmed, null, null);
-                changed = true;
+                 changed = member.updateMemberProfile(trimmed, null, null);
             }
         }
 
@@ -104,8 +107,7 @@ public class MemberServiceImpl implements MemberService {
             }
 
             if (member.getGender() == null || !member.getGender().equals(genderEnum)) {
-                member.updateMemberProfile(null, null, genderEnum);
-                changed = true;
+                changed = member.updateMemberProfile(null, null, genderEnum);
             }
         }
 
@@ -123,9 +125,20 @@ public class MemberServiceImpl implements MemberService {
         Member member = memberRepository.findById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
+        try {
+            refreshTokenService.softDeleteAllByMember(memberPk);
+        } catch (Exception e) {
+            log.error(
+                    "failed to soft-delete auth rows for memberPk={}, proceeding with member deletion",
+                    memberPk, e
+            );
+        }
+
         member.markDeleted();
 
-        return MemberDto.from(member);
+        Member savedMember = memberRepository.save(member);
+
+        return MemberDto.from(savedMember);
     }
 
 }
