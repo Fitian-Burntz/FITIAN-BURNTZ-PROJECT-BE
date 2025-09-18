@@ -32,13 +32,13 @@ public class GoogleApiClientImpl implements GoogleApiClient {
             headers.setBearerAuth(accessToken);
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<Map> resp = restTemplate.exchange(
+            ResponseEntity<Map> response = restTemplate.exchange(
                     GOOGLE_USERINFO_URL,
                     HttpMethod.GET,
                     entity,
                     Map.class
             );
-            Map<String, Object> body = resp.getBody();
+            Map<String, Object> body = response.getBody();
             if (body == null) throw new RuntimeException("Empty response from Google userinfo");
 
             String sub = (String) body.get("sub");

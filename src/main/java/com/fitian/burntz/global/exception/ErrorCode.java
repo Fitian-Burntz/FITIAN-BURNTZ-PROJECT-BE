@@ -45,6 +45,8 @@ public enum ErrorCode {
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다."),
     TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "TOKEN_INVALID", "유효하지 않은 토큰입니다."),
     TOKEN_EXTRACTION_FAILED(HttpStatus.UNAUTHORIZED, "TOKEN_EXTRACTION_FAILED", "토큰 추출에 실패했습니다."),
+    TOKEN_MISSING(HttpStatus.UNAUTHORIZED, "TOKEN_MISSING", "Authorization 헤더가 필요합니다."),
+    TOKEN_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "TOKEN_FORMAT_INVALID", "Authorization 헤더 형식은 'Bearer <token>' 이어야 합니다."),
 
     // 403 Forbidden
     SELF_ACCESS_ONLY(HttpStatus.FORBIDDEN, "SELF_ACCESS_ONLY", "본인의 정보만 조회할 수 있습니다."),
