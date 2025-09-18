@@ -141,4 +141,11 @@ public class MemberServiceImpl implements MemberService {
         return MemberDto.from(savedMember);
     }
 
+    /** 가장 마지막으로 방문한 Box PK 정보 멤버에 업데이트 **/
+    @Override
+    @Transactional
+    public void updateLastVisitedBox(Long memberPk, Long boxPk) {
+        memberRepository.updateLastVisitedBoxPk(memberPk, boxPk);
+    }
+
 }
