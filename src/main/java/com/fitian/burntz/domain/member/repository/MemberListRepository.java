@@ -18,6 +18,11 @@ import java.util.Optional;
  */
 public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     Optional<MemberRole> findRoleByMemberAndBoxAndDeletedYN(Member member, Box box, BaseTime.Yn deletedYN);
+
+    //해당 box에 해당 멤버가 속해있는지 확인하고 MemberList값을 반환
     Optional<MemberList> findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(Long memberPk, Long boxPk, BaseTime.Yn deletedYN);
+
+    //해당 box에 해당 멤버가 속해있는지 확인
+    boolean existsByMemberMemberPkAndBoxBoxPkAndDeletedYN(Long memberPk, Long boxPk, BaseTime.Yn deletedYN);
     boolean existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(Long boxPk, Long memberPk, BaseTime.Yn deletedYN);
 }
