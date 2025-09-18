@@ -19,7 +19,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "box")
-public class Box extends BaseTime {
+public class  Box extends BaseTime {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "box_pk")
     private Long boxPk;
