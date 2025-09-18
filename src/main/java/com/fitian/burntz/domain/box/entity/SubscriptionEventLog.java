@@ -73,7 +73,7 @@ public class SubscriptionEventLog extends BaseTime {
   @Enumerated(EnumType.STRING)
   private PaymentEventType eventType;
 
-  @Lob
+  @Column(length = 100000)
   private String payload;
 
 
@@ -121,6 +121,7 @@ public class SubscriptionEventLog extends BaseTime {
   public static SubscriptionEventLog from(WebhookPurchaseResponse webhookPurchaseResponse) {
     try {
       ObjectMapper mapper = new ObjectMapper();
+      System.out.println("json data : " + mapper.writeValueAsString(webhookPurchaseResponse));
       return SubscriptionEventLog
           .builder()
           .member(null) // TODO: 실제 멤버 엔티티 조회 후 교체 필요

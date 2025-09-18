@@ -2,6 +2,7 @@ package com.fitian.burntz.infra.payment.service;
 
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.entity.BoxSubscription;
+import com.fitian.burntz.domain.box.entity.SubscriptionEventLog;
 import com.fitian.burntz.domain.box.enums.SubscriptionStatus;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.box.repository.BoxSubscriptionRepository;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -27,8 +29,9 @@ public class PaymentService {
   private final SubscriptionEventLogRepository subscriptionEventLogRepository;
   private final MemberRepository memberRepository;
 
+  @Transactional
   public void handlePuchaseWebhook(WebhookPurchaseResponse webhookPurchaseResponse) {
-    log.info("결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk" + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk());
+    log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
 
     // 1. 멤버가 존재하는지 확인 : TODO: 테스트 용이하도록 주석처리, 배포 시 주석 해제 필요.
 //    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
@@ -42,20 +45,23 @@ public class PaymentService {
 //    Box box = boxRepository.findById(boxPkToLong).orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
     // 3. box_subscription 테이블 업데이트 또는 삽입
-    Member member = null;
-    String productId = webhookPurchaseResponse.getEvent().getProductId();
-    PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
-    SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
-    LocalDateTime startedAt = LocalDateTime.now();
-    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
-    Double price = webhookPurchaseResponse.getEvent().getPrice();
+//    Member member = null;
+//    String productId = webhookPurchaseResponse.getEvent().getProductId();
+//    PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
+//    SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
+//    LocalDateTime startedAt = LocalDateTime.now();
+//    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
+//    Double price = webhookPurchaseResponse.getEvent().getPrice();
+//
+//    BoxSubscription boxSubscription = BoxSubscription
+//        .of(member, productId, store, subscriptionStatus, startedAt, expiredAt, price);
 
-    BoxSubscription boxSubscription = BoxSubscription
-        .of(member, productId, store, subscriptionStatus, startedAt, expiredAt, price);
+    SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse);
 
 
     // 4. subscription_event_log 테이블에 로그 삽입
 
+    subscriptionEventLogRepository.save(subscriptionEventLog);
   }
 
 }
