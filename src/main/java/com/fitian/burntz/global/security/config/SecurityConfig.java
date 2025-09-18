@@ -6,6 +6,7 @@ import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,8 +35,6 @@ public class SecurityConfig {
                                 "/login-token-test3.html",
                                 "/css/**",
                                 "/js/**",
-                                "/api/me",
-                                "/api/auth/**",
                                 //결제 테스트용
                                 "/api/v1/payments/**",
                                 //ECS 헬스체크
@@ -46,6 +45,17 @@ public class SecurityConfig {
                                 // 스웨거
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
+                        ).permitAll()
+
+
+                        //== Auth 무인증 경로 (검증이 필요할 경우 토큰 검증으로 확인)  ==/
+                        .requestMatchers(
+                                HttpMethod.POST, "/api/v1/auth/**"
+                        ).permitAll()
+
+                        //== Box 무인증 경로 ==//
+                        .requestMatchers(
+                               HttpMethod.GET, "/api/v1/boxes/all"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
