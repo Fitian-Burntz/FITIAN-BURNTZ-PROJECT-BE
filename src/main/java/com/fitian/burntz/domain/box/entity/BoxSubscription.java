@@ -41,6 +41,10 @@ public class BoxSubscription extends BaseTime {
   @JoinColumn(name = "owner_member_id")
   private Member member; //구매자 id
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "box_pk")
+  private Box box;
+
   private String productId; //구매한 상품 id
 
   @Enumerated(EnumType.STRING)
