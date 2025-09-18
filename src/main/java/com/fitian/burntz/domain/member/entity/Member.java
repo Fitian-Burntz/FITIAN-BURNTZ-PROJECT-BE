@@ -57,6 +57,11 @@ public class Member extends BaseTime {
     private List<MemberList> memberLists = new ArrayList<>();
 
 
+    // nullable 허용
+    @Column(name = "last_visited_box_pk")
+    private Long lastVisitedBoxPk;
+
+
     /** 멤버 계정 생성 정적 메서드 **/
     public static Member create(
             String memberId, String nickname, String email, String provider){
