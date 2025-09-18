@@ -60,10 +60,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public boolean softDeleteByMemberAndDeviceId(Long memberPk, String deviceId) {
         if (deviceId == null || deviceId.isBlank()) return false;
+
         String did = deviceId.trim();
 
         int affected = authRepository.softDeleteByMemberPkAndDeviceIdNative(memberPk, did);
         log.debug("deleteByMemberAndDeviceId memberPk={} deviceId={} affected={}", memberPk, did, affected);
+
         return affected > 0;
     }
 
