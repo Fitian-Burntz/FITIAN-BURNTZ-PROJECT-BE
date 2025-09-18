@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -103,6 +104,15 @@ public class BoxSubscription extends BaseTime {
         .expiredAt(boxSubscription.getExpiredAt())
         .price(boxSubscription.getPrice())
         .build();
+  }
+
+  public long getRemainingDays() {
+    LocalDateTime now = LocalDateTime.now();
+    if (now.isAfter(expiredAt)) {
+      return 0;
+    }
+
+    return ChronoUnit.DAYS.between(now, expiredAt);
   }
 
 
