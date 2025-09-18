@@ -1,12 +1,12 @@
 package com.fitian.burntz.domain.record.v1.dto;
 
-import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.record.enums.RecordResult;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 /**
@@ -30,6 +30,10 @@ public class RecordCreateRequest {
     @Schema(description = "비회원일 경우 닉네임(memberPk가 없을 때 필수)")
     private String nickname;
 
+    @NotNull
+    @Schema(description = "클래스 pk")
+    private Long classesPk;
+
     @Schema(description = "단계")
     private String level;
 
@@ -40,7 +44,7 @@ public class RecordCreateRequest {
     private Integer reps;
 
     @Schema(description = "기록 시간")
-    private float time;
+    private Float time;
 
     @Schema(description = "운동 결과")
     private RecordResult result;

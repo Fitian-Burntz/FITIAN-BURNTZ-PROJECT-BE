@@ -67,6 +67,7 @@ public enum ErrorCode {
     DEVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_NOT_FOUND", "해당 기기를 찾을 수 없습니다."),
     WOD_NOT_FOUND(HttpStatus.NOT_FOUND,"WOD_NOT_FOUND", "해당 WOD를 찾을 수 없습니다."),
     MEMBER_NOT_IN_BOX(HttpStatus.NOT_FOUND,"MEMBER_NOT_IN_BOX","해당 박스에 속해있지 않은 사용자입니다."),
+    RECORD_NOT_FOUND(HttpStatus.NOT_FOUND,"RECORD_NOT_FOUND","운동기록을  찾을 수 없습니다."),
 
     // 405 Method Not Allowed
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "허용되지 않은 HTTP 메서드입니다."),

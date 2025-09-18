@@ -13,7 +13,9 @@ import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.record.repository.RecordRepository;
 import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
 import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
+import com.fitian.burntz.domain.record.v1.dto.RecordUpdateRequest;
 import com.fitian.burntz.domain.wod.entity.Wod;
+import com.fitian.burntz.domain.wod.enums.WodType;
 import com.fitian.burntz.domain.wod.repository.WodRespository;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author : 선순주
@@ -48,7 +52,7 @@ public class RecordService {
     * record 생성
     * */
     @Transactional
-    public void createRecord(RecordCreateRequest req, Long boxPk, Long wodPk, Long ClassesPk ,Long memberPk){
+    public void createRecord(RecordCreateRequest req, LocalDate date, Long boxPk, Long memberPk){
         //wod 조회를 wodPk가 아니라 box, date로 체크하기
         /* 체험하러 온 사람이 있을 수도 있다 -> 일일체험자는 memberPk가 null이면서 name 필드에 값이 들어감.
         * box에 등록된 사람이라면 memberPk에 값이 들어가고, name필드에 null이 들어감.
@@ -61,11 +65,11 @@ public class RecordService {
         //2. 박스 유효성 검증
         Box box = requireActiveBox(boxPk);
 
-        //3. wod 존재 및 소속 검증(wod가 box에 속하는지)
-        Wod wod = requireWodInBox(wodPk, boxPk);
+        //3. wod 유효성 검증 : box+date로 조회
+        Wod wod = requireActiveWod(boxPk, date);
 
         //4. classes 존재 및 소속 검증
-        Classes classes = requireClassesInBox(ClassesPk,boxPk);
+        Classes classes = requireClassesInBox(req.getClassesPk(),boxPk);
         
         //5. memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
         if (req.getMemberPk() != null && req.getNickname() != null && !req.getNickname().isBlank()) {
@@ -79,19 +83,16 @@ public class RecordService {
         Member targetMember = null;
         if (req.getMemberPk() != null) {
             targetMember = requireMemberInBox(req.getMemberPk(), boxPk);
-
-            targetMember = memberRepository.findById(req.getMemberPk())
-                    .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
         }
 
         //7. 운동기록이 작성될 유저가 특정 클래스에 이미 운동기록이 작성되어 있는지 확인(클래스 1번당 운동기록 1개)->memberPk를 가진 필드만 확인
         if(req.getMemberPk() != null){
-            if(requireRecordInClasses(ClassesPk, memberPk)){
+            if(requireRecordInClasses(req.getClassesPk(), targetMember.getMemberPk())){
                 throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
             }
         }
 
-        //엔티티 저장 (아 운동종류별로 뭐 저장할지 분기 나눠야할듯?)
+        //엔티티 저장
         Record record = req.toEntity(wod,classes,targetMember);
 
         //동시성 대비
@@ -107,9 +108,123 @@ public class RecordService {
     /*
      * record 목록 조회
      * */
-    public RecordResponse getRecord(Long boxPk, Long WodPk, Long ClassesPk, Long memberPk){
+    @Transactional(readOnly = true)
+    public List<RecordResponse> getRecord(Long boxPk, Long memberPk, LocalDate date){
 
+        //1. box 유효성 검증
+        Box box = requireActiveBox(boxPk);
+
+        //2. 해당 box에 소속된 멤버인지 검증
+        Member member = requireMemberInBox(memberPk,boxPk);
+
+        //3. wod 존재 및 소속 검증
+        Wod wod = requireActiveWod(boxPk, date);
+
+        //해당 날짜의 record 모두 조회
+        List<Record> records = recordRepository.findAllByWodWithMemberAndClasses(wod, BaseTime.Yn.N);
+
+        return records.stream()
+                .map(RecordResponse::from)
+                .collect(Collectors.toList());
     }
+
+    /*
+    * Record 수정
+    * */
+    @Transactional
+    public void updateRecord(Long boxPk, Long memberPk, Long recordPk, LocalDate date, RecordUpdateRequest req) {
+        //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
+        requireManagerOrOwner(memberPk, boxPk);
+
+        //2. box 유효성 검증
+        Box box = requireActiveBox(boxPk);
+
+        //3. wod 유효성 검증 : box+date로 조회
+        Wod wod = requireActiveWod(boxPk, date);
+
+//        //4. classes 존재 및 소속 검증
+//        Classes classes = requireClassesInBox(req.getClassesPk(), boxPk);
+
+        Record record = recordRepository.findById(recordPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
+
+        Member memberToSet = null;
+        boolean willChangeMember = false;
+
+        if (req.getMemberPk() != null) {
+            // memberPk가 주어지면 해당 멤버로 교체 (예외 처리 포함)
+            memberToSet = memberRepository.findById(req.getMemberPk())
+                    .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+            willChangeMember = true;
+        } else if (Boolean.TRUE.equals(req.getClearMember())) {
+            // 명시적 제거 요청
+            memberToSet = null;
+            willChangeMember = true;
+        } // else: 변경없음
+
+        // 닉네임 처리 규칙:
+        // - memberPk가 주어지면 nickname 무시(자동 null)
+        // - clearMember == true 이면 nickname이 null이든 값이든 '명시적' 처리 (null이면 삭제)
+        // - 그 외 경우 nickname != null 이면 변경, null 이면 변경 없음
+
+        String nicknameToSet = null;
+        boolean nicknameExplicitChange = false;
+
+
+        if (req.getMemberPk() != null) {
+            nicknameToSet = null;
+            nicknameExplicitChange = true; // member로 바꾸니 nickname을 명시적으로 null로 설정
+        } else if (Boolean.TRUE.equals(req.getClearMember())) {
+            // 명시적 제거 시 nickname도 명시적으로 처리 (값 있으면 그 값, 없으면 null)
+            nicknameToSet = req.getNickname(); // may be null -> means clear nickname
+            nicknameExplicitChange = true;
+        } else if (req.getNickname() != null) {
+            // 부분 업데이트로 nickname만 바꾸려는 경우
+            nicknameToSet = req.getNickname();
+            nicknameExplicitChange = true;
+        }
+        // 이제 엔티티로 위임 (엔티티는 willChangeMember/ nicknameExplicitChange를 알고 있어야 함)
+        record.update(
+                /*member*/ memberToSet,
+                /*willChangeMember*/ willChangeMember,
+                /*nickname*/ nicknameToSet,
+                /*nicknameExplicitChange*/ nicknameExplicitChange,
+                req.getLevel(),
+                req.getRound(),
+                req.getReps(),
+                req.getTime(),
+                req.getResult(),
+                req.getTeam(),
+                req.getMemo()
+            );
+        }
+
+    /*
+    * Record 삭제
+    * */
+    @Transactional
+    public void deleteRecord(Long boxPk, Long memberPk, Long recordPk, LocalDate date){
+        //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
+        requireManagerOrOwner(memberPk, boxPk);
+
+        //2. box 유효성 검증
+        Box box = requireActiveBox(boxPk);
+
+        //3. wod 유효성 검증 : box+date로 조회
+        Wod wod = requireActiveWod(boxPk, date);
+
+        //4. classes 존재 및 소속 검증
+        // Classes classes = requireClassesInBox(req.getClassesPk(), boxPk);
+
+        Record record = recordRepository.findById(recordPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
+
+        //delete
+        record.markDeleted();
+    }
+
+
+
 
 
     /*
@@ -132,13 +247,13 @@ public class RecordService {
         }
     }
 
-    //Wod 유효성 검증
-    private Wod requireActiveWod(Box box, LocalDate date){
-        return wodRespository.findByBoxAndWodDateAndDeletedYN(box,date,BaseTime.Yn.N)
+    //Wod 유효성 검증(box+date로 체크)
+    private Wod requireActiveWod(Long boxPk, LocalDate date){
+        return wodRespository.findByBoxBoxPkAndWodDateAndDeletedYN(boxPk,date,BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.WOD_NOT_FOUND));
     }
 
-    //Wod 존재 및 소속 검증(wod가 box에 속하는지)
+    //Wod 존재 및 소속 검증(wodPk, boxPk로 검증)
     private Wod requireWodInBox(Long wodPk, Long boxPk){
         return wodRespository.findByWodPkAndBoxBoxPkAndDeletedYN(wodPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(()-> new ValidationException(ErrorCode.WOD_NOT_FOUND));

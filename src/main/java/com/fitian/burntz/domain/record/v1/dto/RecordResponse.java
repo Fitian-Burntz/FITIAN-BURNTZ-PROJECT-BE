@@ -1,10 +1,13 @@
 package com.fitian.burntz.domain.record.v1.dto;
 
+import com.fitian.burntz.domain.record.entity.Record;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * @author : 선순주
@@ -23,10 +26,13 @@ public class RecordResponse {
     private Long memberPk;
     
     @Schema(description = "record Pk")
-    private Long RecordPk;
+    private Long recordPk;
 
     @Schema(description = "wod Pk")
-    private Long WodPk;
+    private Long wodPk;
+
+    @Schema(description = "Classes Pk")
+    private Long classesPk;
     
     @Schema(description = "nickname")
     private String nickname;
@@ -41,11 +47,44 @@ public class RecordResponse {
     private Integer reps;
     
     @Schema(description = "기록 시간")
-    private float time;
+    private Float time;
 
     @Schema(description = "팀")
     private String team;
 
     @Schema(description = "메모")
     private String memo;
+
+    public static RecordResponse from(Record r){
+        if(r == null) return null;
+
+        // 안전한 member 참조
+        String displayNickname = null;
+        Long memberPk = null;
+        if (r.getMember() != null) {
+            memberPk = r.getMember().getMemberPk();
+            // member 테이블의 nickname을 우선 사용 (회원)
+            displayNickname = r.getMember().getNickname();
+        }
+
+        // member가 없거나 member.nickname이 비어있으면 record에 저장된 nickname 사용 (비회원)
+        if (displayNickname == null || displayNickname.isBlank()) {
+            displayNickname = r.getNickname();
+        }
+
+        return RecordResponse.builder()
+                .memberPk(memberPk)
+                .recordPk(r.getRecordPk())
+                .wodPk(r.getWod() != null ? r.getWod().getWodPk() : null)
+                .classesPk(r.getClasses() != null ? r.getClasses().getClassesPk() : null)
+                .nickname(displayNickname)
+                .level(r.getLevel())
+                .round(r.getRound())
+                .reps(r.getReps())
+                .time(r.getTime())
+                .team(r.getTeam())
+                .memo(r.getMemo())
+                .build();
+
+    }
 }

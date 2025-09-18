@@ -1,18 +1,18 @@
 package com.fitian.burntz.domain.record.v1.controller;
 
+import com.fitian.burntz.domain.record.service.RecordService;
 import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
 import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
+import com.fitian.burntz.domain.record.v1.dto.RecordUpdateRequest;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author : 선순주
@@ -27,6 +27,8 @@ import java.time.LocalDate;
 @RequestMapping("/api/v1/boxes/{boxPk}/wods/{date}/records")
 public class RecordController {
 
+    private final RecordService recordService;
+
     /*
     * Record 생성
     * */
@@ -34,24 +36,58 @@ public class RecordController {
     public ApiResponse<Void> createRecord(
             @Valid @RequestBody RecordCreateRequest request,
             @PathVariable Long boxPk,
-            @PathVariable Long wodPk,
-            @PathVariable Long ClassesPk
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
             ){
-        return ApiResponse.success(null,"");
+        Long memberPk = 2L;
+        recordService.createRecord(request, date, boxPk, memberPk);
+        return ApiResponse.success(null,"record 생성 완료");
     }
 
     /*
-     * Record 조회
+     * Record 전체 조회(랭킹순)
      * */
-    //classPk를 가져올지? -> 운동기록이 class당 1개니까 가져오긴해야할거같은데
-    //api 추가해야하나?
-    //아니면 body에 저장?
-    @GetMapping
-    public ApiResponse<RecordResponse> getRecord(
+    //classesPk, wodPk는 body에서 갖고오기
+    @GetMapping()
+    public ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
             ){
-        return ApiResponse.success("", "");
+
+        Long memberPk = 3L;
+        List<RecordResponse> records = recordService.getRecord(boxPk, memberPk, date);
+
+        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, memberPk, date),"해당 날짜의 records 조회 완료")));
+    }
+
+    /*
+    * Record 수정
+    * */
+    @PutMapping("/{recordPk}")
+    public ApiResponse<Void> updateRecord(
+            @Valid @RequestBody RecordUpdateRequest request,
+            @PathVariable Long boxPk,
+            @PathVariable Long recordPk,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ){
+
+        Long memberPk = 2L;
+        recordService.updateRecord(boxPk,memberPk,recordPk,date,request);
+        return ApiResponse.success(null,"record 수정 완료");
+    }
+
+    /*
+    * Record 삭제
+    * */
+    @DeleteMapping("/{recordPk}")
+    public ApiResponse<Void> deleteRecord(
+            @PathVariable Long boxPk,
+            @PathVariable Long recordPk,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ){
+        Long memberPk = 2L;
+        recordService.deleteRecord(boxPk, memberPk, recordPk, date);
+
+        return ApiResponse.success(null,"record 삭제 완료");
     }
 
 }

@@ -27,13 +27,13 @@ public class WodResponse {
     private Long wodPk;
     @Schema(description = "box Pk")
     private Long boxPk;
-    @NotNull
+
     @Schema(description = "wod 제목")
     private String wodTitle;
-    @NotNull
+
     @Schema(description = "wod 내용")
     private String wodScript;
-    @NotNull
+
     @Schema(description = "wod 종류")
     private WodType wodType;
     @Schema(description = "wod 날짜")
