@@ -51,5 +51,12 @@ public abstract class BaseTime {
         }
     }
 
+    public void markNotDeleted() {
+        if (this.deletedYN == Yn.Y) {
+            this.deletedYN = Yn.N;
+            this.updatedAt = LocalDateTime.now();
+        }
+    }
+
     public boolean isDeleted() { return this.deletedYN == Yn.Y; }
 }

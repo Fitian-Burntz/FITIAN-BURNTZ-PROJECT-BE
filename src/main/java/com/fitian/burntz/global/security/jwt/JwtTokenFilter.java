@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -41,27 +42,44 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain chain)
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain)
             throws ServletException, IOException {
 
         String token = resolveToken(request);
-
         log.debug("[JwtTokenFilter] resolved token present? {}", token != null);
 
-        if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-            Long memberPk = jwtTokenProvider.getMemberPkFromToken(token);
-            if (memberPk != null) {
-                // loadMemberByMemberPk 메서드 사용
-                var userDetails = customUserDetailsService.loadMemberByMemberPk(memberPk);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+                // 필터가 이미 인증을 세팅했으면 건너뜀
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                    // (선택) 토큰이 리프레시 토큰인지 확인하고, 리프레시면 무시
+                    if (jwtTokenProvider.isRefreshToken(token)) {
+                        log.debug("Token is a refresh token - skipping authentication in JwtTokenFilter");
+                    } else {
+                        Long memberPk = jwtTokenProvider.getMemberPkFromToken(token);
+                        if (memberPk != null) {
+                            try {
+                                var userDetails = customUserDetailsService.loadMemberByMemberPk(memberPk);
+                                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                        userDetails, null, userDetails.getAuthorities()
+                                );
+                                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                                SecurityContextHolder.getContext().setAuthentication(authentication);
+                                log.debug("JWT authenticated memberPk={}", memberPk);
+                            } catch (UsernameNotFoundException usernameNotFoundException) {
+                                log.warn("Member not found for memberPk={} - skipping authentication", memberPk);
+                            }
+                        }
+                    }
+                }
             }
+        } catch (Exception e) {
+            // 토큰 검증 실패 등 모든 예외는 여기서 잡아서 무시(다음 필터로 넘어가게)하거나
+            // 필요하면 response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+            log.warn("JwtTokenFilter error: {}", e.getMessage());
         }
 
         chain.doFilter(request, response);
