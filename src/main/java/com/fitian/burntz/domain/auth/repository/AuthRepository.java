@@ -13,12 +13,7 @@ import java.util.Optional;
 @Repository
 public interface AuthRepository extends JpaRepository<Auth, Long> {
 
-    // 기존 편의 메서드
-    Optional<Auth> findTopByMemberMemberPkOrderByAuthPkDesc(Long memberPk);
-
     boolean existsByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
-
-    List<Auth> findAllByMember_MemberPkAndRefreshToken(Long memberPk, String refreshToken);
 
     // -------------------------------------------------
     // Native upsert (Postgres) - ON CONFLICT 사용
