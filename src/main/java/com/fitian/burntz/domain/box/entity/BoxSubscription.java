@@ -60,11 +60,13 @@ public class BoxSubscription extends BaseTime {
   private Double price;
 
   @Builder
-  private BoxSubscription(Member member, String productId,
+  private BoxSubscription(Long boxSubscriptionPk, Member member, Box box, String productId,
       PaymentStore store, SubscriptionStatus status,
       LocalDateTime startedAt, LocalDateTime expiredAt,
       Double price) {
+    this.boxSubscriptionPk = boxSubscriptionPk;
     this.member = member;
+    this.box = box;
     this.productId = productId;
     this.store = store;
     this.status = status;
@@ -73,11 +75,12 @@ public class BoxSubscription extends BaseTime {
     this.price = price;
   }
 
-  public static BoxSubscription of(Member member, String productId,
+  public static BoxSubscription of(Member member ,Box box, String productId,
       PaymentStore store, SubscriptionStatus status,
       LocalDateTime startedAt, LocalDateTime expiredAt, Double price) {
     return BoxSubscription.builder()
         .member(member)
+        .box(box)
         .productId(productId)
         .store(store)
         .status(status)
@@ -86,6 +89,23 @@ public class BoxSubscription extends BaseTime {
         .price(price)
         .build();
   }
+
+  public BoxSubscription replaceTo(BoxSubscription boxSubscription) {
+    return BoxSubscription
+        .builder()
+        .boxSubscriptionPk(this.getBoxSubscriptionPk())
+        .member(boxSubscription.getMember())
+        .box(boxSubscription.getBox())
+        .productId(boxSubscription.getProductId())
+        .store(boxSubscription.getStore())
+        .status(boxSubscription.getStatus())
+        .startedAt(boxSubscription.getStartedAt())
+        .expiredAt(boxSubscription.getExpiredAt())
+        .price(boxSubscription.getPrice())
+        .build();
+  }
+
+
 
 
 

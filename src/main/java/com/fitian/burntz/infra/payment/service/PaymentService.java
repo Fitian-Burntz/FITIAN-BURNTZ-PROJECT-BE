@@ -54,13 +54,23 @@ public class PaymentService {
     Double price = webhookPurchaseResponse.getEvent().getPrice();
 
     BoxSubscription boxSubscription = BoxSubscription
-        .of(member, productId, store, subscriptionStatus, startedAt, expiredAt, price);
+        .of(member, box, productId, store, subscriptionStatus, startedAt, expiredAt, price);
 
-    SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse);
+    SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse, member, box);
 
+    // 4. 박스 구독 정보 저장
+    if(boxSubscriptionRepository.findByBoxPk(boxPkToLong).isPresent()) {
+      log.info("박스 구독 정보 저장 중 - 기존 구독 정보가 존재하여 업데이트를 진행합니다.");
+      BoxSubscription oldBoxSubscription = boxSubscriptionRepository.findByBoxPk(boxPkToLong)
+          .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+      BoxSubscription updatedBoxSubscription = oldBoxSubscription.replaceTo(boxSubscription);
+      boxSubscriptionRepository.save(updatedBoxSubscription);
+      return;
+    }
 
-    // 4. subscription_event_log 테이블에 로그 삽입
+    boxSubscriptionRepository.save(boxSubscription);
 
+    // 5. 박스 구독 로그 저장
     subscriptionEventLogRepository.save(subscriptionEventLog);
   }
 
