@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitian.burntz.domain.box.enums.SubscriptionStatus;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.global.common.entity.BaseTime;
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.InternalServerException;
 import com.fitian.burntz.infra.payment.enums.PaymentEventType;
 import com.fitian.burntz.infra.payment.enums.PaymentStore;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
@@ -118,14 +120,14 @@ public class SubscriptionEventLog extends BaseTime {
         .build();
   }
 
-  public static SubscriptionEventLog from(WebhookPurchaseResponse webhookPurchaseResponse) {
+  public static SubscriptionEventLog from(WebhookPurchaseResponse webhookPurchaseResponse, Member member, Box box) {
     try {
       ObjectMapper mapper = new ObjectMapper();
       System.out.println("json data : " + mapper.writeValueAsString(webhookPurchaseResponse));
       return SubscriptionEventLog
           .builder()
-          .member(null) // TODO: 실제 멤버 엔티티 조회 후 교체 필요
-          .box(null) // TODO: 실제 박스 엔티티 조회 후 교체 필요
+          .member(member) // TODO: 실제 멤버 엔티티 조회 후 교체 필요
+          .box(box) // TODO: 실제 박스 엔티티 조회 후 교체 필요
           .productId(webhookPurchaseResponse.getEvent().getProductId())
           .store(webhookPurchaseResponse.getEvent().getStore())
           .status(SubscriptionStatus.ACTIVE)
@@ -139,7 +141,7 @@ public class SubscriptionEventLog extends BaseTime {
           .build();
     } catch (Exception e) {
       log.error("WebhookPurchaseResponse 직렬화 에러: ", e);
-      return null;
+      throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 
