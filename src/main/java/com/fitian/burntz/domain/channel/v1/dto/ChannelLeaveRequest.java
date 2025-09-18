@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.channel.v1.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,9 +19,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(name = "ChannelLeaveRequest", description = "채널(채팅방) 참여 나가기 요청")
 public class ChannelLeaveRequest {
 
-    @NotBlank(message = "ParticipantPk must not be blank")
+    @NotNull(message = "ParticipantPk must not be blank")
+    @Schema(description = "참여(Participant) PK", example = "987")
     private Long ParticipantPk;
 
 }
