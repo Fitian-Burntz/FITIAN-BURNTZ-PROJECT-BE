@@ -1,6 +1,5 @@
 package com.fitian.burntz.infra.payment.v1.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fitian.burntz.infra.payment.enums.PaymentEventType;
 import com.fitian.burntz.infra.payment.enums.PaymentStore;
@@ -8,6 +7,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
 import lombok.Setter;
 
 @Getter

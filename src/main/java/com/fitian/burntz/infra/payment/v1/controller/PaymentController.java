@@ -3,7 +3,6 @@ package com.fitian.burntz.infra.payment.v1.controller;
 import com.fitian.burntz.infra.payment.service.PaymentService;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

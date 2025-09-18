@@ -33,28 +33,28 @@ public class PaymentService {
   public void handlePuchaseWebhook(WebhookPurchaseResponse webhookPurchaseResponse) {
     log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
 
-    // 1. 멤버가 존재하는지 확인 : TODO: 테스트 용이하도록 주석처리, 배포 시 주석 해제 필요.
-//    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
-//    Long memberIdToLong = Long.parseLong(ownerMemberId);
-//    Member member = memberRepository.findById(memberId).orElseThrow(() -> new ValidationException(
-//        ErrorCode.USER_NOT_FOUND));
+    // 1. 멤버가 존재하는지 확인
+    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
+    Long ownerMemberIdToLong = Long.parseLong(ownerMemberId);
+    Member member = memberRepository.findById(ownerMemberIdToLong)
+        .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-    // 2. 박스가 존재하는지 확인 : TODO: 테스트 용이하도록 주석처리, 배포 시 주석 해제 필요.
-//    String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
-//    Long boxPkToLong = Long.parseLong(boxPk);
-//    Box box = boxRepository.findById(boxPkToLong).orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+    // 2. 박스가 존재하는지 확인
+    String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
+    Long boxPkToLong = Long.parseLong(boxPk);
+    Box box = boxRepository.findById(boxPkToLong)
+        .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
     // 3. box_subscription 테이블 업데이트 또는 삽입
-//    Member member = null;
-//    String productId = webhookPurchaseResponse.getEvent().getProductId();
-//    PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
-//    SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
-//    LocalDateTime startedAt = LocalDateTime.now();
-//    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
-//    Double price = webhookPurchaseResponse.getEvent().getPrice();
-//
-//    BoxSubscription boxSubscription = BoxSubscription
-//        .of(member, productId, store, subscriptionStatus, startedAt, expiredAt, price);
+    String productId = webhookPurchaseResponse.getEvent().getProductId();
+    PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
+    SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
+    LocalDateTime startedAt = LocalDateTime.now();
+    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
+    Double price = webhookPurchaseResponse.getEvent().getPrice();
+
+    BoxSubscription boxSubscription = BoxSubscription
+        .of(member, productId, store, subscriptionStatus, startedAt, expiredAt, price);
 
     SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse);
 
