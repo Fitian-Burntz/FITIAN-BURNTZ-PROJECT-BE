@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fitian.burntz.infra.payment.enums.PaymentEventType;
 import com.fitian.burntz.infra.payment.enums.PaymentStore;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,26 +27,95 @@ public class WebhookPurchaseResponse {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class Event {
-    private PaymentEventType type;
 
-    @JsonProperty("subscriber_attributes")
-    private SubscriberAttributes subscriberAttributes;
-
-    @JsonProperty("app_user_id")
-    private String ownerMemberId;
+    @JsonProperty("event_timestamp_ms")
+    private Long eventTimestampMs;
 
     @JsonProperty("product_id")
     private String productId;
 
-    private PaymentStore store;
+    @JsonProperty("period_type")
+    private String periodType;
 
     @JsonProperty("purchased_at_ms")
-    private Long startedAt;
+    private Long purchasedAtMs;
 
     @JsonProperty("expiration_at_ms")
-    private Long expiresAt;
+    private Long expirationAtMs;
 
+    @JsonProperty("environment")
+    private String environment;
+
+    @JsonProperty("entitlement_id")
+    private String entitlementId;
+
+    @JsonProperty("entitlement_ids")
+    private String entitlementIds;
+
+    @JsonProperty("presented_offering_id")
+    private String presentedOfferingId;
+
+    @JsonProperty("transaction_id")
+    private String transactionId;
+
+    @JsonProperty("original_transaction_id")
+    private String originalTransactionId;
+
+    @JsonProperty("is_family_share")
+    private Boolean isFamilyShare;
+
+    @JsonProperty("country_code")
+    private String countryCode;
+
+    @JsonProperty("app_user_id")
+    private String ownerMemberId;
+
+    @JsonProperty("aliases")
+    private List<String> aliases;
+
+    @JsonProperty("original_app_user_id")
+    private String originalAppUserId;
+
+    @JsonProperty("currency")
+    private String currency;
+
+    @JsonProperty("price")
     private Double price;
+
+    @JsonProperty("price_in_purchased_currency")
+    private Double priceInPurchasedCurrency;
+
+    @JsonProperty("subscriber_attributes")
+    private SubscriberAttributes subscriberAttributes;
+
+    private PaymentStore store;
+
+    @JsonProperty("takehome_percentage")
+    private Double takehomePercentage;
+
+    @JsonProperty("offer_code")
+    private String offerCode;
+
+    @JsonProperty("tax_percentage")
+    private Double taxPercentage;
+
+    @JsonProperty("commission_percentage")
+    private Double commissionPercentage;
+
+    @JsonProperty("metadata")
+    private String metadata;
+
+    @JsonProperty("renewal_number")
+    private String renewalNumber;
+
+    @JsonProperty("type")
+    private PaymentEventType type;
+
+    @JsonProperty("id")
+    private String id;
+
+    @JsonProperty("app_id")
+    private String appId;
   }
 
   @Getter

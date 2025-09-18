@@ -28,8 +28,6 @@ public class PaymentController {
 
   @PostMapping("/webhook/purchase")
   public ResponseEntity<?> handlePuchaseWebhook(@RequestBody WebhookPurchaseResponse webhookPurchaseResponse) {
-
-
     paymentService.handlePuchaseWebhook(webhookPurchaseResponse);
     return ResponseEntity.ok().build();
   }
