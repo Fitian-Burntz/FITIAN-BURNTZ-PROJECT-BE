@@ -1,23 +1,60 @@
 package com.fitian.burntz.infra.payment.service;
 
+import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.entity.BoxSubscription;
+import com.fitian.burntz.domain.box.enums.SubscriptionStatus;
+import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.box.repository.BoxSubscriptionRepository;
 import com.fitian.burntz.domain.box.repository.SubscriptionEventLogRepository;
+import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.ValidationException;
+import com.fitian.burntz.infra.payment.enums.PaymentStore;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class PaymentService {
 
   private final BoxSubscriptionRepository boxSubscriptionRepository;
+  private final BoxRepository boxRepository;
   private final SubscriptionEventLogRepository subscriptionEventLogRepository;
   private final MemberRepository memberRepository;
 
   public void handlePuchaseWebhook(WebhookPurchaseResponse webhookPurchaseResponse) {
+    log.info("결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk" + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk());
+
+    // 1. 멤버가 존재하는지 확인 : TODO: 테스트 용이하도록 주석처리, 배포 시 주석 해제 필요.
+//    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
+//    Long memberIdToLong = Long.parseLong(ownerMemberId);
+//    Member member = memberRepository.findById(memberId).orElseThrow(() -> new ValidationException(
+//        ErrorCode.USER_NOT_FOUND));
+
+    // 2. 박스가 존재하는지 확인 : TODO: 테스트 용이하도록 주석처리, 배포 시 주석 해제 필요.
+//    String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
+//    Long boxPkToLong = Long.parseLong(boxPk);
+//    Box box = boxRepository.findById(boxPkToLong).orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+    // 3. box_subscription 테이블 업데이트 또는 삽입
+    Member member = null;
+    String productId = webhookPurchaseResponse.getEvent().getProductId();
+    PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
+    SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
+    LocalDateTime startedAt = LocalDateTime.now();
+    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
+    Double price = webhookPurchaseResponse.getEvent().getPrice();
+
+    BoxSubscription boxSubscription = BoxSubscription
+        .of(member, productId, store, subscriptionStatus, startedAt, expiredAt, price);
 
 
+    // 4. subscription_event_log 테이블에 로그 삽입
 
   }
 
