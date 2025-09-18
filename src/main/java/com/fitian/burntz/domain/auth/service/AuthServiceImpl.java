@@ -3,7 +3,7 @@ package com.fitian.burntz.domain.auth.service;
 import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.JwtTokenPair;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
-import com.fitian.burntz.domain.member.dto.MemberCreateResult;
+import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -17,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +51,7 @@ public class AuthServiceImpl implements AuthService{
                     deviceId);
         }
 
-        MemberCreateResult createResult;
+        MemberCreateResponse createResult;
         try {
             createResult = oAuthService.findOrCreateUserBySocialToken(socialToken, deviceId, provider);
         } catch (IllegalArgumentException iae) {
@@ -81,28 +79,33 @@ public class AuthServiceImpl implements AuthService{
     @Override
     public void logoutCurrentDevice(String refreshToken, String deviceId) {
         // 검증 책임을 RefreshTokenService로 이동
-        RefreshTokenService.ValidationResult vr = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
+        RefreshTokenService.ValidationResult validationResult = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
 
-        boolean deleted = refreshTokenService.softDeleteByMemberAndDeviceId(vr.memberPk(), vr.deviceId());
+        boolean deleted = refreshTokenService.softDeleteByMemberAndDeviceId(
+                validationResult.memberPk(), validationResult.deviceId()
+        );
+
         if (!deleted) {
-            throw new ValidationException(ErrorCode.DEVICE_NOT_FOUND);
+            // 멱등성 보장: 이미 삭제되었거나 존재하지 않음. 예외 대신 경고 로그 후 정상 종료
+            log.warn("logout noop: memberPk={} deviceId={}", validationResult.memberPk(), validationResult.deviceId());
+            return;
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("logoutCurrentDevice success memberPk={} deviceId={}", vr.memberPk(), vr.deviceId());
+            log.debug("logoutCurrentDevice success memberPk={} deviceId={}", validationResult.memberPk(), validationResult.deviceId());
         }
     }
 
     @Override
-    public void logoutAllDevices(String anyToken) {
-        if (anyToken == null || anyToken.isBlank()) {
+    public void logoutAllDevices(String token) {
+        if (token == null || token.isBlank()) {
             throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
         }
-        if (!jwtTokenProvider.validateToken(anyToken)) {
+        if (!jwtTokenProvider.validateToken(token)) {
             throw new ValidationException(ErrorCode.TOKEN_INVALID);
         }
 
-        Long memberPk = jwtTokenProvider.getMemberPkFromToken(anyToken);
+        Long memberPk = jwtTokenProvider.getMemberPkFromToken(token);
         if (memberPk == null) {
             throw new ValidationException(ErrorCode.TOKEN_INVALID);
         }
