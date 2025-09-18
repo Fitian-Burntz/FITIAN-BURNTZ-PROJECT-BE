@@ -2,7 +2,7 @@ package com.fitian.burntz.domain.auth.oauth;
 
 
 import com.fitian.burntz.domain.auth.dto.OAuthUserInfo;
-import com.fitian.burntz.domain.member.dto.MemberCreateResponse;
+import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 
 public interface OAuthService {
 
@@ -14,6 +14,6 @@ public interface OAuthService {
 //    Member findOrCreateUserBySocialToken(String token, String provider);
 
     // 새로 추가: 이미 검증된 OAuthUserInfo 를 전달하여 멤버 조회/생성
-    MemberCreateResponse findOrCreateUserBySocialToken(String token, String deviceId, String provider);
-    MemberCreateResponse findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider);
+    MemberCreateResult findOrCreateUserBySocialToken(String token, String deviceId, String provider);
+    MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider);
 }
