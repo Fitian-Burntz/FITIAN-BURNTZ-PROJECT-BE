@@ -35,10 +35,12 @@ public class MemberServiceImpl implements MemberService {
         if (existing.isPresent()) {
             Member existingMember = existing.get();
 
-            // 탈퇴(soft-delete) 상태면 복구 처리 (단, 기존 필드 보정은 하지 않음)
+            // 탈퇴(soft-delete) 상태면 복구 처리
             if (existingMember.isDeleted()) {
                 existingMember.markNotDeleted(); // deletedYn = 'N', updatedAt 초기화만 수행
-                Member savedMember = memberRepository.save(existingMember);
+
+                // member 변경사항 DB 바로 반영
+                Member savedMember = memberRepository.saveAndFlush(existingMember);
                 return new MemberCreateResponse(savedMember, false);
             }
 
