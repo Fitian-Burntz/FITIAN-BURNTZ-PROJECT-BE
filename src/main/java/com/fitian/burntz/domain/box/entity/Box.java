@@ -1,5 +1,7 @@
 package com.fitian.burntz.domain.box.entity;
 
+import com.fitian.burntz.domain.box.dto.BoxDto;
+import com.fitian.burntz.domain.box.dto.CreateBoxRequest;
 import com.fitian.burntz.domain.box.enums.SubscribeYN;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
@@ -18,16 +20,23 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "box")
+@Table(name = "box",
+        uniqueConstraints = @UniqueConstraint(name = "uk_box_code", columnNames = "box_code"),
+        indexes = {
+                @Index(name = "idx_box_owner_pk", columnList = "owner_pk")
+        })
 public class  Box extends BaseTime {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "box_pk")
     private Long boxPk;
 
-    @Column(name = "box_name", length = 100)
+    @Column(name = "owner_pk", nullable = false)
+    private Long ownerPk;
+
+    @Column(name = "box_name", nullable = false, length = 100)
     private String boxName;
 
-    @Column(name = "box_code", length = 100)
+    @Column(name = "box_code", nullable = false, length = 100)
     private String boxCode;
 
     @Column(name = "box_contact", length = 200)
@@ -56,5 +65,23 @@ public class  Box extends BaseTime {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "subscribe", length = 1)
-    private SubscribeYN subscribe; // Y/N
+    @Builder.Default
+    private SubscribeYN subscribe = SubscribeYN.N; // Y/N
+
+
+    /** Box 생성 적적 팩토리 매서드 **/
+    public static Box create(Long ownerPk, CreateBoxRequest createBoxRequest) {
+        return Box.builder()
+                .boxName(createBoxRequest.getBoxName())
+                .ownerPk(ownerPk)
+                .boxCode(createBoxRequest.getBoxCode())
+                .boxContact(createBoxRequest.getBoxContact())
+                .boxAddress(createBoxRequest.getBoxAddress())
+                .boxScript(createBoxRequest.getBoxScript())
+                .placeId(createBoxRequest.getPlaceId())
+                .boxFeeUrl(createBoxRequest.getBoxFeeUrl())
+                .boxTimetableUrl(createBoxRequest.getBoxTimetableUrl())
+                .boxInsta(createBoxRequest.getBoxInsta())
+                .build();
+    }
 }
