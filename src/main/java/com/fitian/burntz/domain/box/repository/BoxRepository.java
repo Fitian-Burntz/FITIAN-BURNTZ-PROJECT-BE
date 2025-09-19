@@ -22,4 +22,6 @@ public interface BoxRepository extends JpaRepository<Box, Long> {
 
     // 박스 전체 리스트 페이징 해서 조회
     Page<Box> findAllByDeletedYN(BaseTime.Yn deletedYn, Pageable pageable);
+
+    boolean existsByBoxCode(String boxCode);
 }
