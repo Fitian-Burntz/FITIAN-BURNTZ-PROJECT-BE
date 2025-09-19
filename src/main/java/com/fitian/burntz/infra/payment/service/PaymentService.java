@@ -65,12 +65,13 @@ public class PaymentService {
           .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
       BoxSubscription updatedBoxSubscription = oldBoxSubscription.replaceTo(boxSubscription);
       boxSubscriptionRepository.save(updatedBoxSubscription);
-      return;
+    } else {
+      log.info("박스 구독 정보 저장 중 - 새로운 구독 정보를 저장합니다.");
+      boxSubscriptionRepository.save(boxSubscription);
     }
 
-    boxSubscriptionRepository.save(boxSubscription);
-
     // 5. 박스 구독 로그 저장
+    System.out.println("subscriptionEventLog.getSubscriptionEventLogPk() = " + subscriptionEventLog.getSubscriptionEventLogPk();
     subscriptionEventLogRepository.save(subscriptionEventLog);
   }
 
