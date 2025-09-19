@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.member.repository;
 import com.fitian.burntz.domain.member.entity.Member;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,11 +11,14 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    Optional<Member> findByEmail(String email);
     Optional<Member> findByProviderAndMemberId(String provider, String memberId);
 
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Member m SET m.lastVisitedBoxPk = :boxPk WHERE m.memberPk = :memberPk")
+    int updateLastVisitedBoxPk(@Param("memberPk") Long memberPk,
+                               @Param("boxPk") Long boxPk);
 
-    /** 멤버와 연관된 Auth 모두 찾기 **/
-    @Query("select m from Member m left join fetch m.auths where m.memberPk = :id")
-    Optional<Member> findByIdWithAuths(@Param("id") Long id);
 }
+
+
+

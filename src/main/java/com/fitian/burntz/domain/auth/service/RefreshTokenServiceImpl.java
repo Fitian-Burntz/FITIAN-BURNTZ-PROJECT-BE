@@ -1,7 +1,6 @@
 package com.fitian.burntz.domain.auth.service;
 
 import com.fitian.burntz.domain.auth.repository.AuthRepository;
-import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
@@ -21,7 +20,6 @@ import java.util.HexFormat;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final AuthRepository authRepository;
-    private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider; // 토큰 검증용 주입
 
     private String hashToken(String token) {
@@ -60,10 +58,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public boolean softDeleteByMemberAndDeviceId(Long memberPk, String deviceId) {
         if (deviceId == null || deviceId.isBlank()) return false;
+
         String did = deviceId.trim();
 
         int affected = authRepository.softDeleteByMemberPkAndDeviceIdNative(memberPk, did);
         log.debug("deleteByMemberAndDeviceId memberPk={} deviceId={} affected={}", memberPk, did, affected);
+
         return affected > 0;
     }
 
@@ -78,8 +78,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return new RefreshTokenService.ValidationResult(memberPk, deviceId.trim());
     }
 
-    // 외부 호출 없으면 private로 변경
-    private Long getMemberPkFromValidRefreshToken(String refreshToken) throws ValidationException {
+    /** refreshToken 여부 및 JWT 검증 (더 세밀한 검증 수행) **/
+    @Override
+    @Transactional(readOnly = true)
+    public Long getMemberPkFromValidRefreshToken(String refreshToken) throws ValidationException {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
         }
@@ -93,24 +95,30 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         if (memberPk == null) {
             throw new ValidationException(ErrorCode.TOKEN_INVALID);
         }
-        if (!validateRefreshTokenForMember(memberPk, refreshToken)) {
+        if (!isRefreshTokenValidForMember(memberPk, refreshToken)) {
             throw new ValidationException(ErrorCode.TOKEN_INVALID);
         }
         return memberPk;
     }
 
-    private boolean validateRefreshTokenForMember(Long memberPk, String refreshToken) {
+
+    /** refreshToken 의 멤버 일치 & DB 존재 여부만 확인 **/
+    private boolean isRefreshTokenValidForMember(Long memberPk, String refreshToken) {
+        if (memberPk == null || refreshToken == null || refreshToken.isBlank()) {
+            return false;
+        }
         try {
             String incomingHash = hashToken(refreshToken);
             boolean exists = authRepository.existsByMember_MemberPkAndRefreshToken(memberPk, incomingHash);
             log.debug("validateRefreshTokenForMember: memberPk={} storedHashMatch={}", memberPk, exists);
             return exists;
         } catch (DataAccessException dae) {
+            // 로그는 남기되 예외는 다시 던져서 5xx로 DB 에러 노출
             log.error("DB error during refresh-token validation for memberPk={}", memberPk, dae);
-            return false;
+            throw dae;
         } catch (Exception e) {
-            log.error("validateRefreshTokenForMember ERROR memberPk={} error={}", memberPk, e.getMessage(), e);
-            return false;
+            log.error("Unexpected error during refresh-token validation for memberPk={}", memberPk, e);
+            throw new RuntimeException("Failed to validate refresh token", e);
         }
     }
 }

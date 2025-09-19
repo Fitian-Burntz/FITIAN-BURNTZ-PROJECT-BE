@@ -3,7 +3,6 @@ package com.fitian.burntz.domain.auth.oauth;
 
 import com.fitian.burntz.domain.auth.dto.OAuthUserInfo;
 import com.fitian.burntz.domain.member.dto.MemberCreateResult;
-import com.fitian.burntz.domain.member.entity.Member;
 
 public interface OAuthService {
 

@@ -9,8 +9,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 
 @Service
 @RequiredArgsConstructor
@@ -42,27 +40,27 @@ public class OAuthServiceImpl implements OAuthService {
         String providerMemberId = userInfo.getMemberId();
 
         // 변경: 직접 memberRepository로 먼저 조회하지 않고 getOrCreate 호출만 함
-        MemberCreateResult createResult = memberService.getOrCreateMember(
+        MemberCreateResult memberCreateResult = memberService.getOrCreateMember(
                 providerKey,
                 providerMemberId,
                 userInfo.getNickname() != null ? userInfo.getNickname() : "",
                 userInfo.getEmail()
         );
 
-        Member member = createResult.member();
-        boolean isNew = createResult.isNewMember();
+        Member member = memberCreateResult.member();
+        boolean isNew = memberCreateResult.isNewMember();
 
         // 기존 로직: 기존 사용자라면 프로필 갱신 처리
         if (!isNew) {
             boolean changed = false;
             if (userInfo.getNickname() != null && !userInfo.getNickname().isBlank()
                     && (member.getNickname() == null || !member.getNickname().equals(userInfo.getNickname()))) {
-                member.updateProfileIfChanged(userInfo.getNickname(), null, null);
+                member.updateMemberProfile(userInfo.getNickname(), null, null);
                 changed = true;
             }
             if (userInfo.getEmail() != null && !userInfo.getEmail().isBlank()
                     && (member.getEmail() == null || !member.getEmail().equals(userInfo.getEmail()))) {
-                member.updateProfileIfChanged(null, userInfo.getEmail(), null);
+                member.updateMemberProfile(null, userInfo.getEmail(), null);
                 changed = true;
             }
             if (changed) {
@@ -70,6 +68,6 @@ public class OAuthServiceImpl implements OAuthService {
             }
         }
 
-        return createResult;
+        return memberCreateResult;
     }
 }
