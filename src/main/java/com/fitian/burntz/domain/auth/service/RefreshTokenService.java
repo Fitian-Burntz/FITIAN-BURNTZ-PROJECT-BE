@@ -20,5 +20,8 @@ public interface RefreshTokenService {
      */
     ValidationResult validateRefreshTokenAndDevice(String refreshToken, String deviceId) throws ValidationException;
 
+    Long getMemberPkFromValidRefreshToken(String refreshToken);
+
     public static record ValidationResult(Long memberPk, String deviceId) {}
+
 }
