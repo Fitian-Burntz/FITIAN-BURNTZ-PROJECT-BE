@@ -47,17 +47,16 @@ public class RecordService {
     private final ClassesRepository classesRepository;
     private final MemberRepository memberRepository;
     private final RecordRepository recordRepository;
-
     /*
-    * record 생성
-    * */
+     * record 생성
+     * */
     @Transactional
     public void createRecord(RecordCreateRequest req, LocalDate date, Long boxPk, Long memberPk){
         //wod 조회를 wodPk가 아니라 box, date로 체크하기
         /* 체험하러 온 사람이 있을 수도 있다 -> 일일체험자는 memberPk가 null이면서 name 필드에 값이 들어감.
-        * box에 등록된 사람이라면 memberPk에 값이 들어가고, name필드에 null이 들어감.
-        * 클래스 1번 당 운동기록 1개
-        * */
+         * box에 등록된 사람이라면 memberPk에 값이 들어가고, name필드에 null이 들어감.
+         * 클래스 1번 당 운동기록 1개
+         * */
 
         //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
         requireManagerOrOwner(memberPk, boxPk);
@@ -67,7 +66,7 @@ public class RecordService {
 
         //4. classes 존재 및 소속 검증
         Classes classes = requireClassesInBox(req.getClassesPk(),boxPk);
-        
+
         //5. memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
         if (req.getMemberPk() != null && req.getNickname() != null && !req.getNickname().isBlank()) {
             throw new ValidationException(ErrorCode.DUPLICATED_NICKNAME_MEMBERPK);
@@ -102,19 +101,17 @@ public class RecordService {
     }
 
 
+
     /*
      * record 목록 조회
      * */
     @Transactional(readOnly = true)
     public List<RecordResponse> getRecord(Long boxPk, Long memberPk, LocalDate date){
 
-        //1. box 유효성 검증
-        Box box = requireActiveBox(boxPk);
-
-        //2. 해당 box에 소속된 멤버인지 검증
+        //1. 해당 box에 소속된 멤버인지 검증
         Member member = requireMemberInBox(memberPk,boxPk);
 
-        //3. wod 존재 및 소속 검증
+        //2. wod 존재 및 소속 검증
         Wod wod = requireActiveWod(boxPk, date);
 
         //해당 날짜의 record 모두 조회
@@ -133,25 +130,18 @@ public class RecordService {
         //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
         requireManagerOrOwner(memberPk, boxPk);
 
-        //2. box 유효성 검증
-        Box box = requireActiveBox(boxPk);
-
-        //3. wod 유효성 검증 : box+date로 조회
-        Wod wod = requireActiveWod(boxPk, date);
-
-
-        // 4. 대상 레코드 조회 (Wod & Box fetch)
+        // 2. 대상 레코드 조회 (Wod & Box fetch)
         Record record = recordRepository.findByIdWithWodAndBox(recordPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
 
-        // 5. path의 box/date와 일치하는지 검증
+        // 3. path의 box/date와 일치하는지 검증
         Long recordBoxPk = record.getWod().getBox().getBoxPk();
         LocalDate recordDate = record.getWod().getWodDate();
         if (!recordBoxPk.equals(boxPk) || !recordDate.equals(date)) {
             throw new ValidationException(ErrorCode.INVALID_REQUEST);
         }
 
-        // 5. targetMember (null 허용) 및 nickname 결정 (null => 변경 없음)
+        // 4. targetMember (null 허용) 및 nickname 결정 (null => 변경 없음)
         Member targetMember = null;
         String nicknameToSet = null;
 
@@ -190,10 +180,7 @@ public class RecordService {
         //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
         requireManagerOrOwner(memberPk, boxPk);
 
-        //2. box 유효성 검증
-        Box box = requireActiveBox(boxPk);
-
-        //3. wod 유효성 검증 : box+date로 조회
+        //2. wod 유효성 검증 : box+date로 조회
         Wod wod = requireActiveWod(boxPk, date);
 
         Record record = recordRepository.findById(recordPk)

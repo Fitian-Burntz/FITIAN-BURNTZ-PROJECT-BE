@@ -7,6 +7,7 @@ import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.Optional;
 
 /**
