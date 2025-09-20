@@ -13,7 +13,8 @@ public record BoxResponse(
         String boxFeeUrl,
         String boxTimetableUrl,
         String boxInsta,
-        SubscribeYN subscribe) {
+        SubscribeYN subscribe
+) {
 
     public static BoxResponse from(BoxDto boxDto) {
         return new BoxResponse(

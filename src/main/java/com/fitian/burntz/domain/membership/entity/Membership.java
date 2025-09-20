@@ -3,12 +3,12 @@ package com.fitian.burntz.domain.membership.entity;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.membership.enums.MembershipStatus;
+import com.fitian.burntz.domain.membership.v1.dto.MembershipUpdateRequest;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * @author : 선순주
@@ -52,4 +52,29 @@ public class Membership extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "box_pk", nullable = false)
     private Box box;
+
+    public void updateFrom(MembershipUpdateRequest req) {
+        if (req == null) return;
+        //  startDate  expirationDate   status  memo  period
+
+        if (req.getMembershipName() != null && !req.getMembershipName().isBlank()) {
+            this.membershipName = req.getMembershipName();
+        }
+
+        if (req.getStartDate() != null) {
+            this.startDate = req.getStartDate();
+        }
+
+        if (req.getExpirationDate() != null) {
+            this.expirationDate = req.getExpirationDate();
+        }
+
+        if (req.getStatus() != null) {
+            this.status = req.getStatus();
+        }
+
+        if (req.getMemo() != null && !req.getMemo().isBlank()) {
+            this.memo = req.getMemo();
+        }
+    }
 }
