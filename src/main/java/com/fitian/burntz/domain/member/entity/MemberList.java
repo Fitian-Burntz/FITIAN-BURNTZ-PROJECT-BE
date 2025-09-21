@@ -36,4 +36,10 @@ public class MemberList extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "box_pk", nullable = false)
     private Box box;
+
+    // 멤버 role 변경
+    public void changeRole(MemberRole newRole) {
+        if (newRole == null) throw new IllegalArgumentException("newRole required");
+        this.role = newRole;
+    }
 }
