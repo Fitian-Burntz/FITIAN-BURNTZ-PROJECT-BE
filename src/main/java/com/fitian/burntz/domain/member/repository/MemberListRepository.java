@@ -26,4 +26,9 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     //해당 box에 해당 멤버가 속해있는지 확인
     boolean existsByMemberMemberPkAndBoxBoxPkAndDeletedYN(Long memberPk, Long boxPk, BaseTime.Yn deletedYN);
     boolean existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(Long boxPk, Long memberPk, BaseTime.Yn deletedYN);
+
+
+    Optional<MemberList> findByBox_BoxPkAndMember_MemberPk(Long boxPk, Long memberPk);
+    boolean existsByBox_BoxPkAndMember_MemberPk(Long boxPk, Long memberPk);
+    long countByBox_BoxPkAndRole(Long boxPk, MemberRole role);
 }
