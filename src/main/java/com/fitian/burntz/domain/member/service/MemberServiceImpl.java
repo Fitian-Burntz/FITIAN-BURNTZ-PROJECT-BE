@@ -118,8 +118,9 @@ public class MemberServiceImpl implements MemberService {
     }
 
 
+    /** 멤버 탈퇴 **/
     @Override
-    public MemberDto removeMember(Long memberPk) {
+    public MemberDto withdrawMember(Long memberPk) {
         Member member = memberRepository.findById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
