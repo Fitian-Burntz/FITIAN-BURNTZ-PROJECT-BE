@@ -40,6 +40,8 @@ public enum ErrorCode {
     PASSWORD_SPACE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_SPACE_NOT_ALLOWED", "공백은 포함될 수 없습니다."),
     PASSWORD_EMOJI_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_EMOJI_NOT_ALLOWED", "이모티콘은 사용할 수 없습니다."),
     PASSWORD_KOREAN_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_KOREAN_NOT_ALLOWED", "한글은 포함될 수 없습니다."),
+    NO_CHANGE_REQUIRED(HttpStatus.BAD_REQUEST, "NO_CHANGE_REQUIRED", "변경할 내용이 없습니다."),
+    OPERATION_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "OPERATION_NOT_ALLOWED", "이 작업은 현재 상태에서 허용되지 않습니다. 마지막 소유자는 강등할 수 없습니다."),
 
 
     // 401 Unauthorized
@@ -76,6 +78,7 @@ public enum ErrorCode {
 
     //409 중복 생성/리소스 충돌
     DUPLICATE_BOX_CODE(HttpStatus.CONFLICT, "DUPLICATE_BOX_CODE", "이미 사용중인 boxCode 입니다."),
+    DUPLICATE_MEMBER(HttpStatus.CONFLICT, "DUPLICATE_MEMBER", "이미 해당 박스에 가입된 멤버입니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
