@@ -6,6 +6,8 @@ import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Objects;
+
 /**
  * @author : 선순주
  * @packageName : com.fitian.burntz.domain.box.entity
@@ -36,4 +38,25 @@ public class MemberList extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "box_pk", nullable = false)
     private Box box;
+
+    @Column(name = "box_nickname", length = 50, nullable = false)
+    private String boxNickname;
+
+    // 멤버 role 변경
+    public void changeRole(MemberRole newRole) {
+        if (newRole == null) throw new IllegalArgumentException("newRole required");
+        this.role = newRole;
+    }
+
+    // 멤버 멤버 리스트 생성
+    public static MemberList create(Box box, Member member) {
+        Objects.requireNonNull(member, "member required");
+        Objects.requireNonNull(box, "box required");
+
+        return MemberList.builder()
+                .box(box)
+                .member(member)
+                .role(MemberRole.OWNER)
+                .build();
+    }
 }
