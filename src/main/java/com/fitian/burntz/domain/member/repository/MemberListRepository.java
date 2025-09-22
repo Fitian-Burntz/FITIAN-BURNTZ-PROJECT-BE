@@ -6,6 +6,8 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -29,6 +31,11 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
 
 
     Optional<MemberList> findByBox_BoxPkAndMember_MemberPk(Long boxPk, Long memberPk);
-    boolean existsByBox_BoxPkAndMember_MemberPk(Long boxPk, Long memberPk);
+
+    // memberList 에서 삭제되지 않은 행 중 중복 데이터가 있는지 확인
+    @Query(value = "select exists (select 1 from burntz.member_list where box_pk = :boxPk and member_pk = :memberPk and deleted_yn = 'N')",
+            nativeQuery = true)
+    boolean existsActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
+
     long countByBox_BoxPkAndRole(Long boxPk, MemberRole role);
 }
