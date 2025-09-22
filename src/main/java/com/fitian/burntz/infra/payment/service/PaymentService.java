@@ -71,7 +71,6 @@ public class PaymentService {
     }
 
     // 5. 박스 구독 로그 저장
-    System.out.println("subscriptionEventLog.getSubscriptionEventLogPk() = " + subscriptionEventLog.getSubscriptionEventLogPk();
     subscriptionEventLogRepository.save(subscriptionEventLog);
   }
 
