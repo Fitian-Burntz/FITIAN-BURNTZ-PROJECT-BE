@@ -18,6 +18,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     int updateLastVisitedBoxPk(@Param("memberPk") Long memberPk,
                                @Param("boxPk") Long boxPk);
 
+
+    @Query("SELECT m FROM Member m WHERE m.memberPk = :memberPk AND m.deletedYN = 'N'")
+    Optional<Member> findActiveById(@Param("memberPk") Long memberPk);
+
 }
 
 

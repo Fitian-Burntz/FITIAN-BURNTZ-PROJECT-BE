@@ -73,7 +73,7 @@ public class MemberServiceImpl implements MemberService {
             throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
         }
 
-        Member member = memberRepository.findById(memberPk)
+        Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         boolean changed = false;
@@ -120,7 +120,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public MemberDto removeMember(Long memberPk) {
-        Member member = memberRepository.findById(memberPk)
+        Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         try {
