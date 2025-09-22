@@ -78,6 +78,7 @@ public enum ErrorCode {
 
     //409 중복 생성/리소스 충돌
     DUPLICATE_BOX_CODE(HttpStatus.CONFLICT, "DUPLICATE_BOX_CODE", "이미 사용중인 boxCode 입니다."),
+    DUPLICATE_MEMBER(HttpStatus.CONFLICT, "DUPLICATE_MEMBER", "이미 해당 박스에 가입된 멤버입니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
