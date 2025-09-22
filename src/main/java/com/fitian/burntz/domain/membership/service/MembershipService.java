@@ -111,7 +111,7 @@ public class MembershipService {
             historyRepository.save(history);
         } catch (JsonProcessingException e) {
             log.error("Failed to save Membership History. membershipPk={}, boxPk={}, memberPk={}",
-                    membership.getMembershipPk(), boxPk, memberPk);
+                    membership.getMembershipPk(), boxPk, memberPk, e);
             throw new RuntimeException("Failed to save Membership History.", e);
         }
     }
@@ -147,7 +147,7 @@ public class MembershipService {
             historyRepository.save(history);
         } catch (JsonProcessingException e) {
             log.error("Failed to save Membership History. membershipPk={}, boxPk={}, memberPk={}",
-                    membership.getMembershipPk(), boxPk, memberPk);
+                    membership.getMembershipPk(), boxPk, memberPk, e);
             throw new RuntimeException("Failed to save Membership History.", e);
         }
     }
