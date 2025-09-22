@@ -61,15 +61,21 @@ public class RecordResponse {
         // 안전한 member 참조
         String displayNickname = null;
         Long memberPk = null;
-        if (r.getMember() != null) {
+
+        // record에 저장된 nickname(생성 시 memberList.nickname으로 채워졌다면 이것을 우선 사용)
+        // 닉네임 우선순위: record.nickname -> member.nickname -> null
+        if (r.getNickname() != null && !r.getNickname().isBlank()) {
+            displayNickname = r.getNickname();
+        } else if (r.getMember() != null) {
+            // record.nickname 없으면 member 엔티티 닉네임 사용 (회원)
             memberPk = r.getMember().getMemberPk();
-            // member 테이블의 nickname을 우선 사용 (회원)
             displayNickname = r.getMember().getNickname();
         }
 
-        // member가 없거나 member.nickname이 비어있으면 record에 저장된 nickname 사용 (비회원)
-        if (displayNickname == null || displayNickname.isBlank()) {
-            displayNickname = r.getNickname();
+        // 만약 member가 있고 memberPk를 설정하지 않았던 경우(위에서 record.nickname이 먼저 설정된 경우),
+        // memberPk는 member가 존재하면 채워주는게 좋음.
+        if (memberPk == null && r.getMember() != null) {
+            memberPk = r.getMember().getMemberPk();
         }
 
         return RecordResponse.builder()
@@ -85,6 +91,5 @@ public class RecordResponse {
                 .team(r.getTeam())
                 .memo(r.getMemo())
                 .build();
-
     }
 }

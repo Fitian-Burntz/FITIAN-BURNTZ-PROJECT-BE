@@ -75,10 +75,18 @@ public class RecordService {
             throw new ValidationException(ErrorCode.EMPTY_NICKNAME_MEMBERPK);
         }
 
-        //6. 대상 멤버 검증(회원일 경우) - 해당 box에 존재하는 member인지 확인
+        //6. 대상 멤버 검증(회원일 경우)
+        //memberList에서 member와 nickname을 가져옴.
         Member targetMember = null;
+        String nicknameFromMemberList = null;
         if (req.getMemberPk() != null) {
-            targetMember = requireMemberInBox(req.getMemberPk(), boxPk);
+            // memberList에서 조회해서 member와 box-별 닉네임을 얻음
+            MemberList memberList = memberListRepository
+                    .findByMemberMemberPkAndBoxBoxPkAndDeletedYN(req.getMemberPk(), boxPk, BaseTime.Yn.N)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
+
+            targetMember = memberList.getMember();
+            nicknameFromMemberList = memberList.getBoxNickname();
         }
 
         //7. 운동기록이 작성될 유저가 특정 클래스에 이미 운동기록이 작성되어 있는지 확인(클래스 1번당 운동기록 1개)->memberPk를 가진 필드만 확인
@@ -89,7 +97,7 @@ public class RecordService {
         }
 
         //엔티티 저장
-        Record record = req.toEntity(wod,classes,targetMember);
+        Record record = req.toEntity(wod, classes, targetMember, nicknameFromMemberList);
 
         //동시성 대비
         try {
