@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.member.controller;
 
 import com.fitian.burntz.domain.member.dto.MemberDto;
+import com.fitian.burntz.domain.member.dto.MemberInfoResponse;
 import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
@@ -20,7 +21,7 @@ public class MemberController {
     private final MemberService memberService;
 
     @PutMapping
-    public ResponseEntity<ApiResponse<MemberDto>> updateMemberInfo(
+    public ResponseEntity<ApiResponse<MemberInfoResponse>> updateMemberInfo(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(required = false) String nickname,
             @RequestParam(required = false) String gender) {
@@ -29,19 +30,19 @@ public class MemberController {
 
         MemberDto updateResponse = memberService.updateMemberInfo(memberPk, nickname, gender);
 
-        return ResponseEntity.ok(ApiResponse.success(updateResponse));
+        return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(updateResponse)));
     }
 
 
     @DeleteMapping
-    public ResponseEntity<ApiResponse<MemberDto>> removeMember(
+    public ResponseEntity<ApiResponse<MemberInfoResponse>> removeMember(
             @AuthenticationPrincipal CustomUserDetails customUserDetails){
 
         Long memberPk = customUserDetails.getMemberPk();
 
         MemberDto removeResponse = memberService.removeMember(memberPk);
 
-        return ResponseEntity.ok(ApiResponse.success(removeResponse,
+        return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(removeResponse),
                 "Your membership withdrawal has been completed."));
     }
 }
