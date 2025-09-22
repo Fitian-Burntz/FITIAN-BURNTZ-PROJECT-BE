@@ -13,6 +13,9 @@ public enum ErrorCode {
     DUPLICATED_USER(HttpStatus.BAD_REQUEST, "DUPLICATED_USER", "이미 등록된 사용자입니다."),
     DUPLICATED_NICKNAME(HttpStatus.BAD_REQUEST, "DUPLICATED_NICKNAME", "이미 등록된 닉네임입니다."),
     WOD_ALREADY_EXISTS(HttpStatus.BAD_REQUEST,"WOD_ALREADY_EXISTS","이미 해당 날짜의 WOD가 존재합니다."),
+    DUPLICATED_NICKNAME_MEMBERPK(HttpStatus.BAD_REQUEST,"DUPLICATED_NICKNAME_MEMBERPK","memberPk와 nickname을 동시에 지정할 수 없습니다."),
+    EMPTY_NICKNAME_MEMBERPK(HttpStatus.BAD_REQUEST,"EMPTY_NICKNAME_MEMBERPK","member와 nickname 중 하나는 반드시 필요합니다."),
+    ALREADY_EXISTS_RECORD_FOR_CLASS(HttpStatus.BAD_REQUEST,"ALREADY_EXISTS_RECORD_FOR_CLASS", "이미 해당 Class에 운동기록이 존재합니다."),
 
     // 400 Bad Request 파일 관련 에러코드
     UNSUPPORTED_FILE_FORMAT(HttpStatus.BAD_REQUEST, "UNSUPPORTED_FILE_FORMAT", "지원하지 않는 파일 형식입니다."),
@@ -37,6 +40,8 @@ public enum ErrorCode {
     PASSWORD_SPACE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_SPACE_NOT_ALLOWED", "공백은 포함될 수 없습니다."),
     PASSWORD_EMOJI_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_EMOJI_NOT_ALLOWED", "이모티콘은 사용할 수 없습니다."),
     PASSWORD_KOREAN_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_KOREAN_NOT_ALLOWED", "한글은 포함될 수 없습니다."),
+    NO_CHANGE_REQUIRED(HttpStatus.BAD_REQUEST, "NO_CHANGE_REQUIRED", "변경할 내용이 없습니다."),
+    OPERATION_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "OPERATION_NOT_ALLOWED", "이 작업은 현재 상태에서 허용되지 않습니다. 마지막 소유자는 강등할 수 없습니다."),
 
 
     // 401 Unauthorized
@@ -59,14 +64,21 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."),
     CHANNEL_NOT_FOUND(HttpStatus.NOT_FOUND, "CHANNEL_NOT_FOUND", "해당 채널을 찾을 수 없습니다."),
     CLASS_NOT_FOUND(HttpStatus.NOT_FOUND, "CLASS_NOT_FOUND", "해당 수업을 찾을 수 없습니다."),
+    MEMBERSHIP_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBERSHIP_NOT_FOUND", "해당 멤버십을 찾을 수 없습니다."),
     USER_WITHDRAWN(HttpStatus.NOT_FOUND, "USER_WITHDRAWN", "탈퇴한 회원입니다."),
     PROVIDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROVIDER_NOT_FOUND", "소셜 provider를 찾을 수 없습니다."),
     DEVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_NOT_FOUND", "해당 기기를 찾을 수 없습니다."),
     WOD_NOT_FOUND(HttpStatus.NOT_FOUND,"WOD_NOT_FOUND", "해당 WOD를 찾을 수 없습니다."),
     MEMBER_NOT_IN_BOX(HttpStatus.NOT_FOUND,"MEMBER_NOT_IN_BOX","해당 박스에 속해있지 않은 사용자입니다."),
+    RECORD_NOT_FOUND(HttpStatus.NOT_FOUND,"RECORD_NOT_FOUND","운동기록을  찾을 수 없습니다."),
 
     // 405 Method Not Allowed
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "허용되지 않은 HTTP 메서드입니다."),
+
+
+    //409 중복 생성/리소스 충돌
+    DUPLICATE_BOX_CODE(HttpStatus.CONFLICT, "DUPLICATE_BOX_CODE", "이미 사용중인 boxCode 입니다."),
+    DUPLICATE_MEMBER(HttpStatus.CONFLICT, "DUPLICATE_MEMBER", "이미 해당 박스에 가입된 멤버입니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
