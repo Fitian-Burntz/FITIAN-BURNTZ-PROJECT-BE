@@ -35,8 +35,11 @@ public class Record extends BaseTime {
     private Classes classes;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_pk", nullable = false)
+    @JoinColumn(name = "member_pk")
     private Member member;
+
+    @Column(name = "nickname", length = 50)
+    private String nickname;
 
     @Column(name = "level", length = 50)
     private String level;
@@ -48,7 +51,7 @@ public class Record extends BaseTime {
     private Integer reps;
 
     @Column(name = "time")
-    private float time;
+    private Float time;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "result", length = 10)
@@ -59,4 +62,43 @@ public class Record extends BaseTime {
 
     @Column(name = "memo", length = 255)
     private String memo;
+
+    /**
+     * 관리자용 업데이트 (부분수정 지원)
+     *
+     * targetMember != null : member 연관을 해당 member로 설정, nickname은 member.getNickname()으로 덮어씀
+     * targetMember == null && nicknameParam != null : member 연관 제거(비회원) & nicknameParam 설정
+     * nicknameParam == null : nickname 변경 없음
+     * other fields: null이면 변경 없음
+     */
+    public void updateByAdmin(
+            Member targetMember,
+            String nicknameParam,
+            String level,
+            Integer round,
+            Integer reps,
+            Float time,
+            RecordResult result,
+            String team,
+            String memo
+    ) {
+        if (targetMember != null) {
+            this.member = targetMember;
+            this.nickname = targetMember.getNickname();
+        } else {
+            if (nicknameParam != null) {
+                this.member = null;
+                this.nickname = nicknameParam;
+            }
+            // nicknameParam == null -> 변경 없음
+        }
+
+        if (level != null) this.level = level;
+        if (round != null) this.round = round;
+        if (reps != null) this.reps = reps;
+        if (time != null) this.time = time;
+        if (result != null) this.result = result;
+        if (team != null) this.team = team;
+        if (memo != null) this.memo = memo;
+    }
 }

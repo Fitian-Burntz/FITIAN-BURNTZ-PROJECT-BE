@@ -3,20 +3,21 @@ package com.fitian.burntz.domain.box.controller;
 import com.fitian.burntz.domain.box.docs.BoxDocs;
 import com.fitian.burntz.domain.box.dto.BoxDto;
 import com.fitian.burntz.domain.box.dto.BoxResponse;
+import com.fitian.burntz.domain.box.dto.CreateBoxRequest;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.service.BoxService;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +53,24 @@ public class BoxController implements BoxDocs {
         return ResponseEntity.ok(ApiResponse.success(boxResponsePage));
     }
 
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<BoxResponse>> createBox(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody CreateBoxRequest createBoxRequest
+    ){
+        Long memberPk = customUserDetails.getMemberPk();
+
+        // 실제 생성 로직 실행 (예외는 글로벌 핸들러로 처리)
+        BoxDto boxDtoResponse = boxService.createBox(memberPk, createBoxRequest);
+
+        // 바디에는 간단한 메시지(원하면 null로 해도 됨)
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        BoxResponse.from(boxDtoResponse),
+                        "Creation was successful."));
+
+    }
 
 
 }
