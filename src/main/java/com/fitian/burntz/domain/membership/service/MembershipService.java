@@ -58,6 +58,8 @@ public class MembershipService {
 
         Membership membership = membershipRepository.findByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+        MemberList target = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         return MembershipResponse.builder()
                 .membershipPk(membership.getMembershipPk())
@@ -67,6 +69,7 @@ public class MembershipService {
                 .status(membership.getStatus())
                 .memo(membership.getMemo())
                 .boxPk(membership.getBox().getBoxPk())
+                .boxNickname(target.getBoxNickname())
                 .build();
     }
 
