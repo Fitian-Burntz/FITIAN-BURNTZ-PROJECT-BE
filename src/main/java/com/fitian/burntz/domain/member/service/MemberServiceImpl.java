@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.member.service;
 
 import com.fitian.burntz.domain.auth.service.RefreshTokenService;
+import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;

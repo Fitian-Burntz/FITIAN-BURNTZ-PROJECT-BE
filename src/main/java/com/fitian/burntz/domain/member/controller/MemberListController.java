@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.member.controller;
 
+import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleRequest;
 import com.fitian.burntz.domain.member.service.MemberListService;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberListController {
 
     private final MemberListService memberListService;
+
 
     // 컨트롤러에서 반드시 필요한 값 null 체크 (방어적 코드)
     @PostMapping

@@ -81,7 +81,8 @@ public class BoxServiceImpl implements BoxService {
         }
     }
 
-    public JoinBoxDto joinBoxMember (Long joinMemberPk, String belongBoxCode){
+    @Override
+    public JoinBoxDto joinMemberToBox (Long joinMemberPk, String belongBoxCode){
         // 멤버 DB 존재 여부 확인
         Member joinMember = memberRepository.findActiveById(joinMemberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
