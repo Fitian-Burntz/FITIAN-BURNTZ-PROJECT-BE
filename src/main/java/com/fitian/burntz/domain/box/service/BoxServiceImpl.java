@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.box.service;
 
 import com.fitian.burntz.domain.box.dto.BoxDto;
 import com.fitian.burntz.domain.box.dto.CreateBoxRequest;
+import com.fitian.burntz.domain.box.dto.JoinBoxDto;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -33,6 +34,7 @@ public class BoxServiceImpl implements BoxService {
     private final BoxRepository boxRepository;
     private final MemberRepository memberRepository;
     private final MemberListService memberListService;
+    private final MemberListRepository memberListRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -44,11 +46,11 @@ public class BoxServiceImpl implements BoxService {
     @Override
     public BoxDto createBox(Long ownerPk, CreateBoxRequest createBoxRequest) {
         // 0) owner 존재 확인
-        Member owner = memberRepository.findById(ownerPk)
+        Member owner = memberRepository.findActiveById(ownerPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         // boxCode 중복 검사
-        if (createBoxRequest.getBoxCode() != null && boxRepository.existsByBoxCode(createBoxRequest.getBoxCode())) {
+        if (createBoxRequest.getBoxCode() != null && boxRepository.existsActiveByBoxCode(createBoxRequest.getBoxCode())) {
             throw new ValidationException(ErrorCode.DUPLICATE_BOX_CODE);
         }
 
@@ -60,14 +62,12 @@ public class BoxServiceImpl implements BoxService {
             Box savedBox = boxRepository.save(createdBox);
             log.info("Box created: boxPk={} boxCode={} ownerPk={}", savedBox.getBoxPk(), savedBox.getBoxCode(), ownerPk);
 
-            Long boxPk = savedBox.getBoxPk();
-
             try {
-                memberListService.createMemberList(owner, boxPk);
-                log.info("Owner added to Box as MemberList: boxPk={} ownerPk={}", boxPk, ownerPk);
+                memberListService.createMemberList(owner, savedBox);
+                log.info("Owner added to Box as MemberList: boxPk={} ownerPk={}", savedBox.getBoxPk(), ownerPk);
             } catch (ValidationException e) {
                 // MemberList 생성 중 비즈니스 오류 발생 시 로그 후 전파(트랜잭션 전체 롤백)
-                log.warn("Failed to create MemberList via service for boxPk={} ownerPk={}: {}", boxPk, ownerPk, e.getErrorCode());
+                log.warn("Failed to create MemberList via service for boxPk={} ownerPk={}: {}", savedBox.getBoxPk(), ownerPk, e.getErrorCode());
                 throw e;
             }
 
@@ -79,5 +79,38 @@ public class BoxServiceImpl implements BoxService {
             log.warn("Failed to save box (possible duplicate box_code): {}", createBoxRequest.getBoxCode(), e);
             throw new ValidationException(ErrorCode.DUPLICATE_BOX_CODE);
         }
+    }
+
+    @Override
+    public JoinBoxDto joinMemberToBox (Long joinMemberPk, String belongBoxCode){
+        // 멤버 DB 존재 여부 확인
+        Member joinMember = memberRepository.findActiveById(joinMemberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        // BoxCode DB 존재 여부 확인
+        Box belongBox = boxRepository.findActiveByBoxCode(belongBoxCode)
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_CODE_NOT_FOUND));
+
+        // 이미 해당 박스에 멤버가 존재하는지 확인
+        if (memberListRepository.existsActiveByBoxPkAndMemberPk(belongBox.getBoxPk(), joinMemberPk)) {
+            throw new ValidationException(ErrorCode.DUPLICATE_MEMBER);
+        }
+
+        MemberList joinNewMember = MemberList.joinNewMemberToBox(joinMember, belongBox);
+
+        try {
+            // 멤버 리스트 저장 (영속화)
+            MemberList savedJoinNewMember = memberListRepository.save(joinNewMember);
+            log.info("MemberList created: boxPk={} joinMemberPk={} joinMemberRole:{}",
+                    savedJoinNewMember.getBox().getBoxPk(), joinMemberPk, savedJoinNewMember.getRole());
+
+            return JoinBoxDto.from(joinMemberPk, belongBoxCode);
+        }
+        catch (DataIntegrityViolationException e) {
+            // 데이터 저장중 경쟁상황, 동시성으로 인한 unique 위반 등: 일관된 에러코드로 변환
+            log.warn("Failed to save memberList (possible duplicate memberList): {}", joinNewMember.getMemberListPk(), e);
+            throw new ValidationException(ErrorCode.DUPLICATE_BOX_CODE);
+        }
+
     }
 }

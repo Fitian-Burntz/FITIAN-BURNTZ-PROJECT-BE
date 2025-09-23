@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.member.service;
 
 import com.fitian.burntz.domain.auth.service.RefreshTokenService;
+import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -73,7 +74,7 @@ public class MemberServiceImpl implements MemberService {
             throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
         }
 
-        Member member = memberRepository.findById(memberPk)
+        Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         boolean changed = false;
@@ -118,9 +119,10 @@ public class MemberServiceImpl implements MemberService {
     }
 
 
+    /** 멤버 탈퇴 **/
     @Override
-    public MemberDto removeMember(Long memberPk) {
-        Member member = memberRepository.findById(memberPk)
+    public MemberDto withdrawMember(Long memberPk) {
+        Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         try {
