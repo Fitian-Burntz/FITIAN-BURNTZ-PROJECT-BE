@@ -68,6 +68,11 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
             .group("📦 박스 API")
             .pathsToMatch("/api/v1/boxes/**")
+                //wod랑 record경로 제외
+                .pathsToExclude(
+                        "/api/v1/boxes/**/wods",     
+                        "/api/v1/boxes/**/wods/**"
+                )
             .addOpenApiCustomizer(jwtSecurityCustomizer())
             .build();
     }
@@ -88,6 +93,33 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("💬 채널 API")
                 .pathsToMatch("/api/v1/channels/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    //Wod API 그룹
+    @Bean
+    public GroupedOpenApi wodApi() {
+        return GroupedOpenApi.builder()
+                .group("\uD83C\uDFCB\uFE0F WOD API")
+                .pathsToMatch(
+                        "/api/v1/boxes/*/wods",
+                        "/api/v1/boxes/*/wods/*"
+                )
+                .pathsToExclude("/api/v1/boxes/**/wods/**/records/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // Record API 그룹 (records 하위만 포함)
+    @Bean
+    public GroupedOpenApi recordApi() {
+        return GroupedOpenApi.builder()
+                .group("📝 Record API")
+                .pathsToMatch(
+                        "/api/v1/boxes/*/wods/*/records",
+                        "/api/v1/boxes/*/wods/*/records/*"
+                )
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
