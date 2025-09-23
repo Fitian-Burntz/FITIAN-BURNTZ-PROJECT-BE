@@ -25,6 +25,7 @@ public class MemberListController {
     private final MemberListService memberListService;
 
 
+    /**  box 멤버 역할 변경 MEMBER, MANAGER (양도 x) **/
     // 컨트롤러에서 반드시 필요한 값 null 체크 (방어적 코드)
     @PostMapping
     public ResponseEntity<?> updateMemberRole(
@@ -44,6 +45,7 @@ public class MemberListController {
 
         return ResponseEntity.ok(ApiResponse.success(updateResponse, "The member's role has been successfully changed."));
     }
+
 
 
 }
