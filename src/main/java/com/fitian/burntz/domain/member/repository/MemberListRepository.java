@@ -30,7 +30,8 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     boolean existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(Long boxPk, Long memberPk, BaseTime.Yn deletedYN);
 
 
-    Optional<MemberList> findByBox_BoxPkAndMember_MemberPk(Long boxPk, Long memberPk);
+    @Query("SELECT m FROM MemberList m WHERE m.box.boxPk = :boxPk AND m.member.memberPk = :memberPk AND m.deletedYN = 'N'")
+    Optional<MemberList> findActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
 
     // memberList 에서 삭제되지 않은 행 중 중복 데이터가 있는지 확인
     @Query(value = "select exists (select 1 from burntz.member_list where box_pk = :boxPk and member_pk = :memberPk and deleted_yn = 'N')",
