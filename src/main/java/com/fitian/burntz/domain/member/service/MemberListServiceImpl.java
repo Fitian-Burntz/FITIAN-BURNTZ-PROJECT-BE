@@ -29,35 +29,39 @@ public class MemberListServiceImpl implements MemberListService{
 
     /**
      * owner: 로그인한 사용자의 owner (권한 체크 필요 시 사용)
-     * updateMemberRoleDto: boxPk, owner(target), role(optional)
+     * updateMemberRoleDto: newBox, owner(target), role(optional)
      */
     @Override
-    public CreateMemberListResponse createMemberList(Member owner, Long boxPk) {
+    public CreateMemberListResponse createMemberList(Member owner, Box newBox) {
         // 인증 체크: 컨트롤러에서 이미 처리하더라도 방어적으로 검사
         if (owner == null) {
             throw new ValidationException(ErrorCode.UNAUTHORIZED);
         }
 
+        Long ownerPk = owner.getMemberPk();
+        Long newBoxPk = newBox.getBoxPk();
+
         // 이미 해당 박스에 멤버가 존재하는지 확인
-        if (memberListRepository.existsActiveByBoxPkAndMemberPk(boxPk, owner.getMemberPk())) {
+        if (memberListRepository.existsActiveByBoxPkAndMemberPk(newBoxPk, ownerPk)) {
             throw new ValidationException(ErrorCode.DUPLICATE_MEMBER);
         }
 
         // 이미 박스 생성 로직에서 요청 멤버의 DB 존재 여부를 확인했음.
         // 박스 조회
-        Box box = boxRepository.findActiveById(boxPk)
+        Box box = boxRepository.findActiveById(newBoxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
+        //생성 후 저장한 박스 엔티티를 바로 받아오는거라서 재조회 필요 없음
         // 정적 팩토리 메서드로 객체 생성
-        MemberList memberList = MemberList.create(box, owner);
+        MemberList memberList = MemberList.create(newBox, owner);
 
         try {
             MemberList savedMemberList = memberListRepository.save(memberList);
-            log.info("MemberList created: boxPk={} owner={}", boxPk, owner);
+            log.info("MemberList created: newBoxPk={} ownerPk={}", newBoxPk, ownerPk);
             return CreateMemberListResponse.toDto(savedMemberList);
         } catch (DataIntegrityViolationException dive) {
             // 인덱스/동시성 문제 등으로 중복 삽입 시 안전하게 처리
-            log.warn("Failed to save MemberList (possible duplicate): boxPk={} owner={}", boxPk, owner, dive);
+            log.warn("Failed to save MemberList (possible duplicate): newBoxPk={} ownerPk={}", newBoxPk, ownerPk, dive);
             throw new ValidationException(ErrorCode.DUPLICATE_MEMBER);
         }
     }
@@ -96,7 +100,7 @@ public class MemberListServiceImpl implements MemberListService{
             throw new ValidationException(ErrorCode.FORBIDDEN);
         }
 
-        // 3) 대상 멤버가 박스에 존재하는지 확인
+        // 대상 멤버가 박스에 존재하는지 확인
         MemberList targetMember = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, targetMemberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 

@@ -46,7 +46,7 @@ public class BoxServiceImpl implements BoxService {
     @Override
     public BoxDto createBox(Long ownerPk, CreateBoxRequest createBoxRequest) {
         // 0) owner 존재 확인
-        Member owner = memberRepository.findById(ownerPk)
+        Member owner = memberRepository.findActiveById(ownerPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         // boxCode 중복 검사
@@ -62,14 +62,12 @@ public class BoxServiceImpl implements BoxService {
             Box savedBox = boxRepository.save(createdBox);
             log.info("Box created: boxPk={} boxCode={} ownerPk={}", savedBox.getBoxPk(), savedBox.getBoxCode(), ownerPk);
 
-            Long boxPk = savedBox.getBoxPk();
-
             try {
-                memberListService.createMemberList(owner, boxPk);
-                log.info("Owner added to Box as MemberList: boxPk={} ownerPk={}", boxPk, ownerPk);
+                memberListService.createMemberList(owner, savedBox);
+                log.info("Owner added to Box as MemberList: boxPk={} ownerPk={}", savedBox.getBoxPk(), ownerPk);
             } catch (ValidationException e) {
                 // MemberList 생성 중 비즈니스 오류 발생 시 로그 후 전파(트랜잭션 전체 롤백)
-                log.warn("Failed to create MemberList via service for boxPk={} ownerPk={}: {}", boxPk, ownerPk, e.getErrorCode());
+                log.warn("Failed to create MemberList via service for boxPk={} ownerPk={}: {}", savedBox.getBoxPk(), ownerPk, e.getErrorCode());
                 throw e;
             }
 
@@ -85,11 +83,11 @@ public class BoxServiceImpl implements BoxService {
 
     public JoinBoxDto joinBoxMember (Long joinMemberPk, String belongBoxCode){
         // 멤버 DB 존재 여부 확인
-        Member joinMember = memberRepository.findById(joinMemberPk)
+        Member joinMember = memberRepository.findActiveById(joinMemberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         // BoxCode DB 존재 여부 확인
-        Box belongBox = boxRepository.findByBoxCode(belongBoxCode)
+        Box belongBox = boxRepository.findActiveByBoxCode(belongBoxCode)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_CODE_NOT_FOUND));
 
         // 이미 해당 박스에 멤버가 존재하는지 확인

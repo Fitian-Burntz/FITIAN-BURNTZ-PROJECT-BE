@@ -56,6 +56,7 @@ public class MemberList extends BaseTime {
         return MemberList.builder()
                 .box(box)
                 .member(member)
+                .boxNickname(member.getNickname())
                 .role(MemberRole.OWNER)
                 .build();
     }
