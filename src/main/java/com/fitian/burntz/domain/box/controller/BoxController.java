@@ -4,9 +4,12 @@ import com.fitian.burntz.domain.box.docs.BoxDocs;
 import com.fitian.burntz.domain.box.dto.BoxDto;
 import com.fitian.burntz.domain.box.dto.BoxResponse;
 import com.fitian.burntz.domain.box.dto.CreateBoxRequest;
+import com.fitian.burntz.domain.box.dto.JoinBoxDto;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.service.BoxService;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,6 +39,30 @@ public class BoxController implements BoxDocs {
     return "Test API";
   }
 
+    /** box 생성하기 **/
+    @PostMapping
+    public ResponseEntity<ApiResponse<BoxResponse>> createBox(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody CreateBoxRequest createBoxRequest
+    ){
+        Long loginMemberPk = customUserDetails.getMemberPk();
+
+        //컨트롤러에서 빠르게 인증예외 처리
+        if (loginMemberPk == null) {
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // 실제 생성 로직 실행 (예외는 글로벌 핸들러로 처리)
+        BoxDto boxDtoResponse = boxService.createBox(loginMemberPk, createBoxRequest);
+
+        // 바디에는 간단한 메시지(원하면 null로 해도 됨)
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        BoxResponse.from(boxDtoResponse),
+                        "Creation was successful."));
+
+    }
+
     /** 활성화된 box 리스트 전체 조회 **/
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<Page<BoxResponse>>> getAllActiveBoxes(
@@ -53,24 +80,32 @@ public class BoxController implements BoxDocs {
         return ResponseEntity.ok(ApiResponse.success(boxResponsePage));
     }
 
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<BoxResponse>> createBox(
+    @PostMapping("/join")
+    public ResponseEntity<?> joinMemberToBox(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestBody CreateBoxRequest createBoxRequest
+            @RequestParam(value = "boxCode", required = false) String boxCode
     ){
-        Long memberPk = customUserDetails.getMemberPk();
+        Long joinMemberPk = customUserDetails.getMemberPk();
 
-        // 실제 생성 로직 실행 (예외는 글로벌 핸들러로 처리)
-        BoxDto boxDtoResponse = boxService.createBox(memberPk, createBoxRequest);
+        //컨트롤러에서 빠르게 null 값 예외 처리
+        // 인증 예외
+        if (joinMemberPk == null) {
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
+        }
 
-        // 바디에는 간단한 메시지(원하면 null로 해도 됨)
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(
-                        BoxResponse.from(boxDtoResponse),
-                        "Creation was successful."));
+
+        if (boxCode == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        JoinBoxDto joinResponse = boxService.joinMemberToBox(joinMemberPk, boxCode);
+
+        return ResponseEntity.ok(ApiResponse.success(joinResponse));
 
     }
+
+
+
 
 
 }
