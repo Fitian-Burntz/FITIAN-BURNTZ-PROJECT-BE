@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.record.entity;
 
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.record.enums.RecordResult;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -72,7 +73,7 @@ public class Record extends BaseTime {
      * other fields: null이면 변경 없음
      */
     public void updateByAdmin(
-            Member targetMember,
+            MemberList targetMemberList,
             String nicknameParam,
             String level,
             Integer round,
@@ -82,9 +83,9 @@ public class Record extends BaseTime {
             String team,
             String memo
     ) {
-        if (targetMember != null) {
-            this.member = targetMember;
-            this.nickname = targetMember.getNickname();
+        if (targetMemberList != null) {
+            this.member = targetMemberList.getMember();
+            this.nickname = targetMemberList.getBoxNickname();
         } else {
             if (nicknameParam != null) {
                 this.member = null;
