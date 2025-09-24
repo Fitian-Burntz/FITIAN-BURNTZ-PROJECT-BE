@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.record.v1.dto;
 
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.record.enums.RecordResult;
 import com.fitian.burntz.domain.wod.entity.Wod;
@@ -25,7 +26,7 @@ import lombok.*;
 @Schema(description = "Record Create DTO")
 public class RecordCreateRequest {
     @Schema(description = "기록 대상자(회원일 경우)")
-    private Long memberPk;
+    private Long memberListPk;
 
     @Schema(description = "비회원일 경우 닉네임(memberPk가 없을 때 필수)")
     private String nickname;
@@ -56,13 +57,13 @@ public class RecordCreateRequest {
     private String memo;
 
     // memberList에서 가져온 nickname을 인자로 받음
-    public Record toEntity(Wod wod, Classes classes, Member member, String nicknameFromMemberList){
+    public Record toEntity(Wod wod, Classes classes, MemberList memberList, String nicknameFromMemberList){
         Record.RecordBuilder builder = Record.builder()
                 .wod(wod)
                 .classes(classes);
 
         // member가 있으면 연관 설정
-        if (member != null && member.getMemberPk() != null) builder.member(member);
+        if (memberList != null && memberList.getMemberListPk() != null) builder.memberList(memberList);
 
         // 닉네임 우선순위: memberList에서 준 nicknameFromMemberList가 있으면 그걸 사용.
         if (nicknameFromMemberList != null) {
