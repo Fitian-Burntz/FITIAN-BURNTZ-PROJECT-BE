@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.wod.v1.controller;
 
+import com.fitian.burntz.domain.wod.docs.WodDocs;
 import com.fitian.burntz.domain.wod.service.WodService;
 import com.fitian.burntz.domain.wod.v1.dto.WodCreateRequest;
 import com.fitian.burntz.domain.wod.v1.dto.WodResponse;
@@ -22,7 +23,7 @@ import java.time.LocalDate;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/boxes/{boxPk}/wods")
-public class WodController {
+public class WodController implements WodDocs {
     private final WodService wodService;
 
     /*
@@ -61,6 +62,7 @@ public class WodController {
             @Valid @RequestBody WodUpdateRequest request,
             @PathVariable Long boxPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
     ){
         Long memberPk = 2L;
         wodService.updateWod(boxPk, memberPk, date,request);
@@ -74,6 +76,7 @@ public class WodController {
     public ApiResponse<Void> deleteWod(
             @PathVariable Long boxPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
     ){
         Long memberPk = 2L;
         wodService.deleteWod(boxPk, memberPk, date);

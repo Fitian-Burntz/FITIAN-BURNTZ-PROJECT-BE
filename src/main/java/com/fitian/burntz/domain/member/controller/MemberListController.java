@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.member.controller;
 
+import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleRequest;
 import com.fitian.burntz.domain.member.service.MemberListService;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +24,10 @@ public class MemberListController {
 
     private final MemberListService memberListService;
 
+
+    /**  box 멤버 역할 변경 MEMBER, MANAGER (양도 x) **/
     // 컨트롤러에서 반드시 필요한 값 null 체크 (방어적 코드)
+    @PostMapping
     public ResponseEntity<?> updateMemberRole(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UpdateMemberRoleRequest updateMemberRoleRequest
@@ -40,6 +45,7 @@ public class MemberListController {
 
         return ResponseEntity.ok(ApiResponse.success(updateResponse, "The member's role has been successfully changed."));
     }
+
 
 
 }
