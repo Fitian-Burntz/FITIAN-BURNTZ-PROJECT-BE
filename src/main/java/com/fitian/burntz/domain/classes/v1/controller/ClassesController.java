@@ -2,7 +2,6 @@ package com.fitian.burntz.domain.classes.v1.controller;
 
 import com.fitian.burntz.domain.classes.docs.ClassesDocs;
 import com.fitian.burntz.domain.classes.v1.dto.*;
-import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.service.ClassesService;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
@@ -30,7 +29,7 @@ public class ClassesController implements ClassesDocs {
 
     @GetMapping()
     @Override
-    public ResponseEntity<ApiResponse<List<Classes>>> getClasses(
+    public ResponseEntity<ApiResponse<List<ClassesResponse>>> getClasses(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ClassesSearchRequest request) {
         return ResponseEntity.ok(ApiResponse.success(classesService.getClasses(request, userDetails)));

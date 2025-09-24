@@ -18,11 +18,11 @@ import java.util.Optional;
  * @description : 수업 참여자 리포지토리입니다.
  */
 public interface ClassParticipantRepository extends JpaRepository<ClassParticipant, Long> {
-    boolean existsByClassesClassesPkAndMemberMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
-    Optional<ClassParticipant> findByClassesClassesPkAndMemberMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
+    boolean existsByClassesClassesPkAndMemberListMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
+    Optional<ClassParticipant> findByClassesClassesPkAndMemberListMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
 
     @Query("SELECT new com.fitian.burntz.domain.classes.v1.dto.ClassParticipantResponse("
-            + " cp.classParticipantPk, cp.classes.classesPk, cp.member.memberPk, cp.createdAt ) "
+            + " cp.classParticipantPk, cp.classes.classesPk, cp.member_list.memberPk, cp.createdAt ) "
             + "FROM ClassParticipant cp "
             + "WHERE cp.classes.classesPk = :classesPk AND cp.deletedYN = :deletedYN")
     List<ClassParticipantResponse> findResponsesByClassesPkAndDeletedYN(

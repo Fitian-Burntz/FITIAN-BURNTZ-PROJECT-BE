@@ -32,6 +32,9 @@ public class ClassParticipantResponse {
     @Schema(description = "멤버 PK", example = "456")
     private Long memberPk;
 
+    @Schema(description = "박스 닉네임", example = "문정동 이경영")
+    private String boxNickname;
+
     @Schema(description = "생성일시(서버 기준)", example = "2025-09-16T15:00:00")
     private LocalDateTime createdAt;
 }
