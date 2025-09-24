@@ -8,7 +8,10 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CreateBoxRequest {
+public class UpdateBoxInfoRequest {
+
+    @NotNull(message = "boxPk is required")
+    private Long boxPk;
 
     @NotNull(message = "boxName is required")
     private String boxName;
