@@ -47,4 +47,6 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     boolean existsActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
 
     long countByBox_BoxPkAndRole(Long boxPk, MemberRole role);
+
+    Optional<MemberList> findByMemberListPkAndBoxBoxPkAndDeletedYN(Long memberListPk, Long boxPk, BaseTime.Yn yn);
 }
