@@ -23,7 +23,7 @@ public class AuthController implements AuthDocs {
 
     @Override
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> loginWithSocial(
+    public ResponseEntity<?> loginWithSocial(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam("provider") String provider,
             @RequestParam(value = "deviceId", required = false) String deviceId) {
