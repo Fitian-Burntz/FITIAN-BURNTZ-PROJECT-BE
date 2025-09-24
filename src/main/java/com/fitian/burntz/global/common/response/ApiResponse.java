@@ -1,5 +1,6 @@
 package com.fitian.burntz.global.common.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,6 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
     private boolean success;
@@ -25,7 +27,7 @@ public class ApiResponse<T> {
         return res;
     }
 
-    public static <T> ApiResponse<T> success(T data,String message){
+    public static <T> ApiResponse<T> success(T data, String message){
         ApiResponse<T> res = new ApiResponse<>();
         res.success = true;
         res.data = data;
