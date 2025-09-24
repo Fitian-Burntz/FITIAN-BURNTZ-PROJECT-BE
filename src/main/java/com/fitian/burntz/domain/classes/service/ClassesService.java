@@ -95,7 +95,7 @@ public class ClassesService {
         boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
         //해당 수업에 참여중인지 검증
-        boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberListMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
+        boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(isInClass) throw new ValidationException(ErrorCode.DUPLICATED_USER);
 
         Classes classes = classesRepository.findById(request.getClassesPk())
@@ -116,7 +116,7 @@ public class ClassesService {
         boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
         //해당 수업에 참여중인지 검증
-        ClassParticipant participant = participantRepository.findByClassesClassesPkAndMemberListMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N)
+        ClassParticipant participant = participantRepository.findByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         participant.markDeleted();
