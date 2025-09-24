@@ -24,7 +24,7 @@ public class RecordUpdateRequest {
 
      // 최종 반영할 기록자 memberPk (null 이면 비회원)
     @Schema(description = "기록 대상자(회원일 경우)")
-    private Long memberPk;
+    private Long memberListPk;
 
      //비회원 닉네임 (memberPk가 null일 때 사용).
     @Schema(description = "비회원일 경우 닉네임(memberPk가 없을 때 필수)")
