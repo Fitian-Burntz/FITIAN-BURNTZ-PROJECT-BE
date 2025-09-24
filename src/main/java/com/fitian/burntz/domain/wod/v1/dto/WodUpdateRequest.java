@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.enums.WodType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -21,17 +22,18 @@ import java.time.LocalDate;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Schema(name = "WodUpdateRequest", description = "Wod 수정 요청")
 public class WodUpdateRequest {
-    @NotNull
-    @Schema(description = "wod 제목")
+    @NotBlank(message = "wodTitle must not be blank")
+    @Schema(description = "wod 제목", example="HSPU+HPCL")
     private String wodTitle;
 
-    @NotNull
-    @Schema(description = "wod 내용")
+    @NotBlank(message = "wodScript must not be blank")
+    @Schema(description = "wod 내용", example="Strength Every 2:00 x 6 set")
     private String wodScript;
 
-    @NotNull
-    @Schema(description = "wod 종류")
+    @NotNull(message = "wodType is required")
+    @Schema(description = "wod 종류", example="AMRAP")
     private WodType wodType;
 
     //DTO -> Entity 적용(DTO가 엔티티의 도메인 메서드 호출)
