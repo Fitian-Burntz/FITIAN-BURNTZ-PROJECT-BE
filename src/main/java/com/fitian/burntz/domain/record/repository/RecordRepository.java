@@ -37,4 +37,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
             "where r.recordPk = :recordPk")
     Optional<Record> findByIdWithWodAndBox(@Param("recordPk") Long recordPk);
 
+    //자기 자신(헌재의 recordPk)를 제외하고 중복 운동기록이 존재하는지 확인(운동기록 수정 시 방어선)
+    boolean existsByClassesClassesPkAndMemberMemberPkAndDeletedYNAndRecordPkNot(
+            Long classesPk, Long memberPk, BaseTime.Yn deletedYN, Long recordPk);
 }
