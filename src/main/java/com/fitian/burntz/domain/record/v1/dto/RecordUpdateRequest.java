@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.record.v1.dto;
 
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.record.enums.RecordResult;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,11 +60,11 @@ public class RecordUpdateRequest {
     *   - null : 닉네임 변경 없음
     *   - non-null : 해당 값으로 nickname을 설정(비회원 전환 포함)
     * targetMember 의미:
-    *   - non-null : 해당 Member로 연관 설정, nickname은 targetMember.getNickname()으로 덮어씀
+    *   - non-null : 해당 Member로 연관 설정, nickname은 memberList의 boxnickname으로 덮어씀
     *   - null & nicknameToSet != null : member 연관 제거(비회원) & nicknameToSet 적용
     *   - null & nicknameToSet == null : member/nickname 변경 없음
     * */
-    public void applyTo(Record record, Member targetMember, String nicknameToSet) {
+    public void applyTo(Record record, MemberList targetMember, String nicknameToSet) {
         record.updateByAdmin(
                 targetMember,
                 nicknameToSet,

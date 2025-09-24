@@ -1,5 +1,7 @@
 package com.fitian.burntz.domain.record.v1.controller;
 
+import com.fitian.burntz.domain.channel.docs.ChannelDocs;
+import com.fitian.burntz.domain.record.docs.RecordDocs;
 import com.fitian.burntz.domain.record.service.RecordService;
 import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
 import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
@@ -25,7 +27,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/boxes/{boxPk}/wods/{date}/records")
-public class RecordController {
+public class RecordController implements RecordDocs {
 
     private final RecordService recordService;
 
@@ -37,6 +39,7 @@ public class RecordController {
             @Valid @RequestBody RecordCreateRequest request,
             @PathVariable Long boxPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
             ){
         Long memberPk = 2L;
         recordService.createRecord(request, date, boxPk, memberPk);
@@ -51,6 +54,7 @@ public class RecordController {
     public ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
             ){
 
         Long memberPk = 3L;
@@ -59,21 +63,22 @@ public class RecordController {
         return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, memberPk, date),"해당 날짜의 records 조회 완료")));
     }
 
-    /*
-    * Record 수정
-    * */
-    @PutMapping("/{recordPk}")
-    public ApiResponse<Void> updateRecord(
-            @Valid @RequestBody RecordUpdateRequest request,
-            @PathVariable Long boxPk,
-            @PathVariable Long recordPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-    ){
-
-        Long memberPk = 2L;
-        recordService.updateRecord(boxPk,memberPk,recordPk,date,request);
-        return ApiResponse.success(null,"record 수정 완료");
-    }
+//    /*
+//    * Record 수정
+//    * */
+//    @PutMapping("/{recordPk}")
+//    public ApiResponse<Void> updateRecord(
+//            @Valid @RequestBody RecordUpdateRequest request,
+//            @PathVariable Long boxPk,
+//            @PathVariable Long recordPk,
+//            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+//            //@AuthenticationPrincipal CustomUserDetails userDetails
+//    ){
+//
+//        Long memberPk = 2L;
+//        recordService.updateRecord(boxPk,memberPk,recordPk,date,request);
+//        return ApiResponse.success(null,"record 수정 완료");
+//    }
 
     /*
     * Record 삭제
@@ -83,6 +88,7 @@ public class RecordController {
             @PathVariable Long boxPk,
             @PathVariable Long recordPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
     ){
         Long memberPk = 2L;
         recordService.deleteRecord(boxPk, memberPk, recordPk, date);
