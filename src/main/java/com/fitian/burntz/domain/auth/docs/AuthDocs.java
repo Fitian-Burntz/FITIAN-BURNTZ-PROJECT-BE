@@ -30,24 +30,24 @@ public interface AuthDocs {
     )
 
     @Operation(summary = "소셜로그인 수행 api 입니다.", description = "google/apple 소셜로그인을 수행 합니다.")
-    public ResponseEntity<com.fitian.burntz.global.common.response.ApiResponse<LoginResponse>> loginWithSocial(
+    ResponseEntity<?> loginWithSocial(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam("provider") String provider,
             @RequestParam(value = "deviceId", required = false) String deviceId);
 
 
     @Operation(summary = "현재 기기에서만 로그아웃 api 입니다.", description = "현재 기기에서만 로그아웃 합니다.")
-    public ResponseEntity<?> logoutCurrentDevice(
+    ResponseEntity<?> logoutCurrentDevice(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "deviceId", required = false) String deviceId);
 
 
     @Operation(summary = "모든 기기에서 로그아웃 api 입니다.", description = "해당 멤버의 모든 기기에서 로그아웃 합니다.")
-    public ResponseEntity<?> logoutAllDevices(@RequestHeader(value = "Authorization", required = false) String authorization);
+    ResponseEntity<?> logoutAllDevices(@RequestHeader(value = "Authorization", required = false) String authorization);
 
 
     @Operation(summary = "refreshToken 갱신 api 입니다.", description = "현재 로그인된 계정의 refreshToken을 갱신합니다.")
-    public ResponseEntity<?> refreshTokenBased(
+    ResponseEntity<?> refreshTokenBased(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "deviceId", required = false) String deviceId);
 
