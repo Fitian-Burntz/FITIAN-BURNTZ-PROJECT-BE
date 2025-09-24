@@ -18,7 +18,8 @@
         { "name": "REDIS_PORT", "value": "6379" },
         { "name": "SPRING_DATA_REDIS_SSL_ENABLED", "value": "true" },
         { "name": "SPRING_DATA_REDIS_USERNAME", "value": "default" },
-        { "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED", "value": "true" }
+        { "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED", "value": "true" },
+        { "name": "BURNTZ_APPLE_PRIVATE_KEY_FILE", "value": "/tmp/apple_private_key.p8" }
       ],
       "secrets": [
         { "name": "DB_URL",      "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:DB_URL::" },
