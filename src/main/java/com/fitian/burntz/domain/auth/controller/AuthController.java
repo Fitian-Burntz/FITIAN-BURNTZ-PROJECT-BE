@@ -2,8 +2,11 @@ package com.fitian.burntz.domain.auth.controller;
 
 import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
+import com.fitian.burntz.domain.auth.dto.LogoutResponse;
 import com.fitian.burntz.domain.auth.service.AuthService;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -19,65 +22,99 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithSocial(
-            @RequestHeader("Authorization") String socialTokenHeader,
-            @RequestParam("Provider") String provider,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam("provider") String provider,
+            @RequestParam(value = "deviceId", required = false) String deviceId) {
 
-        if (socialTokenHeader == null || !socialTokenHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Authorization header required"));
+        //클라이언트로 부터 받은 토큰 검증 및 추출
+        String token = extractBearer(authorization);
+
+        // deviceId 값 확인
+        if (deviceId == null || deviceId.isEmpty()) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
         }
-        String token = socialTokenHeader.replaceFirst("^Bearer\\s+", "");
 
-        String deviceId = (body != null) ? body.get("deviceId") : null;
+        //deviceId 정제(공백 제거)
+        deviceId = deviceId.trim();
 
-        LoginResponse resp = authService.loginWithSocial(token, provider, deviceId);
-        return ResponseEntity.ok(ApiResponse.success(resp));
+        LoginResponse loginResponse = authService.loginWithSocial(token, provider, deviceId);
+
+        return ResponseEntity.ok(ApiResponse.success(loginResponse));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logoutCurrentDevice(
             @RequestHeader(value = "Authorization", required = false) String authorization,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestParam(value = "deviceId", required = false) String deviceId) {
 
-        String refreshToken = extractBearer(authorization, body);
-        String deviceId = (body != null) ? body.get("deviceId") : null;
+        //클라이언트로 부터 받은 토큰 검증 및 추출
+        String refreshToken = extractBearer(authorization);
+
+        if (deviceId == null ||  deviceId.isEmpty()) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        //deviceId 정제(공백 제거)
+        deviceId = deviceId.trim();
 
         authService.logoutCurrentDevice(refreshToken, deviceId);
 
-        return ResponseEntity.ok(ApiResponse.success(Map.of("result", "logged out", "deviceId", deviceId)));
+        LogoutResponse logoutResponse = new LogoutResponse("logged out", deviceId);
+
+        return ResponseEntity.ok(ApiResponse.success(logoutResponse));
     }
 
     @PostMapping("/logout/all")
     public ResponseEntity<?> logoutAllDevices(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("no token provided"));
-        }
-        String anyToken = authorization.substring(7);
-        authService.logoutAllDevices(anyToken);
-        return ResponseEntity.ok(ApiResponse.success(Map.of("result", "logged out from all devices")));
+        //클라이언트로 부터 받은 토큰 검증 및 추출
+        String refreshToken = extractBearer(authorization);
+
+        authService.logoutAllDevices(refreshToken);
+
+
+        return ResponseEntity.ok(ApiResponse.success("logged out all devices"));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshTokenBased(
             @RequestHeader(value = "Authorization", required = false) String authorization,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestParam(value = "deviceId", required = false) String deviceId) {
 
-        String refreshToken = extractBearer(authorization, body);
-        String deviceId = (body != null) ? body.get("deviceId") : null;
+        //클라이언트로 부터 받은 토큰 검증 및 추출
+        String refreshToken = extractBearer(authorization);
+
+        if (deviceId == null ||  deviceId.isEmpty()) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        //deviceId 정제(공백 제거)
+        deviceId = deviceId.trim();
 
         AuthTokenResponse response = authService.refreshTokenBased(refreshToken, deviceId);
+
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // helper: 헤더 우선, 없으면 body의 "refreshToken" 사용
-    private String extractBearer(String authorization, Map<String, String> body) {
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            return authorization.substring(7);
+
+    /** 헬퍼 메서드 **/
+
+    /**토큰 검증 및 추출 **/
+    private String extractBearer(String authorization) {
+        if (authorization == null) {
+            throw new ValidationException(ErrorCode.TOKEN_MISSING); // 헤더 없음
         }
-        if (body != null) {
-            String t = body.get("refreshToken");
-            if (t != null && !t.isBlank()) return t.trim();
+        if (!authorization.startsWith("Bearer ")) {
+            throw new ValidationException(ErrorCode.TOKEN_FORMAT_INVALID); // Bearer 없는 경우
         }
-        return null;
+
+        // 토큰 추출
+        String token = authorization.substring(7).trim();
+
+        if (token.isEmpty()) {
+            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED); // Bearer 뒤가 빈 값이 경우
+        }
+
+        return token;
     }
+
 }

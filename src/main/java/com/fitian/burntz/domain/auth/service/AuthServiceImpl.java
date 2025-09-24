@@ -16,9 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -53,9 +52,9 @@ public class AuthServiceImpl implements AuthService{
                     deviceId);
         }
 
-        MemberCreateResult createResult;
+        MemberCreateResult memberCreateResult;
         try {
-            createResult = oAuthService.findOrCreateUserBySocialToken(socialToken, deviceId, provider);
+            memberCreateResult = oAuthService.findOrCreateUserBySocialToken(socialToken, deviceId, provider);
         } catch (IllegalArgumentException iae) {
             // 예: provider가 없을 때 등 - OAuthService에서 IllegalArgumentException을 던진다면 적절한 ErrorCode로 변환
             throw new ValidationException(ErrorCode.PROVIDER_NOT_FOUND);
@@ -64,8 +63,8 @@ public class AuthServiceImpl implements AuthService{
             throw new ValidationException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        Member member = createResult.member();
-        boolean isNewMember = createResult.isNewMember();
+        Member member = memberCreateResult.member();
+        boolean isNewMember = memberCreateResult.isNewMember();
 
         JwtTokenPair pair = jwtTokenProvider.createTokenPair(member);
         refreshTokenService.saveOrUpdateRefreshToken(member.getMemberPk(), pair.getRefreshToken(), deviceId);
@@ -81,32 +80,29 @@ public class AuthServiceImpl implements AuthService{
     @Override
     public void logoutCurrentDevice(String refreshToken, String deviceId) {
         // 검증 책임을 RefreshTokenService로 이동
-        RefreshTokenService.ValidationResult vr = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
+        RefreshTokenService.ValidationResult validationResult = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
 
-        boolean deleted = refreshTokenService.softDeleteByMemberAndDeviceId(vr.memberPk(), vr.deviceId());
+        boolean deleted = refreshTokenService.softDeleteByMemberAndDeviceId(
+                validationResult.memberPk(), validationResult.deviceId()
+        );
+
         if (!deleted) {
-            throw new ValidationException(ErrorCode.DEVICE_NOT_FOUND);
+            // 멱등성 보장: 이미 삭제되었거나 존재하지 않음. 예외 대신 경고 로그 후 정상 종료
+            log.warn("logout noop: memberPk={} deviceId={}", validationResult.memberPk(), validationResult.deviceId());
+            return;
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("logoutCurrentDevice success memberPk={} deviceId={}", vr.memberPk(), vr.deviceId());
+            log.debug("logoutCurrentDevice success memberPk={} deviceId={}", validationResult.memberPk(), validationResult.deviceId());
         }
     }
 
     @Override
-    public void logoutAllDevices(String anyToken) {
-        if (anyToken == null || anyToken.isBlank()) {
-            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
-        }
-        if (!jwtTokenProvider.validateToken(anyToken)) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
+    public void logoutAllDevices(String refreshToken) {
+        // refresh 토큰 정보 일치, DB 존재, JWT 검증 수행
+        Long memberPk = refreshTokenService.getMemberPkFromValidRefreshToken(refreshToken);
 
-        Long memberPk = jwtTokenProvider.getMemberPkFromToken(anyToken);
-        if (memberPk == null) {
-            throw new ValidationException(ErrorCode.TOKEN_INVALID);
-        }
-
+        // soft-deleted 처리
         refreshTokenService.softDeleteAllByMember(memberPk);
 
         if (log.isDebugEnabled()) {
@@ -122,7 +118,7 @@ public class AuthServiceImpl implements AuthService{
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         CustomUserDetails principal = new CustomUserDetails(member);
-        var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
         String newAccessToken = jwtTokenProvider.generateAccessToken(auth, jwtAccessTokenExpirationTime);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(auth, jwtRefreshTokenExpirationTime);
