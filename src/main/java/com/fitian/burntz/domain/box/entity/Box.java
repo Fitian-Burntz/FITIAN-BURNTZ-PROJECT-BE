@@ -2,10 +2,13 @@ package com.fitian.burntz.domain.box.entity;
 
 import com.fitian.burntz.domain.box.dto.BoxDto;
 import com.fitian.burntz.domain.box.dto.CreateBoxRequest;
+import com.fitian.burntz.domain.box.dto.UpdateBoxInfoDto;
 import com.fitian.burntz.domain.box.enums.SubscribeYN;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
+
+import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
 
 /**
  * @author : 선순주
@@ -72,16 +75,31 @@ public class  Box extends BaseTime {
     /** Box 생성 적적 팩토리 매서드 **/
     public static Box create(Long ownerPk, CreateBoxRequest createBoxRequest) {
         return Box.builder()
-                .boxName(createBoxRequest.getBoxName())
+                .boxName(trimToNull(createBoxRequest.getBoxName()))
                 .ownerPk(ownerPk)
-                .boxCode(createBoxRequest.getBoxCode())
-                .boxContact(createBoxRequest.getBoxContact())
-                .boxAddress(createBoxRequest.getBoxAddress())
-                .boxScript(createBoxRequest.getBoxScript())
-                .placeId(createBoxRequest.getPlaceId())
-                .boxFeeUrl(createBoxRequest.getBoxFeeUrl())
-                .boxTimetableUrl(createBoxRequest.getBoxTimetableUrl())
-                .boxInsta(createBoxRequest.getBoxInsta())
+                .boxCode(trimToNull(createBoxRequest.getBoxCode()))
+                .boxContact(trimToNull(createBoxRequest.getBoxContact()))
+                .boxAddress(trimToNull(createBoxRequest.getBoxAddress()))
+                .boxScript(trimToNull(createBoxRequest.getBoxScript()))
+                .placeId(trimToNull(createBoxRequest.getPlaceId()))
+                .boxFeeUrl(trimToNull(createBoxRequest.getBoxFeeUrl()))
+                .boxTimetableUrl(trimToNull(createBoxRequest.getBoxTimetableUrl()))
+                .boxInsta(trimToNull(createBoxRequest.getBoxInsta()))
                 .build();
     }
+
+    /** boxInfoUpdate **/
+    // null 허용 값이 null 일 경우 기존 값 지움 처리
+    public void updateInfo(UpdateBoxInfoDto updateBoxInfoDto) {
+        this.boxName = updateBoxInfoDto.getBoxName();
+        this.boxCode = updateBoxInfoDto.getBoxCode();
+        this.boxContact = updateBoxInfoDto.getBoxContact();
+        this.boxAddress = updateBoxInfoDto.getBoxAddress();
+        this.boxScript = updateBoxInfoDto.getBoxScript();
+        this.placeId = updateBoxInfoDto.getPlaceId();
+        this.boxFeeUrl = updateBoxInfoDto.getBoxFeeUrl();
+        this.boxTimetableUrl = updateBoxInfoDto.getBoxTimetableUrl();
+        this.boxInsta = updateBoxInfoDto.getBoxInsta();
+    }
+
 }
