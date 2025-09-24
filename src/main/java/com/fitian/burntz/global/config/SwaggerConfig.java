@@ -123,4 +123,14 @@ public class SwaggerConfig {
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
+
+    // 채널 API 그룹
+    @Bean
+    public GroupedOpenApi membershipApi() {
+        return GroupedOpenApi.builder()
+                .group("🪪 멤버십 API")
+                .pathsToMatch("/api/v1/boxPk/{boxPk}/membership/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
 }

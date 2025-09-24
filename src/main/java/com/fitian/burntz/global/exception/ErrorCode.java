@@ -61,6 +61,7 @@ public enum ErrorCode {
     // 404 Not Found
     NOT_FOUND(HttpStatus.NOT_FOUND, "NOT_FOUND", "요청한 자원이 존재하지 않습니다."),
     BOX_NOT_FOUND(HttpStatus.NOT_FOUND, "BOX_NOT_FOUND", "해당 박스를 찾을 수 없습니다."),
+    BOX_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "BOX_CODE_NOT_FOUND", "해당 박스 코드를 찾을 수 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."),
     CHANNEL_NOT_FOUND(HttpStatus.NOT_FOUND, "CHANNEL_NOT_FOUND", "해당 채널을 찾을 수 없습니다."),
     CLASS_NOT_FOUND(HttpStatus.NOT_FOUND, "CLASS_NOT_FOUND", "해당 수업을 찾을 수 없습니다."),

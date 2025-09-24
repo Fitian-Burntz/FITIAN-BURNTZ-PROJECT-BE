@@ -56,7 +56,21 @@ public class MemberList extends BaseTime {
         return MemberList.builder()
                 .box(box)
                 .member(member)
+                .boxNickname(member.getNickname())
                 .role(MemberRole.OWNER)
                 .build();
+    }
+
+    public static MemberList joinNewMemberToBox(Member joinMember, Box belongBox) {
+        Objects.requireNonNull(joinMember, "member required");
+        Objects.requireNonNull(belongBox, "box required");
+
+        return MemberList.builder()
+                .box(belongBox)
+                .member(joinMember)
+                .boxNickname(joinMember.getNickname())
+                .role(MemberRole.GUEST)
+                .build();
+
     }
 }
