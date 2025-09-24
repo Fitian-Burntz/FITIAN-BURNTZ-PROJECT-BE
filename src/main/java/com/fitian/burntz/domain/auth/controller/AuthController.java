@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -23,7 +21,7 @@ public class AuthController implements AuthDocs {
 
     @Override
     @PostMapping("/login")
-    public ResponseEntity<?> loginWithSocial(
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithSocial(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam("provider") String provider,
             @RequestParam(value = "deviceId", required = false) String deviceId) {
@@ -46,7 +44,7 @@ public class AuthController implements AuthDocs {
 
     @Override
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutCurrentDevice(
+    public ResponseEntity<ApiResponse<LogoutResponse>> logoutCurrentDevice(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "deviceId", required = false) String deviceId) {
 
@@ -69,19 +67,19 @@ public class AuthController implements AuthDocs {
 
     @Override
     @PostMapping("/logout/all")
-    public ResponseEntity<?> logoutAllDevices(@RequestHeader(value = "Authorization", required = false) String authorization) {
+    public ApiResponse<Void> logoutAllDevices(@RequestHeader(value = "Authorization", required = false) String authorization) {
         //클라이언트로 부터 받은 토큰 검증 및 추출
         String refreshToken = extractBearer(authorization);
 
         authService.logoutAllDevices(refreshToken);
 
 
-        return ResponseEntity.ok(ApiResponse.success("logged out all devices"));
+        return ApiResponse.success(null,"logged out all devices");
     }
 
     @Override
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshTokenBased(
+    public ResponseEntity<ApiResponse<AuthTokenResponse>> refreshTokenBased(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "deviceId", required = false) String deviceId) {
 
