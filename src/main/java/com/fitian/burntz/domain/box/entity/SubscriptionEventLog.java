@@ -126,8 +126,8 @@ public class SubscriptionEventLog extends BaseTime {
       System.out.println("json data : " + mapper.writeValueAsString(webhookPurchaseResponse));
       return SubscriptionEventLog
           .builder()
-          .member(member) // TODO: 실제 멤버 엔티티 조회 후 교체 필요
-          .box(box) // TODO: 실제 박스 엔티티 조회 후 교체 필요
+          .member(member)
+          .box(box)
           .productId(webhookPurchaseResponse.getEvent().getProductId())
           .store(webhookPurchaseResponse.getEvent().getStore())
           .status(SubscriptionStatus.ACTIVE)
