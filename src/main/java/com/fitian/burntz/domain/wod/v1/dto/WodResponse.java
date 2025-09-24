@@ -22,21 +22,23 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Schema(name = "WodResponse", description = "Wod 조회 응답")
 public class WodResponse {
-    @Schema(description = "wod Pk")
+    @Schema(description = "wod Pk", example = "3")
     private Long wodPk;
-    @Schema(description = "box Pk")
+    @Schema(description = "box Pk", example = "2")
     private Long boxPk;
 
-    @Schema(description = "wod 제목")
+    @Schema(description = "wod 제목", example="HSPU+HPCL")
     private String wodTitle;
 
-    @Schema(description = "wod 내용")
+    @Schema(description = "wod 내용", example="Strength Every 2:00 x 6 set")
     private String wodScript;
 
-    @Schema(description = "wod 종류")
+    @Schema(description = "wod 종류", example="AMRAP")
     private WodType wodType;
-    @Schema(description = "wod 날짜")
+
+    @Schema(description = "wod 날짜", example="2025-10-01")
     private LocalDate wodDate;
 
     public static WodResponse from(Wod w) {

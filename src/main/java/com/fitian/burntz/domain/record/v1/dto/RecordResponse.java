@@ -55,29 +55,17 @@ public class RecordResponse {
     @Schema(description = "메모")
     private String memo;
 
-    public static RecordResponse from(Record r){
-        if(r == null) return null;
+    public static RecordResponse from(Record r) {
+        if (r == null) return null;
 
-        // 안전한 member 참조
-        String displayNickname = null;
-        Long memberPk = null;
-        if (r.getMember() != null) {
-            memberPk = r.getMember().getMemberPk();
-            // member 테이블의 nickname을 우선 사용 (회원)
-            displayNickname = r.getMember().getNickname();
-        }
-
-        // member가 없거나 member.nickname이 비어있으면 record에 저장된 nickname 사용 (비회원)
-        if (displayNickname == null || displayNickname.isBlank()) {
-            displayNickname = r.getNickname();
-        }
+        Long memberPk = (r.getMemberList() != null) ? r.getMemberList().getMemberListPk() : null;
 
         return RecordResponse.builder()
                 .memberPk(memberPk)
                 .recordPk(r.getRecordPk())
                 .wodPk(r.getWod() != null ? r.getWod().getWodPk() : null)
                 .classesPk(r.getClasses() != null ? r.getClasses().getClassesPk() : null)
-                .nickname(displayNickname)
+                .nickname(r.getNickname())
                 .level(r.getLevel())
                 .round(r.getRound())
                 .reps(r.getReps())
@@ -85,6 +73,5 @@ public class RecordResponse {
                 .team(r.getTeam())
                 .memo(r.getMemo())
                 .build();
-
     }
 }
