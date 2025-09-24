@@ -42,7 +42,9 @@
         { "name": "REDIS_HOST",       "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:REDIS_HOST::" },
         { "name": "REDIS_AUTH_TOKEN", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:REDIS_AUTH_TOKEN::" },
 
-        { "name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:JWT_SECRET::" }
+        { "name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:JWT_SECRET::" },
+
+        { "name" :  "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "burntz/firebase/service-account-key" }
       ]
     ,
       "essential": true,
