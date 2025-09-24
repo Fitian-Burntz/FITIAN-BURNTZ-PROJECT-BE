@@ -55,13 +55,23 @@ public class RecordCreateRequest {
     @Schema(description = "메모")
     private String memo;
 
-    public Record toEntity(Wod wod, Classes classes, Member member){
+    // memberList에서 가져온 nickname을 인자로 받음
+    public Record toEntity(Wod wod, Classes classes, Member member, String nicknameFromMemberList){
         Record.RecordBuilder builder = Record.builder()
                 .wod(wod)
                 .classes(classes);
-        //NPE 방지 NULL 조건부 처리
+
+        // member가 있으면 연관 설정
         if (member != null && member.getMemberPk() != null) builder.member(member);
-        if(this.nickname != null)   builder.nickname(this.nickname);
+
+        // 닉네임 우선순위: memberList에서 준 nicknameFromMemberList가 있으면 그걸 사용.
+        if (nicknameFromMemberList != null) {
+            builder.nickname(nicknameFromMemberList);
+        } else if (this.nickname != null) {
+            // 회원이 아닌 경우(또는 memberList 닉네임이 없는 경우) 클라이언트가 보낸 nickname 사용
+            builder.nickname(this.nickname);
+        }
+
         if (this.level != null)    builder.level(this.level);
         if (this.round != null)    builder.round(this.round);
         if (this.reps != null)     builder.reps(this.reps);
