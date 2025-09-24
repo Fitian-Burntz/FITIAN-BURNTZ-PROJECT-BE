@@ -22,8 +22,8 @@
       ],
       "secrets": [
         {
-          "name": "BURNTZ_CONFIG_JSON",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config-GzNGQm"
+          "name": "SPRING_APPLICATION_JSON",
+          "valueFrom": "burntz/app/config"
         }
       ],
       "essential": true,
