@@ -1,6 +1,6 @@
 package com.fitian.burntz.domain.classes.entity;
 
-import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,7 +28,7 @@ public class ClassParticipant extends BaseTime {
     private Classes classes;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_pk", nullable = false)
-    private Member member;
+    @JoinColumn(name = "member_list_pk", nullable = false)
+    private MemberList memberList;
 
 }
