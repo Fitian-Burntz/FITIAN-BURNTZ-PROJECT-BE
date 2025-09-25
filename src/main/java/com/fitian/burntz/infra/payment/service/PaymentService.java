@@ -133,12 +133,36 @@ public class PaymentService {
     return token;
   }
 
-
+  /**
+   * 구매 로그를 조회하는 메서드입니다.
+   *
+   * @param bokPk 조회하고자 하는 박스 pk 입니다.
+   * @return 정제된 구매 로그 리스트 입니다.
+   */
   public List<PurchaseLogResponse> getPurchaseLog(Long bokPk) {
+
     Box box = boxRepository.findById(bokPk)
         .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_NOT_FOUND));
 
+    List<SubscriptionEventLog> subscriptionEventLogs = subscriptionEventLogRepository.findAllByBoxPk(bokPk);
 
+    if(subscriptionEventLogs.isEmpty()) {
+      return List.of();
+    }
+
+    List<PurchaseLogResponse> responses = subscriptionEventLogs
+        .stream()
+        .map(log -> {
+          PurchaseLogResponse purchaseLogResponse = PurchaseLogResponse
+              .builder()
+              .purchasedAt(log.getCreatedAt())
+              .productId(log.getProductId())
+              .price(log.getPrice())
+              .build();
+          return purchaseLogResponse;
+        }).toList();
+
+    return responses;
   }
 
 }
