@@ -42,7 +42,6 @@ public enum ErrorCode {
     PASSWORD_KOREAN_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_KOREAN_NOT_ALLOWED", "한글은 포함될 수 없습니다."),
     NO_CHANGE_REQUIRED(HttpStatus.BAD_REQUEST, "NO_CHANGE_REQUIRED", "변경할 내용이 없습니다."),
     OPERATION_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "OPERATION_NOT_ALLOWED", "이 작업은 현재 상태에서 허용되지 않습니다. 마지막 소유자는 강등할 수 없습니다."),
-    PROMOTE_TO_OWNER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROMOTE_TO_OWNER_NOT_ALLOWED", "현재 페이지에서는 OWNER 로 승격할 수 없습니다."),
 
 
     // 401 Unauthorized
