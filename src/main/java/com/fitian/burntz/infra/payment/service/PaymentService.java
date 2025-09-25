@@ -73,6 +73,9 @@ public class PaymentService {
     // 5. 박스 구독 로그 저장
     log.info("박스 구독 로그 저장 중 - 구매 로그를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
     subscriptionEventLogRepository.save(subscriptionEventLog);
+
+    // 6. 최종 BOX 구독상태 변경
+
   }
 
 }
