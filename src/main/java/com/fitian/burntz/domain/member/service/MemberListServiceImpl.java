@@ -206,7 +206,7 @@ public class MemberListServiceImpl implements MemberListService{
         // 3) 멤버별 최신 membership(최대 membership_pk) 한 건씩 조회 — 페이지 단위이므로 단일 호출
         List<Membership> memberships = memberPks.isEmpty()
                 ? Collections.emptyList()
-                : membershipRepository.findLatestByMaxPkPerMemberNative(boxPk, memberPks);
+                : membershipRepository.findLatestMembershipPerMemberByBox(boxPk, memberPks);
 
         // 4) memberPk -> Membership (최신 1건) 매핑
         Map<Long, Membership> latestByMemberPk = memberships.stream()

@@ -1,8 +1,6 @@
 package com.fitian.burntz.domain.membership.repository;
 
-import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.membership.entity.Membership;
-import com.fitian.burntz.domain.membership.enums.MembershipStatus;
 import com.fitian.burntz.global.common.entity.BaseTime.Yn;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,12 +21,11 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
 
     // 해당 box 에 member 의 활성화 membershipPk 중 가장 큰 값 조회
     @Query(value =
-            "SELECT * FROM (" +
-                    "  SELECT m.*, ROW_NUMBER() OVER (PARTITION BY m.member_pk ORDER BY m.membership_pk DESC) rn " +
-                    "  FROM membership m " +
-                    "  WHERE m.box_pk = :boxPk AND m.member_pk IN (:memberPks) AND m.deleted_yn = 'N'" +
-                    ") t WHERE t.rn = 1",
+            "SELECT DISTINCT ON (m.member_pk) m.* " +
+                    "FROM burntz.membership m " +   // <-- 스키마 명시
+                    "WHERE m.box_pk = :boxPk AND m.member_pk IN (:memberPks) AND m.deleted_yn = 'N' " +
+                    "ORDER BY m.member_pk, m.membership_pk DESC",
             nativeQuery = true)
-    List<Membership> findLatestByMaxPkPerMemberNative(@Param("boxPk") Long boxPk,
-                                                      @Param("memberPks") List<Long> memberPks);
+    List<Membership> findLatestMembershipPerMemberByBox(@Param("boxPk") Long boxPk,
+                                                        @Param("memberPks") List<Long> memberPks);
 }

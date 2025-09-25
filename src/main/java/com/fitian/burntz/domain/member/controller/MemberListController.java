@@ -54,7 +54,7 @@ public class MemberListController {
 
 
     /** boxCode 로 해당 box 의 모든 memberList 를 membership 과 함께 조회 **/
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<ApiResponse<Page<MemberListWithMembershipDto>>> getAllBoxMemberList(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(value = "boxCode", required = false) String boxCode,
