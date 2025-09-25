@@ -60,17 +60,18 @@ public class PaymentService {
 
     // 4. 박스 구독 정보 저장
     if(boxSubscriptionRepository.findByBoxPk(boxPkToLong).isPresent()) {
-      log.info("박스 구독 정보 저장 중 - 기존 구독 정보가 존재하여 업데이트를 진행합니다.");
+      log.info("박스 구독 정보 저장 중 - 기존 구독 정보가 존재하여 업데이트를 진행합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
       BoxSubscription oldBoxSubscription = boxSubscriptionRepository.findByBoxPk(boxPkToLong)
           .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
       BoxSubscription updatedBoxSubscription = oldBoxSubscription.replaceTo(boxSubscription);
       boxSubscriptionRepository.save(updatedBoxSubscription);
     } else {
-      log.info("박스 구독 정보 저장 중 - 새로운 구독 정보를 저장합니다.");
+      log.info("박스 구독 정보 저장 중 - 새로운 구독 정보를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
       boxSubscriptionRepository.save(boxSubscription);
     }
 
     // 5. 박스 구독 로그 저장
+    log.info("박스 구독 로그 저장 중 - 구매 로그를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
     subscriptionEventLogRepository.save(subscriptionEventLog);
   }
 
