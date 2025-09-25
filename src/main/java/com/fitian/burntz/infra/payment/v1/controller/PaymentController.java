@@ -44,8 +44,8 @@ public class PaymentController implements PaymentDocs {
   }
 
   @GetMapping("/purchase/log")
-  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "memberPk") Long memberPk) {
-    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(memberPk);
+  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "boxPk") Long bokPk) {
+    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(bokPk);
     return ApiResponse.success(response);
   }
 
