@@ -30,6 +30,17 @@ public class PaymentService {
   private final MemberRepository memberRepository;
 
   @Transactional
+  /**
+   * 결제 완료 웹훅 처리 메서드
+   * @param webhookPurchaseResponse 결제 완료 웹훅 데이터
+   * 결제완료 처리 흐름..
+   * 1. 멤버가 존재하는지 확인
+   * 2. 박스가 존재하는지 확인
+   * 3. box_subscription 테이블 업데이트 또는 삽입
+   * 4. 박스 구독 정보 저장
+   * 5. 박스 구독 로그 저장
+   * 6. 최종 BOX 구독상태 변경
+   */
   public void handlePuchaseWebhook(WebhookPurchaseResponse webhookPurchaseResponse) {
     log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
 
@@ -75,6 +86,7 @@ public class PaymentService {
     subscriptionEventLogRepository.save(subscriptionEventLog);
 
     // 6. 최종 BOX 구독상태 변경
+    box.subscribe();
 
   }
 
