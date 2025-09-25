@@ -50,6 +50,7 @@ public class PaymentService {
     log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
 
     // 1. 토큰 검증
+    log.info("[1. 토큰 검증]");
     String token = extractToken(request);
     if(!jwtTokenProvider.validateToken(token)) {
       log.error("토큰 검증 실패 - 결제완료 웹훅 처리중 토큰이 유효하지 않습니다.(" + "구매한 box pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue() + ")" + "(" + "구매자 pk : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + ")");
@@ -58,18 +59,21 @@ public class PaymentService {
 
 
     // 2. 멤버가 존재하는지 확인
+    log.info("[2. 멤버가 존재하는지 확인]");
     String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
     Long ownerMemberIdToLong = Long.parseLong(ownerMemberId);
     Member member = memberRepository.findById(ownerMemberIdToLong)
         .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
     // 3. 박스가 존재하는지 확인
+    log.info("[3. 박스가 존재하는지 확인]");
     String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
     Long boxPkToLong = Long.parseLong(boxPk);
     Box box = boxRepository.findById(boxPkToLong)
         .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
     // 4. box_subscription 테이블 업데이트 또는 삽입
+    log.info("[4. box_subscription 테이블 업데이트 또는 삽입]");
     String productId = webhookPurchaseResponse.getEvent().getProductId();
     PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
     SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
@@ -83,6 +87,7 @@ public class PaymentService {
     SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse, member, box);
 
     // 5. 박스 구독 정보 저장
+    log.info("[5. 박스 구독 정보 저장]");
     if(boxSubscriptionRepository.findByBoxPk(boxPkToLong).isPresent()) {
       log.info("박스 구독 정보 저장 중 - 기존 구독 정보가 존재하여 업데이트를 진행합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
       BoxSubscription oldBoxSubscription = boxSubscriptionRepository.findByBoxPk(boxPkToLong)
@@ -95,10 +100,12 @@ public class PaymentService {
     }
 
     // 6. 박스 구독 로그 저장
+    log.info("[6. 박스 구독 로그 저장]");
     log.info("박스 구독 로그 저장 중 - 구매 로그를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
     subscriptionEventLogRepository.save(subscriptionEventLog);
 
     // 7. 최종 BOX 구독상태 변경
+    log.info("[7. 최종 BOX 구독상태 변경]");
     box.subscribe();
 
   }
