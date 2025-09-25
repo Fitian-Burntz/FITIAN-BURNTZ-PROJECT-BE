@@ -5,6 +5,8 @@ import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.global.common.entity.BaseTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,6 +34,16 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
 
     @Query("SELECT m FROM MemberList m WHERE m.box.boxPk = :boxPk AND m.member.memberPk = :memberPk AND m.deletedYN = 'N'")
     Optional<MemberList> findActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
+
+
+    // memberList ABC 순으로 정렬해서 조회
+    @Query(
+            value = "SELECT ml FROM MemberList ml JOIN FETCH ml.member m " +
+                    "WHERE ml.box.boxPk = :boxPk AND ml.deletedYN = 'N' " +
+                    "ORDER BY m.nickname ASC",   // <-- 대소문자 구분은 DB collation에 따름
+            countQuery = "SELECT COUNT(ml) FROM MemberList ml WHERE ml.box.boxPk = :boxPk AND ml.deletedYN = 'N'"
+    )
+    Page<MemberList> findActiveByBoxPkWithMember(@Param("boxPk") Long boxPk, Pageable pageable);
 
     // memberList 에서 삭제되지 않은 행 중 중복 데이터가 있는지 확인
     @Query(value = "select exists (select 1 from burntz.member_list where box_pk = :boxPk and member_pk = :memberPk and deleted_yn = 'N')",
