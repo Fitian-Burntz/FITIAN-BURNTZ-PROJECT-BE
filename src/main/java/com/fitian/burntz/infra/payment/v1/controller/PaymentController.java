@@ -1,5 +1,6 @@
 package com.fitian.burntz.infra.payment.v1.controller;
 
+import com.fitian.burntz.infra.payment.docs.PaymentDocs;
 import com.fitian.burntz.infra.payment.service.PaymentService;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
-public class PaymentController {
+public class PaymentController implements PaymentDocs {
 
   private final PaymentService paymentService;
 
+  @Override
   @PostMapping("/webhook/purchase")
   public ResponseEntity<?> handlePuchaseWebhook(@RequestBody WebhookPurchaseResponse webhookPurchaseResponse) {
     paymentService.handlePuchaseWebhook(webhookPurchaseResponse);

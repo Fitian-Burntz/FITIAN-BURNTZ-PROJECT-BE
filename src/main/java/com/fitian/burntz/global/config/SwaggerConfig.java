@@ -133,4 +133,16 @@ public class SwaggerConfig {
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
+
+
+    // 결제 API 그룹
+    @Bean
+    public GroupedOpenApi paymentApi() {
+        return GroupedOpenApi.builder()
+                .group("💰 결제 API")
+                .pathsToMatch("/api/v1/payments/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
 }
