@@ -53,7 +53,7 @@ public class PaymentService {
     log.info("[1. 토큰 검증]");
     String token = extractToken(request);
     if(!jwtTokenProvider.validateToken(token)) {
-      log.error("토큰 검증 실패 - 결제완료 웹훅 처리중 토큰이 유효하지 않습니다.(" + "구매한 box pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue() + ")" + "(" + "구매자 pk : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + ")");
+      log.error("[1. 토큰 검증] - 결제완료 웹훅 처리중 토큰이 유효하지 않습니다.(" + "구매한 box pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue() + ")" + "(" + "구매자 pk : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + ")");
       throw new ValidationException(ErrorCode.TOKEN_INVALID);
     }
 
@@ -89,19 +89,19 @@ public class PaymentService {
     // 5. 박스 구독 정보 저장
     log.info("[5. 박스 구독 정보 저장]");
     if(boxSubscriptionRepository.findByBoxPk(boxPkToLong).isPresent()) {
-      log.info("박스 구독 정보 저장 중 - 기존 구독 정보가 존재하여 업데이트를 진행합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
+      log.info("[5. 박스 구독 정보 저장] - 기존 구독 정보가 존재하여 업데이트를 진행합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
       BoxSubscription oldBoxSubscription = boxSubscriptionRepository.findByBoxPk(boxPkToLong)
           .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
       BoxSubscription updatedBoxSubscription = oldBoxSubscription.replaceTo(boxSubscription);
       boxSubscriptionRepository.save(updatedBoxSubscription);
     } else {
-      log.info("박스 구독 정보 저장 중 - 새로운 구독 정보를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
+      log.info("[5. 박스 구독 정보 저장] - 새로운 구독 정보를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
       boxSubscriptionRepository.save(boxSubscription);
     }
 
     // 6. 박스 구독 로그 저장
     log.info("[6. 박스 구독 로그 저장]");
-    log.info("박스 구독 로그 저장 중 - 구매 로그를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
+    log.info("[6. 박스 구독 로그 저장] - 구매 로그를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
     subscriptionEventLogRepository.save(subscriptionEventLog);
 
     // 7. 최종 BOX 구독상태 변경
@@ -121,7 +121,7 @@ public class PaymentService {
 
     // Authorization 헤더가 없거나 "Bearer "로 시작하지 않는 경우 예외 처리
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      log.error("Authorization 헤더가 없거나 Bearer 로 시작하지 않습니다.");
+      log.error("[1. 토큰 검증] Authorization 헤더가 없거나 Bearer 로 시작하지 않습니다.");
       throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
     }
 
