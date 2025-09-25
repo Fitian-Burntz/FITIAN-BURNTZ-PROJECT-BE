@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.record.service.RankingService.RankingRow;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -18,27 +19,28 @@ import java.util.List;
 public class RankingResponse {
     private Long boxPk;
     private String date;
-    private String wodType;
+    private String wodType;   // 예: "ForTime"
     private int count;
     private List<Item> ranking;
 
-    @Getter
-    @AllArgsConstructor
+    @Getter @AllArgsConstructor
     public static class Item {
         private int rank;
         private Long recordPk;
-        private Long memberListPk; // 게스트 null
-        private String nickname;
-        private String level;
-        private String metric;
-    }
 
-    public static RankingResponse from(Long boxPk, String date, String wodType, List<RankingRow> rows){
-        return new RankingResponse(
-                boxPk, date, wodType, rows.size(),
-                rows.stream().map(r ->
-                        new Item(r.getRank(), r.getRecordPk(), r.getMemberListPk(), r.getNickname(), r.getLevel(), r.getMetric())
-                ).toList()
-        );
+        // Record 엔티티의 값들
+        private Long wodPk;
+        private Long classesPk;
+        private Long memberListPk; // 게스트 null
+        private String nickname;   // record.nickname 우선, 없으면 memberList.boxNickname
+        private String level;      // "rx'd", "A", "B", "C" (원문 그대로)
+        private Integer round;
+        private Integer reps;
+        private Float time;
+        private String result;     // "S"/"F" 또는 enum name
+        private String team;
+        private String memo;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }
