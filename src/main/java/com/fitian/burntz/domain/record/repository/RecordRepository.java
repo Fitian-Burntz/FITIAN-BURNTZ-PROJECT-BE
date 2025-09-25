@@ -42,7 +42,68 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     boolean existsByClassesClassesPkAndMemberListMemberListPkAndDeletedYNAndRecordPkNot(
             Long classesPk, Long memberListPk, BaseTime.Yn deletedYN, Long recordPk);
 
+    /*
+    * 랭킹 관련 쿼리
+    * */
 
+    // ForTime: level ASC → time ASC → nickname ASC
+    @Query("""
+      select r from Record r
+      join r.wod w
+      left join r.memberList ml
+      where w.box.boxPk = :boxPk
+        and w.wodDate = :date
+        and r.deletedYN = 'N'
+      order by 
+        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        r.time asc nulls last,
+        lower(coalesce(r.nickname, ml.boxNickname, '')) asc
+    """)
+    List<Record> findForTimeOrder(Long boxPk, LocalDate date);
 
+    // AMRAP: level ASC → rounds DESC → reps DESC → nickname ASC
+    @Query("""
+      select r from Record r
+      join r.wod w
+      left join r.memberList ml
+      where w.box.boxPk = :boxPk
+        and w.wodDate = :date
+        and r.deletedYN = 'N'
+      order by 
+        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        r.round desc nulls last,
+        r.reps  desc nulls last,
+        lower(coalesce(r.nickname, ml.boxNickname, '')) asc
+    """)
+    List<Record> findAmrapOrder(Long boxPk, LocalDate date);
 
+    // EMOM / SuccessFail: S 상위(F 하위)
+    @Query("""
+      select r from Record r
+      join r.wod w
+      left join r.memberList ml
+      where w.box.boxPk = :boxPk
+        and w.wodDate = :date
+        and r.deletedYN = 'N'
+      order by 
+        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        case when upper(coalesce(r.result,'F')) = 'S' then 0 else 1 end,
+        lower(coalesce(r.nickname, ml.boxNickname, '')) asc
+    """)
+    List<Record> findEmomOrSfOrder(Long boxPk, LocalDate date);
+
+    // MAXREPS / EMOMMAX: reps DESC → nickname ASC
+    @Query("""
+      select r from Record r
+      join r.wod w
+      left join r.memberList ml
+      where w.box.boxPk = :boxPk
+        and w.wodDate = :date
+        and r.deletedYN = 'N'
+      order by 
+        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        r.reps desc nulls last,
+        lower(coalesce(r.nickname, ml.boxNickname, '')) asc
+    """)
+    List<Record> findMaxRepsOrder(Long boxPk, LocalDate date);
 }
