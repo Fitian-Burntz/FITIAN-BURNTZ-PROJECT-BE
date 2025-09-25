@@ -12,10 +12,12 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
+import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
 import com.fitian.burntz.infra.payment.enums.PaymentStore;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -128,6 +130,11 @@ public class PaymentService {
     String token = authHeader.substring(7);
 
     return token;
+  }
+
+
+  public List<PurchaseLogResponse> getPurchaseLog(Long memberPk) {
+
   }
 
 }
