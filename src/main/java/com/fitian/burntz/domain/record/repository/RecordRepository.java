@@ -106,4 +106,17 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
         lower(coalesce(r.nickname, ml.boxNickname, '')) asc
     """)
     List<Record> findMaxRepsOrder(Long boxPk, LocalDate date);
+
+    /** 랭킹 결과(recordPk 목록)를 한 번에 긁어오기 위한 조회.
+     *  연관까지 fetch 해서 N+1 방지. DISTINCT로 중복 제거.
+     */
+    @Query("""
+        select distinct r
+        from Record r
+        left join fetch r.memberList ml
+        left join fetch r.classes c
+        left join fetch r.wod w
+        where r.recordPk in (:ids)
+    """)
+    List<Record> findAllByRecordPkInWithJoins(List<Long> ids);
 }

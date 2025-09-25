@@ -94,6 +94,7 @@ public class RankingService {
     /** 조회: Redis 우선 → 폴백(DB) → Redis 재빌드 */
     public List<RankingRow> getRanking(Long boxPk, LocalDate date, Supplier<List<RankingRow>> dbFallback) {
         String k = key(boxPk, date);
+        // 1) 캐시 우선: Redis가 꺼져 있어도 여기서 예외가 밖으로 나가지 않게
         try {
             Set<String> members = redis.opsForZSet().range(k, 0, -1);
             if (members != null && !members.isEmpty()) {
@@ -102,19 +103,31 @@ public class RankingService {
                 for (String m : members) out.add(RankingRow.fromRankAndMember(rank++, m));
                 return out;
             }
-        } catch (DataAccessException ignored) { /* Redis 일시 장애 → 폴백 */ }
+        } catch (org.springframework.dao.DataAccessException ignore) {
+            // Redis 장애 → 조용히 DB 폴백으로 진행
+        }
 
-        // 폴백: DB 정렬 → Redis 재빌드
+        // 2) 폴백: DB에서 정렬해 결과 만들기
         List<RankingRow> rebuilt = dbFallback.get();
+
+        // 3) Redis 재빌드: Redis가 꺼져 있으면 여기서도 예외가 날 수 있으므로 반드시 catch
         if (!rebuilt.isEmpty()) {
             Instant expAt = expireAt(date);
-            redis.executePipelined((RedisCallback<Object>) con -> {
-                byte[] kb = k.getBytes();
-                for (RankingRow e : rebuilt) con.zAdd(kb, e.score, e.member.getBytes());
-                con.keyCommands().expireAt(kb, expAt);
-                return null;
-            });
+            try {
+                redis.executePipelined((org.springframework.data.redis.core.RedisCallback<Object>) con -> {
+                    byte[] kb = k.getBytes();
+                    for (RankingRow e : rebuilt) {
+                        con.zAdd(kb, e.getScore(), e.getMember().getBytes());
+                    }
+                    con.keyCommands().expireAt(kb, expAt);
+                    return null;
+                });
+            } catch (org.springframework.dao.DataAccessException ignore) {
+                // Redis가 죽어 있으면 재빌드는 건너뛰고 DB 결과만 반환
+            }
         }
+
+        // 4) 항상 응답은 DB 결과로 반환 (Redis가 죽어 있어도 200으로 떨어짐)
         return rebuilt;
     }
 
