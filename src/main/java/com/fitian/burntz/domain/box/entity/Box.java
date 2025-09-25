@@ -102,4 +102,12 @@ public class  Box extends BaseTime {
         this.boxInsta = updateBoxInfoDto.getBoxInsta();
     }
 
+    public void subscribe() {
+        this.subscribe = SubscribeYN.Y;
+    }
+
+    public void unsubscribe() {
+        this.subscribe = SubscribeYN.N;
+    }
+
 }
