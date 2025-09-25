@@ -3,6 +3,7 @@ package com.fitian.burntz.infra.payment.v1.controller;
 import com.fitian.burntz.infra.payment.docs.PaymentDocs;
 import com.fitian.burntz.infra.payment.service.PaymentService;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +29,9 @@ public class PaymentController implements PaymentDocs {
 
   @Override
   @PostMapping("/webhook/purchase")
-  public ResponseEntity<?> handlePuchaseWebhook(@RequestBody WebhookPurchaseResponse webhookPurchaseResponse) {
-    paymentService.handlePuchaseWebhook(webhookPurchaseResponse);
+  public ResponseEntity<?> handlePuchaseWebhook(@RequestBody WebhookPurchaseResponse webhookPurchaseResponse,
+      HttpServletRequest request) {
+    paymentService.handlePuchaseWebhook(webhookPurchaseResponse, request);
     return ResponseEntity.ok().build();
   }
 
