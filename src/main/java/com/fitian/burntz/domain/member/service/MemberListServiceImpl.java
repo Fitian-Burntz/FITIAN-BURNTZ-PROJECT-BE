@@ -100,6 +100,11 @@ public class MemberListServiceImpl implements MemberListService{
             throw new ValidationException(ErrorCode.FORBIDDEN);
         }
 
+        // 이 메서드로 OWNER 양도를 시도하는 경우
+        if (newRole == MemberRole.OWNER){
+            throw new ValidationException(ErrorCode.PROMOTE_TO_OWNER_NOT_ALLOWED);
+        }
+
         // 대상 멤버가 박스에 존재하는지 확인
         MemberList targetMember = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, targetMemberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
