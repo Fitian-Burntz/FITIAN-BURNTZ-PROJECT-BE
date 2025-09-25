@@ -158,6 +158,7 @@ public class MemberListServiceImpl implements MemberListService{
     }
 
 
+    @Override
     @Transactional(readOnly = true)
     public Page<MemberListWithMembershipDto> getMemberListsWithMembership(
             String boxCode, Long operatorPk, Pageable pageable

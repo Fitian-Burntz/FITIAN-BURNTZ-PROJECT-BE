@@ -36,11 +36,10 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     Optional<MemberList> findActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
 
 
-    // memberList ABC 순으로 정렬해서 조회
+    // box에 해당하는 memberList 페이징 조회
     @Query(
             value = "SELECT ml FROM MemberList ml JOIN FETCH ml.member m " +
-                    "WHERE ml.box.boxPk = :boxPk AND ml.deletedYN = 'N' " +
-                    "ORDER BY m.nickname ASC",   // <-- 대소문자 구분은 DB collation에 따름
+                    "WHERE ml.box.boxPk = :boxPk AND ml.deletedYN = 'N'",
             countQuery = "SELECT COUNT(ml) FROM MemberList ml WHERE ml.box.boxPk = :boxPk AND ml.deletedYN = 'N'"
     )
     Page<MemberList> findActiveByBoxPkWithMember(@Param("boxPk") Long boxPk, Pageable pageable);
