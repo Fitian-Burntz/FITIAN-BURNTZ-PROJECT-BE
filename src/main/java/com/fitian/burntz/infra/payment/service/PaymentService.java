@@ -29,39 +29,65 @@ public class PaymentService {
   private final SubscriptionEventLogRepository subscriptionEventLogRepository;
   private final MemberRepository memberRepository;
 
+  /**
+   * [결제 완료 웹훅 처리 메서드]
+   * @param webhookPurchaseResponse 결제 완료 웹훅 데이터
+   * 결제완료 처리 흐름..
+   * 1. 멤버가 존재하는지 확인
+   * 2. 박스가 존재하는지 확인
+   * 3. box_subscription 테이블 업데이트 또는 삽입
+   * 4. 구독 정보 저장
+   * 5. 구독 로그 저장
+   * 6. 최종 BOX 구독상태 변경
+   */
   @Transactional
   public void handlePuchaseWebhook(WebhookPurchaseResponse webhookPurchaseResponse) {
     log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
 
-    // 1. 멤버가 존재하는지 확인 : TODO: 테스트 용이하도록 주석처리, 배포 시 주석 해제 필요.
-//    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
-//    Long memberIdToLong = Long.parseLong(ownerMemberId);
-//    Member member = memberRepository.findById(memberId).orElseThrow(() -> new ValidationException(
-//        ErrorCode.USER_NOT_FOUND));
+    // 1. 멤버가 존재하는지 확인
+    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
+    Long ownerMemberIdToLong = Long.parseLong(ownerMemberId);
+    Member member = memberRepository.findById(ownerMemberIdToLong)
+        .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-    // 2. 박스가 존재하는지 확인 : TODO: 테스트 용이하도록 주석처리, 배포 시 주석 해제 필요.
-//    String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
-//    Long boxPkToLong = Long.parseLong(boxPk);
-//    Box box = boxRepository.findById(boxPkToLong).orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+    // 2. 박스가 존재하는지 확인
+    String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
+    Long boxPkToLong = Long.parseLong(boxPk);
+    Box box = boxRepository.findById(boxPkToLong)
+        .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
     // 3. box_subscription 테이블 업데이트 또는 삽입
-//    Member member = null;
-//    String productId = webhookPurchaseResponse.getEvent().getProductId();
-//    PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
-//    SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
-//    LocalDateTime startedAt = LocalDateTime.now();
-//    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
-//    Double price = webhookPurchaseResponse.getEvent().getPrice();
-//
-//    BoxSubscription boxSubscription = BoxSubscription
-//        .of(member, productId, store, subscriptionStatus, startedAt, expiredAt, price);
+    String productId = webhookPurchaseResponse.getEvent().getProductId();
+    PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
+    SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
+    LocalDateTime startedAt = LocalDateTime.now();
+    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
+    Double price = webhookPurchaseResponse.getEvent().getPrice();
 
-    SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse);
+    BoxSubscription boxSubscription = BoxSubscription
+        .of(member, box, productId, store, subscriptionStatus, startedAt, expiredAt, price);
 
+    SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse, member, box);
 
-    // 4. subscription_event_log 테이블에 로그 삽입
+    // 4. 박스 구독 정보 저장
+    if(boxSubscriptionRepository.findByBoxPk(boxPkToLong).isPresent()) {
+      log.info("박스 구독 정보 저장 중 - 기존 구독 정보가 존재하여 업데이트를 진행합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
+      BoxSubscription oldBoxSubscription = boxSubscriptionRepository.findByBoxPk(boxPkToLong)
+          .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+      BoxSubscription updatedBoxSubscription = oldBoxSubscription.replaceTo(boxSubscription);
+      boxSubscriptionRepository.save(updatedBoxSubscription);
+    } else {
+      log.info("박스 구독 정보 저장 중 - 새로운 구독 정보를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
+      boxSubscriptionRepository.save(boxSubscription);
+    }
 
+    // 5. 박스 구독 로그 저장
+    log.info("박스 구독 로그 저장 중 - 구매 로그를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
     subscriptionEventLogRepository.save(subscriptionEventLog);
+
+    // 6. 최종 BOX 구독상태 변경
+    box.subscribe();
+
   }
 
 }

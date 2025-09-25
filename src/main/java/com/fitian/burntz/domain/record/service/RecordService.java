@@ -135,63 +135,62 @@ public class RecordService {
     /*
     * Record 수정
     * */
-//    @Transactional
-//    public void updateRecord(Long boxPk, Long memberPk, Long recordPk, LocalDate date, RecordUpdateRequest req) {
-//        //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
-//        requireManagerOrOwner(memberPk, boxPk);
-//
-//        // 2. 대상 레코드 조회 (Wod & Box fetch)
-//        Record record = recordRepository.findByIdWithWodAndBox(recordPk)
-//                .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
-//
-//        // 3. path의 box/date와 일치하는지 검증
-//        Long recordBoxPk = record.getWod().getBox().getBoxPk();
-//        LocalDate recordDate = record.getWod().getWodDate();
-//        if (!recordBoxPk.equals(boxPk) || !recordDate.equals(date)) {
-//            throw new ValidationException(ErrorCode.INVALID_REQUEST);
-//        }
-//
-//        //4. memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
-//        validateMemberOrNickname(req);
-//
-//        // 5. targetMemberList (null 허용) 및 nickname 결정 (null => 변경 없음)
-//        MemberList targetMemberList = null;
-//        String nicknameToSet = null;
-//
-//
-//        if (req.getMemberPk() != null) {
-//            // mmemberPk가 있으면 memberList에서 조회해서 member와 box-별 닉네임을 얻음
-//            MemberList memberList = memberListRepository
-//                    .findByMemberMemberPkAndBoxBoxPkAndDeletedYN(req.getMemberPk(), boxPk, BaseTime.Yn.N)
-//                    .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
-//
-//            //자기자신제외(recordPk) 중복 운동기록 있는지 확인
-//            boolean dup = recordRepository.existsByClassesClassesPkAndMemberMemberPkAndDeletedYNAndRecordPkNot
-//                    (record.getClasses().getClassesPk(),req.getMemberPk(),BaseTime.Yn.N,recordPk);
-//
-//            if(dup){
-//                throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
-//            }
-//
-//            targetMemberList = memberList;
-//        } else {
-//            // memberPk == null => 비회원으로 전환 또는 유지
-//            if (req.getNickname() != null) {
-//                // 클라이언트가 명시적으로 nickname을 보내면 그 값으로 변경(빈 문자열도 허용)
-//                nicknameToSet = req.getNickname();
-//            }
-//            // nicknameToSet == null -> nickname 변경 없음
-//        }
-//
-//        //동시성 대비
-//        try {
-//            req.applyTo(record, targetMemberList, nicknameToSet);
-//            recordRepository.flush();
-//        } catch (DataIntegrityViolationException ex) {
-//            // DB 유니크 제약 위반 등 동시성 문제로 인해 발생할 수 있음
-//            throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
-//        }
-//    }
+    @Transactional
+    public void updateRecord(Long boxPk, Long memberPk, Long recordPk, LocalDate date, RecordUpdateRequest req) {
+        //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
+        requireManagerOrOwner(memberPk, boxPk);
+
+        // 2. 대상 레코드 조회 (Wod & Box fetch)
+        Record record = recordRepository.findByIdWithWodAndBox(recordPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
+
+        // 3. path의 box/date와 일치하는지 검증
+        if (!record.getWod().getBox().getBoxPk().equals(boxPk)
+                || !record.getWod().getWodDate().equals(date)) {
+            throw new ValidationException(ErrorCode.INVALID_REQUEST);
+        }
+
+        //4. memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
+        validateMemberOrNickname(req);
+
+        // 5. targetMemberList (null 허용) 및 nickname 결정 (null => 변경 없음)
+        MemberList targetMemberList = null;
+        String nicknameToSet = null;
+
+
+        if (req.getMemberListPk() != null) {
+            // mmemberPk가 있으면 memberList에서 조회해서 member와 box-별 닉네임을 얻음
+            MemberList memberList = memberListRepository
+                    .findByMemberListPkAndBoxBoxPkAndDeletedYN(req.getMemberListPk(), boxPk, BaseTime.Yn.N)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
+
+            //자기자신제외(recordPk) 중복 운동기록 있는지 확인
+            boolean dup = recordRepository.existsByClassesClassesPkAndMemberListMemberListPkAndDeletedYNAndRecordPkNot
+                    (record.getClasses().getClassesPk(),req.getMemberListPk(),BaseTime.Yn.N,recordPk);
+
+            if(dup){
+                throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
+            }
+
+            targetMemberList = memberList;
+        } else {
+            // memberPk == null => 비회원으로 전환 또는 유지
+            if (req.getNickname() != null) {
+                // 클라이언트가 명시적으로 nickname을 보내면 그 값으로 변경(빈 문자열도 허용)
+                nicknameToSet = req.getNickname();
+            }
+            // nicknameToSet == null -> nickname 변경 없음
+        }
+
+        //동시성 대비
+        try {
+            req.applyTo(record, targetMemberList, nicknameToSet);
+            recordRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            // DB 유니크 제약 위반 등 동시성 문제로 인해 발생할 수 있음
+            throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
+        }
+    }
 
     /*
     * Record 삭제
@@ -235,13 +234,13 @@ public class RecordService {
 
     //memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
     private void validateMemberOrNickname(RecordUpdateRequest req) {
-        boolean hasMember = req.getMemberPk() != null;
+        boolean hasMemberList = req.getMemberListPk() != null;
         boolean hasNickname = req.getNickname() != null && !req.getNickname().isBlank();
 
-        if (hasMember && hasNickname) {
+        if (hasMemberList && hasNickname) {
             throw new ValidationException(ErrorCode.DUPLICATED_NICKNAME_MEMBERPK);
         }
-        if (!hasMember && !hasNickname) {
+        if (!hasMemberList && !hasNickname) {
             throw new ValidationException(ErrorCode.EMPTY_NICKNAME_MEMBERPK);
         }
     }

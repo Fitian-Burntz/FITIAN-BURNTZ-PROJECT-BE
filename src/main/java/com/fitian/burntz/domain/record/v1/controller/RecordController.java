@@ -63,22 +63,22 @@ public class RecordController implements RecordDocs {
         return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, memberPk, date),"해당 날짜의 records 조회 완료")));
     }
 
-//    /*
-//    * Record 수정
-//    * */
-//    @PutMapping("/{recordPk}")
-//    public ApiResponse<Void> updateRecord(
-//            @Valid @RequestBody RecordUpdateRequest request,
-//            @PathVariable Long boxPk,
-//            @PathVariable Long recordPk,
-//            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-//            //@AuthenticationPrincipal CustomUserDetails userDetails
-//    ){
-//
-//        Long memberPk = 2L;
-//        recordService.updateRecord(boxPk,memberPk,recordPk,date,request);
-//        return ApiResponse.success(null,"record 수정 완료");
-//    }
+    /*
+    * Record 수정
+    * */
+    @PutMapping("/{recordPk}")
+    public ApiResponse<Void> updateRecord(
+            @Valid @RequestBody RecordUpdateRequest request,
+            @PathVariable Long boxPk,
+            @PathVariable Long recordPk,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+
+        Long memberPk = 2L;
+        recordService.updateRecord(boxPk,memberPk,recordPk,date,request);
+        return ApiResponse.success(null,"record 수정 완료");
+    }
 
     /*
     * Record 삭제
