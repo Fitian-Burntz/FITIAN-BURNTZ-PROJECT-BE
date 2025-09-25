@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.box.docs.BoxDocs;
 import com.fitian.burntz.domain.box.dto.*;
 import com.fitian.burntz.domain.box.service.BoxService;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.common.util.StringUtil;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
@@ -18,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
 
 @RestController
 @RequiredArgsConstructor
@@ -74,6 +77,9 @@ public class BoxController implements BoxDocs {
     @GetMapping("/code")
     public ResponseEntity<?> getBoxForCode(@RequestParam(value = "boxCode", required = false) String boxCode){
 
+        // 빈 문자열일 경우 null 처리
+        boxCode = trimToNull(boxCode);
+
         if (boxCode == null) {
             throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
         }
@@ -114,6 +120,9 @@ public class BoxController implements BoxDocs {
         if (joinMemberPk == null) {
             throw new ValidationException(ErrorCode.UNAUTHORIZED);
         }
+
+        // 빈 문자열일 경우 null 처리
+        boxCode = trimToNull(boxCode);
 
 
         if (boxCode == null) {
@@ -156,6 +165,7 @@ public class BoxController implements BoxDocs {
         if (loginMemberPk == null) {
             throw new ValidationException(ErrorCode.UNAUTHORIZED);
         }
+
 
         if (boxPk == null) {
             throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);

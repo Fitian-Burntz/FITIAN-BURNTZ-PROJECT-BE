@@ -4,18 +4,29 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.dto.memberList_dto.CreateMemberListResponse;
+import com.fitian.burntz.domain.member.dto.memberList_dto.MemberListWithMembershipDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.domain.membership.entity.Membership;
+import com.fitian.burntz.domain.membership.repository.MembershipRepository;
+import com.fitian.burntz.domain.membership.v1.dto.MembershipDto;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +37,7 @@ public class MemberListServiceImpl implements MemberListService{
     private final MemberListRepository memberListRepository;
     private final BoxRepository boxRepository;
     private final MemberRepository memberRepository;
+    private final MembershipRepository membershipRepository;
 
     /**
      * owner: 로그인한 사용자의 owner (권한 체크 필요 시 사용)
@@ -69,6 +81,7 @@ public class MemberListServiceImpl implements MemberListService{
     /** MANAGER, MEMBER 로 역할 변경 가능 (양도 X) **/
     @Override
     public UpdateMemberRoleDto updateMemberRole(Long operatorPk, UpdateMemberRoleDto dto) {
+        //서비스에서 한 번 더 필요 데이터 체크 (방어적 코딩)
         // 인증 실패
         if (operatorPk == null) {
             throw new ValidationException(ErrorCode.UNAUTHORIZED);
@@ -144,5 +157,77 @@ public class MemberListServiceImpl implements MemberListService{
                 .build();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<MemberListWithMembershipDto> getMemberListsWithMembership(
+            String boxCode, Long operatorPk, Pageable pageable
+    ) {
+
+        // 기본 검증
+        if (boxCode == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+        if (operatorPk == null) {
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // Box 조회
+        Box box = boxRepository.findByBoxCode(boxCode.trim())
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        Long boxPk = box.getBoxPk();
+
+        // 권한 체크: 오너이거나 OWNER/MANAGER 여야 함
+        if (!Objects.equals(box.getOwnerPk(), operatorPk)) {
+            MemberList requesterMl = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, operatorPk)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.FORBIDDEN));
+
+            MemberRole role = requesterMl.getRole();
+            if (!(role == MemberRole.OWNER || role == MemberRole.MANAGER)) {
+                throw new ValidationException(ErrorCode.FORBIDDEN);
+            }
+        }
+
+        // 1) MemberList 페이지 조회 (JOIN FETCH member, JPQL에서 ORDER BY m.nickname ASC)
+        Page<MemberList> memberListPage = memberListRepository.findActiveByBoxPkWithMember(boxPk, pageable);
+        List<MemberList> memberLists = memberListPage.getContent();
+        if (memberLists.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, memberListPage.getTotalElements());
+        }
+
+        // 2) 페이지 내 memberPk 목록 추출 (중복 제거)
+        List<Long> memberPks = memberLists.stream()
+                .map(memberList -> memberList.getMember().getMemberPk())
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 3) 멤버별 최신 membership(최대 membership_pk) 한 건씩 조회 — 페이지 단위이므로 단일 호출
+        List<Membership> memberships = memberPks.isEmpty()
+                ? Collections.emptyList()
+                : membershipRepository.findLatestByMaxPkPerMemberNative(boxPk, memberPks);
+
+        // 4) memberPk -> Membership (최신 1건) 매핑
+        Map<Long, Membership> latestByMemberPk = memberships.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        membership -> membership.getMember().getMemberPk(),
+                        Function.identity()
+                ));
+
+        // 5) DTO 조립 — 단일 MembershipDto 전달
+        List<MemberListWithMembershipDto> dtos = memberLists.stream().map(memberList -> {
+            Long memberPk = memberList.getMember().getMemberPk();
+            Membership latest = latestByMemberPk.get(memberPk);
+
+            // 여기서 단일 MembershipDto 생성 (없으면 null)
+            MembershipDto membershipDto = (latest == null) ? null : MembershipDto.from(latest);
+
+            // from 메서드는 MembershipDto (단일) 파라미터를 받도록 DTO에 정의되어 있어야 함
+            return MemberListWithMembershipDto.from(memberList, memberPk, boxPk, membershipDto);
+        }).collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, memberListPage.getTotalElements());
+    }
 
 }
