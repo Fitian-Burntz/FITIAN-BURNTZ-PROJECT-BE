@@ -43,7 +43,7 @@ public class PaymentController implements PaymentDocs {
     return ResponseEntity.ok().build();
   }
 
-  @GetMapping("/purchase/log")
+  @GetMapping("/purchase/log/{boxPk}")
   public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "boxPk") Long bokPk) {
     List<PurchaseLogResponse> response = paymentService.getPurchaseLog(bokPk);
     return ApiResponse.success(response);
