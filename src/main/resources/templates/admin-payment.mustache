@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burntz Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bw05: #f8f9fa;
+      --bw08: #f1f3f4;
+      --bw15: #e8eaed;
+      --bw20: #dadce0;
+      --bw30: #9aa0a6;
+      --bw40: #80868b;
+      --bw70: #5f6368;
+      --bw80: #3c4043;
+      --bw100: #202124;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bw05);
+      color: var(--bw80);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    .header {
+      background: white;
+      padding: 20px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Sofia Sans Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--bw100);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bw30);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bw70);
+      font-weight: 700;
+    }
+
+    .logout-btn {
+      background: var(--bw100);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .logout-btn:hover {
+      background: var(--bw70);
+    }
+
+    .login-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bw05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .login-form {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 400px;
+      max-width: 90vw;
+    }
+
+    .login-title {
+      font-family: 'Sofia Sans Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 32px;
+      color: var(--bw100);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--bw80);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--bw15);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--bw100);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--bw100);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .login-btn:hover {
+      background: var(--bw70);
+    }
+
+    .main-content {
+      padding: 20px 0;
+      display: none;
+    }
+
+    .main-content.active {
+      display: block;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--bw100);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .count-badge {
+      color: var(--bw40);
+    }
+
+    .premium-toggle {
+      display: flex;
+      align-items: center;
+      background: var(--bw100);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Sofia Sans Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      height: 24px;
+      max-width: 84px;
+    }
+
+    .premium-toggle.collapsed {
+      background: var(--bw05);
+      color: var(--bw80);
+      max-width: 60px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 0 12px;
+      height: 32px;
+      background: var(--bw15);
+      color: var(--bw80);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--bw100);
+      color: white;
+    }
+
+    .filter-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--bw15);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: var(--bw100);
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 12px;
+      background: var(--bw15);
+      color: var(--bw80);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: var(--bw100);
+      color: white;
+    }
+
+    .content-area {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .list-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--bw15);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bw70);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .item-content {
+      flex: 1;
+    }
+
+    .item-title {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--bw80);
+      margin-bottom: 4px;
+    }
+
+    .item-subtitle {
+      font-size: 12px;
+      color: var(--bw40);
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .action-btn.primary {
+      background: var(--bw100);
+      color: white;
+    }
+
+    .action-btn.danger {
+      background: #ea4335;
+      color: white;
+    }
+
+    .action-btn.secondary {
+      background: var(--bw15);
+      color: var(--bw80);
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-active {
+      background: #34a853;
+      color: white;
+    }
+
+    .status-expired {
+      background: #ea4335;
+      color: white;
+    }
+
+    .status-pending {
+      background: #fbbc04;
+      color: var(--bw80);
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--bw40);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 400px;
+      width: 90vw;
+      transform: translateY(20px);
+      transition: transform 0.3s;
+    }
+
+    .modal.active .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--bw80);
+    }
+
+    .modal-text {
+      margin-bottom: 24px;
+      color: var(--bw70);
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+    }
+
+    .modal-btn.cancel {
+      background: var(--bw15);
+      color: var(--bw80);
+    }
+
+    .modal-btn.confirm {
+      background: #ea4335;
+      color: white;
+    }
+
+    .floating-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 64px;
+      height: 64px;
+      border-radius: 32px;
+      background: var(--bw100);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-size: 9px;
+      font-weight: 900;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 100;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 12px;
+      }
+
+      .login-form {
+        padding: 30px 20px;
+      }
+
+      .page-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .tabs {
+        margin-bottom: 16px;
+      }
+
+      .list-item {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .item-content {
+        width: 100%;
+      }
+
+      .item-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+<!-- 로그인 화면 -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-form">
+    <h1 class="login-title">Burntz Admin</h1>
+    <div class="form-group">
+      <label class="form-label">아이디</label>
+      <input type="text" class="form-input" id="adminId" placeholder="관리자 아이디를 입력하세요">
+    </div>
+    <div class="form-group">
+      <label class="form-label">비밀번호</label>
+      <input type="password" class="form-input" id="adminPassword" placeholder="비밀번호를 입력하세요">
+    </div>
+    <button class="login-btn" onclick="login()">로그인</button>
+  </div>
+</div>
+
+<!-- 메인 헤더 -->
+<div id="header" class="header hidden">
+  <div class="container">
+    <div class="header-content">
+      <div class="logo">Burntz Admin</div>
+      <div class="user-info">
+        <div class="user-avatar">A</div>
+        <span id="adminName">Admin</span>
+        <button class="logout-btn" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 메인 콘텐츠 -->
+<div id="mainContent" class="main-content">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-title">
+        <span id="pageTitle">구독 구매 로그</span>
+        <span class="count-badge" id="itemCount">0</span>
+      </div>
+      <div class="premium-toggle" onclick="togglePremium()">
+        <span>Premium</span>
+        <span>▼</span>
+      </div>
+    </div>
+
+    <!-- 탭 메뉴 -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="logs" onclick="switchTab('logs')">구매 로그</button>
+      <button class="tab-btn" data-tab="users" onclick="switchTab('users')">사용자 관리</button>
+    </div>
+
+    <!-- 필터 섹션 -->
+    <div class="filter-section">
+      <input type="text" class="search-box" id="searchBox" placeholder="검색어를 입력하세요..." onkeyup="handleSearch()">
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">전체</button>
+        <button class="filter-btn" data-filter="active" onclick="setFilter('active')">활성</button>
+        <button class="filter-btn" data-filter="expired" onclick="setFilter('expired')">만료</button>
+        <button class="filter-btn" data-filter="pending" onclick="setFilter('pending')">대기</button>
+      </div>
+    </div>
+
+    <!-- 콘텐츠 영역 -->
+    <div class="content-area" id="contentArea">
+      <!-- 동적 콘텐츠가 여기에 렌더링 -->
+    </div>
+  </div>
+</div>
+
+<!-- 플로팅 버튼 -->
+<button class="floating-btn" onclick="showPremiumInfo()">
+  <div>PREMIUM</div>
+</button>
+
+<!-- 환불 확인 모달 -->
+<div id="refundModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">환불 처리</div>
+    <div class="modal-text" id="refundModalText">
+      이 구독을 환불 처리하시겠습니까?<br>
+      처리 후에는 되돌릴 수 없습니다.
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeRefundModal()">취소</button>
+      <button class="modal-btn confirm" onclick="confirmRefund()">환불 처리</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentTab = 'logs';
+  let currentFilter = 'all';
+  let selectedRefundItem = null;
+
+  // 샘플 데이터
+  const sampleLogs = [
+    { id: 1, userId: 'user001', userName: '김철수', plan: 'Premium Monthly', amount: '9,900원', date: '2025-09-20', status: 'active', expirationDate: '2025-10-20' },
+    { id: 2, userId: 'user002', userName: '이영희', plan: 'Premium Yearly', amount: '99,000원', date: '2025-09-15', status: 'active', expirationDate: '2026-09-15' },
+    { id: 3, userId: 'user003', userName: '박민수', plan: 'Premium Monthly', amount: '9,900원', date: '2025-08-20', status: 'expired', expirationDate: '2025-09-20' },
+    { id: 4, userId: 'user004', userName: '정수정', plan: 'Premium Monthly', amount: '9,900원', date: '2025-09-22', status: 'pending', expirationDate: '2025-10-22' },
+    { id: 5, userId: 'user005', userName: '홍길동', plan: 'Premium Yearly', amount: '99,000원', date: '2025-09-10', status: 'active', expirationDate: '2026-09-10' },
+  ];
+
+  const sampleUsers = [
+    { id: 1, uid: 'user001', name: '김철수', rank: 'member', status: 'active', subscription: 'Premium Monthly', expirationDate: '2025-10-20' },
+    { id: 2, uid: 'user002', name: '이영희', rank: 'member', status: 'active', subscription: 'Premium Yearly', expirationDate: '2026-09-15' },
+    { id: 3, uid: 'user003', name: '박민수', rank: 'guest', status: 'expired', subscription: null, expirationDate: null },
+    { id: 4, uid: 'user004', name: '정수정', rank: 'member', status: 'pending', subscription: 'Premium Monthly', expirationDate: '2025-10-22' },
+    { id: 5, uid: 'user005', name: '홍길동', rank: 'manager', status: 'active', subscription: 'Premium Yearly', expirationDate: '2026-09-10' },
+  ];
+
+  function login() {
+    const id = document.getElementById('adminId').value;
+    const password = document.getElementById('adminPassword').value;
+
+    if (id === 'admin' && password === 'burntz2025') {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('header').classList.remove('hidden');
+      document.getElementById('mainContent').classList.add('active');
+      document.getElementById('adminName').textContent = 'Admin';
+      renderContent();
+    } else {
+      alert('아이디 또는 비밀번호가 올바르지 않습니다.');
+    }
+  }
+
+  function logout() {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('header').classList.add('hidden');
+    document.getElementById('mainContent').classList.remove('active');
+    document.getElementById('adminId').value = '';
+    document.getElementById('adminPassword').value = '';
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+    const pageTitle = document.getElementById('pageTitle');
+    pageTitle.textContent = tab === 'logs' ? '구독 구매 로그' : '사용자 관리';
+
+    renderContent();
+  }
+
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+    renderContent();
+  }
+
+  function handleSearch() {
+    renderContent();
+  }
+
+  function getProfileColor(uid) {
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF'];
+    const hash = uid.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  function formatRemainingDays(expirationDate) {
+    if (!expirationDate) return '-';
+
+    const today = new Date();
+    const expiration = new Date(expirationDate);
+    const diffTime = expiration - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return `D+${Math.abs(diffDays)}`;
+    } else if (diffDays === 0) {
+      return 'D-Day';
+    } else {
+      return `D-${diffDays}`;
+    }
+  }
+
+  function renderContent() {
+    const contentArea = document.getElementById('contentArea');
+    const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+
+    let data = currentTab === 'logs' ? sampleLogs : sampleUsers;
+
+    // 필터링
+    if (currentFilter !== 'all') {
+      data = data.filter(item => item.status === currentFilter);
+    }
+
+    // 검색
+    if (searchTerm) {
+      data = data.filter(item =>
+          item.userName?.toLowerCase().includes(searchTerm) ||
+          item.name?.toLowerCase().includes(searchTerm) ||
+          item.userId?.toLowerCase().includes(searchTerm) ||
+          item.uid?.toLowerCase().includes(searchTerm) ||
+          item.plan?.toLowerCase().includes(searchTerm) ||
+          item.subscription?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    document.getElementById('itemCount').textContent = data.length;
+
+    if (data.length === 0) {
+      contentArea.innerHTML = '<div class="no-data">데이터가 없습니다</div>';
+      return;
+    }
+
+    const html = data.map(item => {
+      if (currentTab === 'logs') {
+        return `
+                        <div class="list-item">
+                            <div class="avatar" style="background-color: ${getProfileColor(item.userId)}">
+                                ${item.userName[0]}
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">${item.userName}</div>
+                                <div class="item-subtitle">
+                                    ${item.plan} • ${item.amount} • ${item.date}
+                                    <span class="status-badge status-${item.status}">${item.status}</span>
+                                </div>
+                            </div>
+                            <div class="item-actions">
+                                ${item.status === 'active' ? `<button class="action-btn danger" onclick="showRefundModal(${item.id}, '${item.userName}', '${item.plan}')">환불</button>` : ''}
+                                <button class="action-btn secondary" onclick="viewDetails(${item.id})">상세</button>
+                            </div>
+                        </div>
+                    `;
+      } else {
+        return `
+                        <div class="list-item">
+                            <div class="avatar" style="background-color: ${getProfileColor(item.uid)}">
+                                ${item.name[0]}
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">${item.name}</div>
+                                <div class="item-subtitle">
+                                    ${item.rank} • ${item.subscription || 'Basic'}
+                                    ${item.expirationDate ? `• ${formatRemainingDays(item.expirationDate)}` : ''}
+                                    <span class="status-badge status-${item.status}">${item.status}</span>
+                                </div>
+                            </div>
+                            <div class="item-actions">
+                                ${item.status === 'active' && item.subscription ? `<button class="action-btn danger" onclick="showRefundModal(${item.id}, '${item.name}', '${item.subscription}')">환불</button>` : ''}
+                                <button class="action-btn primary" onclick="manageUser(${item.id})">관리</button>
+                            </div>
+                        </div>
+                    `;
+      }
+    }).join('');
+
+    contentArea.innerHTML = html;
+  }
+
+  function showRefundModal(id, name, plan) {
+    selectedRefundItem = { id, name, plan, tab: currentTab };
+    document.getElementById('refundModalText').innerHTML =
+        `<strong>${name}</strong>님의<br><strong>${plan}</strong> 구독을 환불 처리하시겠습니까?<br><br>처리 후에는 되돌릴 수 없습니다.`;
+    document.getElementById('refundModal').classList.add('active');
+  }
+
+  function closeRefundModal() {
+    document.getElementById('refundModal').classList.remove('active');
+    selectedRefundItem = null;
+  }
+
+  function confirmRefund() {
+    if (selectedRefundItem) {
+      if (selectedRefundItem.tab === 'logs') {
+        const logIndex = sampleLogs.findIndex(log => log.id === selectedRefundItem.id);
+        if (logIndex !== -1) {
+          sampleLogs[logIndex].status = 'expired';
+        }
+      } else {
+        const userIndex = sampleUsers.findIndex(user => user.id === selectedRefundItem.id);
+        if (userIndex !== -1) {
+          sampleUsers[userIndex].status = 'expired';
+          sampleUsers[userIndex].subscription = null;
+          sampleUsers[userIndex].expirationDate = null;
+        }
+      }
+
+      alert(`${selectedRefundItem.name}님의 구독이 환불 처리되었습니다.`);
+      closeRefundModal();
+      renderContent();
+    }
+  }
+
+  function viewDetails(id) {
+    const item = sampleLogs.find(log => log.id === id);
+    if (item) {
+      alert(`상세 정보:\n사용자: ${item.userName}\n플랜: ${item.plan}\n금액: ${item.amount}\n구매일: ${item.date}\n만료일: ${item.expirationDate}\n상태: ${item.status}`);
+    }
+  }
+
+  function manageUser(id) {
+    const user = sampleUsers.find(u => u.id === id);
+    if (user) {
+      alert(`사용자 관리:\n이름: ${user.name}\n등급: ${user.rank}\n구독: ${user.subscription || 'Basic'}\n상태: ${user.status}`);
+    }
+  }
+
+  function togglePremium() {
+    const toggle = document.querySelector('.premium-toggle');
+    toggle.classList.toggle('collapsed');
+  }
+
+  function showPremiumInfo() {
+    alert('Burntz Premium 관리 페이지입니다.\n\n• 구독 구매 로그 조회\n• 사용자 구독 상태 관리\n• 환불 처리\n• 실시간 검색 및 필터링');
+  }
+
+  // 키보드 이벤트 처리
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      const loginScreen = document.getElementById('loginScreen');
+      if (!loginScreen.classList.contains('hidden')) {
+        login();
+      }
+    }
+  });
+
+  // 모달 외부 클릭 시 닫기
+  document.getElementById('refundModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeRefundModal();
+    }
+  });
+
+  // 초기 렌더링
+  document.addEventListener('DOMContentLoaded', function() {
+    // 로그인 폼에 포커스
+    document.getElementById('adminId').focus();
+  });
+
+  // 반응형 처리
+  function handleResize() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      // 모바일에서의 추가 처리
+      document.querySelectorAll('.list-item').forEach(item => {
+        item.style.flexDirection = 'column';
+        item.style.alignItems = 'flex-start';
+      });
+    } else {
+      // 데스크톱에서의 처리
+      document.querySelectorAll('.list-item').forEach(item => {
+        item.style.flexDirection = 'row';
+        item.style.alignItems = 'center';
+      });
+    }
+  }
+
+  window.addEventListener('resize', handleResize);
+
+  // 샘플 데이터 추가 생성 (더 많은 테스트 데이터)
+  function generateMoreSampleData() {
+    const additionalLogs = [
+      { id: 6, userId: 'user006', userName: '김민지', plan: 'Premium Monthly', amount: '9,900원', date: '2025-09-18', status: 'active', expirationDate: '2025-10-18' },
+      { id: 7, userId: 'user007', userName: '이준호', plan: 'Premium Yearly', amount: '99,000원', date: '2025-08-30', status: 'expired', expirationDate: '2025-08-30' },
+      { id: 8, userId: 'user008', userName: '박서연', plan: 'Premium Monthly', amount: '9,900원', date: '2025-09-25', status: 'pending', expirationDate: '2025-10-25' },
+    ];
+
+    const additionalUsers = [
+      { id: 6, uid: 'user006', name: '김민지', rank: 'member', status: 'active', subscription: 'Premium Monthly', expirationDate: '2025-10-18' },
+      { id: 7, uid: 'user007', name: '이준호', rank: 'guest', status: 'expired', subscription: null, expirationDate: null },
+      { id: 8, uid: 'user008', name: '박서연', rank: 'member', status: 'pending', subscription: 'Premium Monthly', expirationDate: '2025-10-25' },
+    ];
+
+    sampleLogs.push(...additionalLogs);
+    sampleUsers.push(...additionalUsers);
+  }
+
+  generateMoreSampleData();
+</script>
+</body>
+</html>

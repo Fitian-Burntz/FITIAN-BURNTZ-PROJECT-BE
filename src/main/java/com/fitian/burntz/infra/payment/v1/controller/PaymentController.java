@@ -43,6 +43,11 @@ public class PaymentController implements PaymentDocs {
     return ResponseEntity.ok().build();
   }
 
+  @Override
+  @PostMapping("/purchase/refund/{boxPk}")
+
+
+
   @GetMapping("/purchase/log/{boxPk}")
   public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "boxPk") Long bokPk) {
     List<PurchaseLogResponse> response = paymentService.getPurchaseLog(bokPk);
