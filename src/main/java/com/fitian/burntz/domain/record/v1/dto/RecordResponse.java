@@ -58,7 +58,7 @@ public class RecordResponse {
     public static RecordResponse from(Record r) {
         if (r == null) return null;
 
-        Long memberPk = (r.getMember() != null) ? r.getMember().getMemberPk() : null;
+        Long memberPk = (r.getMemberList() != null) ? r.getMemberList().getMemberListPk() : null;
 
         return RecordResponse.builder()
                 .memberPk(memberPk)

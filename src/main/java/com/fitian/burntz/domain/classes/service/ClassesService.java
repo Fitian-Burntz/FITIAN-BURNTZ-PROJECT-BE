@@ -8,10 +8,8 @@ import com.fitian.burntz.domain.classes.entity.ClassParticipant;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.repository.ClassParticipantRepository;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
-import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
-import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
@@ -36,18 +34,32 @@ import java.util.List;
 public class ClassesService {
 
     private final BoxRepository boxRepository;
-    private final MemberRepository memberRepository;
     private final MemberListRepository memberListRepository;
     private final ClassesRepository classesRepository;
     private final ClassParticipantRepository participantRepository;
 
-    public List<Classes> getClasses(ClassesSearchRequest request, CustomUserDetails userDetails) {
+    public List<ClassesResponse> getClasses(ClassesSearchRequest request, CustomUserDetails userDetails) {
 
         //존재하는 회원인지 검증
         boolean exist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(!exist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
-        return classesRepository.findByBoxBoxPkAndClassDateBetweenAndDeletedYN(request.getBoxPk(), request.getStartDate(), request.getEndDate(), BaseTime.Yn.N);
+        List<Classes> list = classesRepository.findByBoxBoxPkAndClassDateBetweenAndDeletedYN(request.getBoxPk(), request.getStartDate(), request.getEndDate(), BaseTime.Yn.N);
+        List<ClassesResponse> responseList = new ArrayList<>();
+
+        for(Classes c : list) {
+            ClassesResponse response = ClassesResponse.builder()
+                    .classesPk(c.getClassesPk())
+                    .classDate(c.getClassDate())
+                    .startTime(c.getStartTime())
+                    .endTime(c.getEndTime())
+                    .classMemberCapacity(c.getClassMemberCapacity())
+                    .classTitle(c.getClassTitle())
+                    .classMemo(c.getClassMemo())
+                    .build();
+            responseList.add(response);
+        }
+        return responseList;
     }
 
     public void createClasses(List<ClassesCreateRequest> requestList, CustomUserDetails userDetails) {
@@ -83,17 +95,17 @@ public class ClassesService {
         boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
         //해당 수업에 참여중인지 검증
-        boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
+        boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(isInClass) throw new ValidationException(ErrorCode.DUPLICATED_USER);
 
         Classes classes = classesRepository.findById(request.getClassesPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
-        Member member = memberRepository.findById(userDetails.getMemberPk())
+        MemberList memberList = memberListRepository.findById(userDetails.getMemberPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         ClassParticipant cp = ClassParticipant.builder()
                 .classes(classes)
-                .member(member)
+                .memberList(memberList)
                 .build();
 
         participantRepository.save(cp);
@@ -104,7 +116,7 @@ public class ClassesService {
         boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
         //해당 수업에 참여중인지 검증
-        ClassParticipant participant = participantRepository.findByClassesClassesPkAndMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N)
+        ClassParticipant participant = participantRepository.findByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         participant.markDeleted();
@@ -113,7 +125,21 @@ public class ClassesService {
     public List<ClassParticipantResponse> getMembersByClassPk(ClassesIdentifierRequest request, CustomUserDetails userDetails) {
         boolean exist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(!exist) throw new ValidationException(ErrorCode.USER_NOT_FOUND);
-        return participantRepository.findResponsesByClassesPkAndDeletedYN(request.getClassesPk(), BaseTime.Yn.N);
+
+        List<ClassParticipant> cpList = participantRepository.findByClassesClassesPkAndDeletedYN(request.getClassesPk(), BaseTime.Yn.N);
+        List<ClassParticipantResponse> responseList = new ArrayList<>();
+
+        for(ClassParticipant cp : cpList) {
+            ClassParticipantResponse response = ClassParticipantResponse.builder()
+                    .classParticipantPk(cp.getClassParticipantPk())
+                    .classesPk(cp.getClasses().getClassesPk())
+                    .memberPk(cp.getMemberList().getMember().getMemberPk())
+                    .boxNickname(cp.getMemberList().getBoxNickname())
+                    .createdAt(cp.getCreatedAt())
+                    .build();
+            responseList.add(response);
+        }
+        return responseList;
     }
 
     public void updateClass(ClassesUpdateRequest request, CustomUserDetails userDetails) {

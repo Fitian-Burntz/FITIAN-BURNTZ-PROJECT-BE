@@ -49,8 +49,8 @@ public class RecordService {
     @Transactional
     public void createRecord(RecordCreateRequest req, LocalDate date, Long boxPk, Long memberPk) {
         //wod 조회를 wodPk가 아니라 box, date로 체크하기
-        /* 체험하러 온 사람이 있을 수도 있다 -> 일일체험자는 memberPk가 null이면서 name 필드에 값이 들어감.
-         * box에 등록된 사람이라면 memberPk에 값이 들어가고, name필드에 null이 들어감.
+        /* 체험하러 온 사람이 있을 수도 있다 -> 일일체험자는 memberListPk가 null이면서 nickname 필드에 값이 들어감.
+         * box에 등록된 사람이라면 memberListPk가 값이 들어가고, nickname필드에 boxNickname이 들어감
          * 클래스 1번 당 운동기록 1개
          * */
         //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
@@ -63,31 +63,30 @@ public class RecordService {
         Classes classes =classesRepository.findByClassesPkAndBoxBoxPkAndDeletedYN(req.getClassesPk(), boxPk, BaseTime.Yn.N)
                 .orElseThrow(()-> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
 
-        //5. memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
-        if (req.getMemberPk() != null && req.getNickname() != null && !req.getNickname().isBlank()) {
+        //5. memberListPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
+        if (req.getMemberListPk() != null && req.getNickname() != null && !req.getNickname().isBlank()) {
             throw new ValidationException(ErrorCode.DUPLICATED_NICKNAME_MEMBERPK);
         }
-        if (req.getMemberPk() == null && (req.getNickname() == null || req.getNickname().isBlank())) {
+        if (req.getMemberListPk() == null && (req.getNickname() == null || req.getNickname().isBlank())) {
             throw new ValidationException(ErrorCode.EMPTY_NICKNAME_MEMBERPK);
         }
 
         //6. 대상 멤버 검증(회원일 경우)
-        //memberList에서 member와 nickname을 가져옴.
-        Member targetMember = null;
+        MemberList targetMember = null;
         String nicknameFromMemberList = null;
-        if (req.getMemberPk() != null) {
-            // memberList에서 조회해서 member와 box-별 닉네임을 얻음
+        if (req.getMemberListPk() != null) {
+            // memberListPK가 존재하면 해당 memberList 객체 저장
             MemberList memberList = memberListRepository
-                    .findByMemberMemberPkAndBoxBoxPkAndDeletedYN(req.getMemberPk(), boxPk, BaseTime.Yn.N)
+                    .findByMemberListPkAndBoxBoxPkAndDeletedYN(req.getMemberListPk(), boxPk, BaseTime.Yn.N)
                     .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
 
-            targetMember = memberList.getMember();
+            targetMember = memberList;
             nicknameFromMemberList = memberList.getBoxNickname();
         }
 
         //7. 운동기록이 작성될 유저가 특정 클래스에 이미 운동기록이 작성되어 있는지 확인(클래스 1번당 운동기록 1개)->memberPk를 가진 필드만 확인
-        if (req.getMemberPk() != null) {
-            boolean dub = recordRepository.existsByClassesClassesPkAndMemberMemberPkAndDeletedYN(req.getClassesPk(), targetMember.getMemberPk(), BaseTime.Yn.N);
+        if (targetMember != null) {
+            boolean dub = recordRepository.existsByClassesClassesPkAndMemberListMemberListPkAndDeletedYN(req.getClassesPk(), targetMember.getMemberListPk(), BaseTime.Yn.N);
             if(dub){
                 throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
             }
@@ -146,9 +145,8 @@ public class RecordService {
                 .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
 
         // 3. path의 box/date와 일치하는지 검증
-        Long recordBoxPk = record.getWod().getBox().getBoxPk();
-        LocalDate recordDate = record.getWod().getWodDate();
-        if (!recordBoxPk.equals(boxPk) || !recordDate.equals(date)) {
+        if (!record.getWod().getBox().getBoxPk().equals(boxPk)
+                || !record.getWod().getWodDate().equals(date)) {
             throw new ValidationException(ErrorCode.INVALID_REQUEST);
         }
 
@@ -160,15 +158,15 @@ public class RecordService {
         String nicknameToSet = null;
 
 
-        if (req.getMemberPk() != null) {
+        if (req.getMemberListPk() != null) {
             // mmemberPk가 있으면 memberList에서 조회해서 member와 box-별 닉네임을 얻음
             MemberList memberList = memberListRepository
-                    .findByMemberMemberPkAndBoxBoxPkAndDeletedYN(req.getMemberPk(), boxPk, BaseTime.Yn.N)
+                    .findByMemberListPkAndBoxBoxPkAndDeletedYN(req.getMemberListPk(), boxPk, BaseTime.Yn.N)
                     .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
 
             //자기자신제외(recordPk) 중복 운동기록 있는지 확인
-            boolean dup = recordRepository.existsByClassesClassesPkAndMemberMemberPkAndDeletedYNAndRecordPkNot
-                    (record.getClasses().getClassesPk(),req.getMemberPk(),BaseTime.Yn.N,recordPk);
+            boolean dup = recordRepository.existsByClassesClassesPkAndMemberListMemberListPkAndDeletedYNAndRecordPkNot
+                    (record.getClasses().getClassesPk(),req.getMemberListPk(),BaseTime.Yn.N,recordPk);
 
             if(dup){
                 throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
@@ -236,13 +234,13 @@ public class RecordService {
 
     //memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
     private void validateMemberOrNickname(RecordUpdateRequest req) {
-        boolean hasMember = req.getMemberPk() != null;
+        boolean hasMemberList = req.getMemberListPk() != null;
         boolean hasNickname = req.getNickname() != null && !req.getNickname().isBlank();
 
-        if (hasMember && hasNickname) {
+        if (hasMemberList && hasNickname) {
             throw new ValidationException(ErrorCode.DUPLICATED_NICKNAME_MEMBERPK);
         }
-        if (!hasMember && !hasNickname) {
+        if (!hasMemberList && !hasNickname) {
             throw new ValidationException(ErrorCode.EMPTY_NICKNAME_MEMBERPK);
         }
     }

@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.auth.controller;
 
+import com.fitian.burntz.domain.auth.docs.AuthDocs;
 import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import com.fitian.burntz.domain.auth.dto.LogoutResponse;
@@ -11,15 +12,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements AuthDocs {
 
     private final AuthService authService;
 
+    @Override
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithSocial(
             @RequestHeader(value = "Authorization", required = false) String authorization,
@@ -42,8 +42,9 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(loginResponse));
     }
 
+    @Override
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutCurrentDevice(
+    public ResponseEntity<ApiResponse<LogoutResponse>> logoutCurrentDevice(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "deviceId", required = false) String deviceId) {
 
@@ -64,19 +65,21 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(logoutResponse));
     }
 
+    @Override
     @PostMapping("/logout/all")
-    public ResponseEntity<?> logoutAllDevices(@RequestHeader(value = "Authorization", required = false) String authorization) {
+    public ApiResponse<Void> logoutAllDevices(@RequestHeader(value = "Authorization", required = false) String authorization) {
         //클라이언트로 부터 받은 토큰 검증 및 추출
         String refreshToken = extractBearer(authorization);
 
         authService.logoutAllDevices(refreshToken);
 
 
-        return ResponseEntity.ok(ApiResponse.success("logged out all devices"));
+        return ApiResponse.success(null,"logged out all devices");
     }
 
+    @Override
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshTokenBased(
+    public ResponseEntity<ApiResponse<AuthTokenResponse>> refreshTokenBased(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "deviceId", required = false) String deviceId) {
 
