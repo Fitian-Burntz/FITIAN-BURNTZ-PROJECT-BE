@@ -10,6 +10,7 @@ import com.fitian.burntz.domain.box.repository.SubscriptionEventLogRepository;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.NotFoundException;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
@@ -133,7 +134,10 @@ public class PaymentService {
   }
 
 
-  public List<PurchaseLogResponse> getPurchaseLog(Long memberPk) {
+  public List<PurchaseLogResponse> getPurchaseLog(Long bokPk) {
+    Box box = boxRepository.findById(bokPk)
+        .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_NOT_FOUND));
+
 
   }
 
