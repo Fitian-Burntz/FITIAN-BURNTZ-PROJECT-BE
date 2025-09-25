@@ -34,8 +34,8 @@ public interface BoxRepository extends JpaRepository<Box, Long> {
     // 삭제되지 않은 박스 전체 리스트 페이징 해서 조회
     Page<Box> findAllByDeletedYN(BaseTime.Yn deletedYn, Pageable pageable);
 
-    @Query(value = "SELECT EXISTS (SELECT 1 FROM box b WHERE b.box_code = :boxCode AND b.deleted_yn = 'N')",
-            nativeQuery = true)
+    @Query("select case when (count(b) > 0) then true else false end " +
+            "from Box b where b.boxCode = :boxCode and b.deletedYN = 'N'")
     boolean existsActiveByBoxCode(@Param("boxCode") String boxCode);
 
 

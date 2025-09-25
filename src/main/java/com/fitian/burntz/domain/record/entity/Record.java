@@ -36,8 +36,8 @@ public class Record extends BaseTime {
     private Classes classes;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_pk")
-    private Member member;
+    @JoinColumn(name = "member_list_pk")
+    private MemberList memberList;
 
     @Column(name = "nickname", length = 50)
     private String nickname;
@@ -84,11 +84,11 @@ public class Record extends BaseTime {
             String memo
     ) {
         if (targetMemberList != null) {
-            this.member = targetMemberList.getMember();
+            this.memberList = targetMemberList;
             this.nickname = targetMemberList.getBoxNickname();
         } else {
             if (nicknameParam != null) {
-                this.member = null;
+                this.memberList = null;
                 this.nickname = nicknameParam;
             }
             // nicknameParam == null -> 변경 없음

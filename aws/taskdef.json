@@ -15,21 +15,36 @@
       ],
       "environment": [
         { "name": "SPRING_PROFILES_ACTIVE", "value": "dev" },
-        { "name": "REDIS_HOST", "value": "master.burntz-redis-rg.xsiurc.apn2.cache.amazonaws.com" },
         { "name": "REDIS_PORT", "value": "6379" },
         { "name": "SPRING_DATA_REDIS_SSL_ENABLED", "value": "true" },
         { "name": "SPRING_DATA_REDIS_USERNAME", "value": "default" },
-        { "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED", "value": "true" }
+        { "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED", "value": "true" },
+        { "name": "BURNTZ_APPLE_PRIVATE_KEY_FILE", "value": "/tmp/apple_private_key.p8" }
       ],
       "secrets": [
-        { "name": "REDIS_AUTH_TOKEN", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/redis/auth-token-nXhrnR" },
-        { "name": "DB_URL", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/db-url-cWPpJX" },
-        { "name": "DB_USERNAME", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/db-username-jzQFgu" },
-        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/db-password-JdqhY1" },
-        { "name" : "BURNTZ_DEV_GOOGLE_CLIENT_ID", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/google_client_id-pJFqcn"  },
-        { "name" : "BURNTZ_DEV_GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/google_client_secret-9uPnmo"  },
-        { "name" : "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/jwt_secret-P9VNkQ"  }
+        { "name": "DB_URL",      "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:DB_URL::" },
+        { "name": "DB_USERNAME", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:DB_USERNAME::" },
+        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:DB_PASSWORD::" },
 
+        { "name": "BURNTZ_DEV_GOOGLE_CLIENT_ID",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_DEV_GOOGLE_CLIENT_ID::" },
+        { "name": "BURNTZ_DEV_GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_DEV_GOOGLE_CLIENT_SECRET::" },
+
+        { "name": "BURNTZ_APPLE_CLIENT_ID_WEB", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_CLIENT_ID_WEB::" },
+        { "name": "BURNTZ_APPLE_JWKS_URL",      "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_JWKS_URL::" },
+        { "name": "BURNTZ_APPLE_TEAM_ID",       "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_TEAM_ID::" },
+        { "name": "BURNTZ_APPLE_KEY_ID",        "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_KEY_ID::" },
+        { "name": "BURNTZ_APPLE_TOKEN_ISSUER",  "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_TOKEN_ISSUER::" },
+        { "name": "APPLE_ENFORCE_NONCE",        "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:APPLE_ENFORCE_NONCE::" },
+        { "name": "BURNTZ_APPLE_CLOCK_SKEW",    "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_CLOCK_SKEW::" },
+        { "name": "BURNTZ_APPLE_JWKS_TTL",      "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_JWKS_TTL::" },
+        { "name": "BURNTZ_APPLE_PRIVATE_KEY_PEM", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_PRIVATE_KEY_PEM::" },
+
+        { "name": "REDIS_HOST",       "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:REDIS_HOST::" },
+        { "name": "REDIS_AUTH_TOKEN", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:REDIS_AUTH_TOKEN::" },
+
+        { "name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:JWT_SECRET::" },
+
+        { "name" :  "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/firebase/service-account-key-EqPajh" }
       ],
       "essential": true,
       "logConfiguration": {

@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.record.repository;
 
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -23,11 +24,11 @@ import java.util.Optional;
 @Repository
 public interface RecordRepository extends JpaRepository<Record, Long> {
 
-    //회원(memberPk)를 기준으로 해당 Classes에 이미 운동 기록이 있는지 확인
-    boolean existsByClassesClassesPkAndMemberMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
+    //memberListPk를 기준으로 해당 Classes에 이미 운동 기록이 있는지 확인
+    boolean existsByClassesClassesPkAndMemberListMemberListPkAndDeletedYN(Long classesPk, Long memberListPk, BaseTime.Yn deletedYN);
 
     //해당 날짜의 전체 record 반환
-    @Query("select r from Record r left join fetch r.member left join fetch r.classes where r.wod = :wod and r.deletedYN = 'N'")
+    @Query("select r from Record r left join fetch r.memberList left join fetch r.classes where r.wod = :wod and r.deletedYN = 'N'")
     List<Record> findAllByWodWithMemberAndClasses(@Param("wod") Wod wod, @Param("deletedYN") BaseTime.Yn deletedYN);
 
     //해당 레코드 존재여부 확인(wod,box 소속)
@@ -38,6 +39,10 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     Optional<Record> findByIdWithWodAndBox(@Param("recordPk") Long recordPk);
 
     //자기 자신(헌재의 recordPk)를 제외하고 중복 운동기록이 존재하는지 확인(운동기록 수정 시 방어선)
-    boolean existsByClassesClassesPkAndMemberMemberPkAndDeletedYNAndRecordPkNot(
-            Long classesPk, Long memberPk, BaseTime.Yn deletedYN, Long recordPk);
+    boolean existsByClassesClassesPkAndMemberListMemberListPkAndDeletedYNAndRecordPkNot(
+            Long classesPk, Long memberListPk, BaseTime.Yn deletedYN, Long recordPk);
+
+
+
+
 }
