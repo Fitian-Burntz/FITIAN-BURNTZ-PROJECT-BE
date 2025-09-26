@@ -101,7 +101,7 @@ public class MembershipService {
             Member createdBy = memberRepository.findById(userDetails.getMemberPk())
                     .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-            String newValue = objectMapper.writeValueAsString(membership);
+            String newValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
             MembershipHistory history = MembershipHistory.builder()
                     .membership(membership)
                     .actionType(HistoryActionType.CREATE)
@@ -131,9 +131,9 @@ public class MembershipService {
         if(!memberPk.equals(membership.getMember().getMemberPk())) throw new ValidationException(ErrorCode.USER_NOT_FOUND);
 
         try {
-            String preValue = objectMapper.writeValueAsString(membership);
+            String preValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
             membership.updateFrom(request);
-            String newValue = objectMapper.writeValueAsString(membership);
+            String newValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
 
             Member createdBy = memberRepository.findById(userDetails.getMemberPk())
                     .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
@@ -167,7 +167,7 @@ public class MembershipService {
         if(!memberPk.equals(membership.getMember().getMemberPk())) throw new ValidationException(ErrorCode.USER_NOT_FOUND);
 
         try{
-            String preValue = objectMapper.writeValueAsString(membership);
+            String preValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
             membership.markDeleted();
 
             Member createdBy = memberRepository.findById(userDetails.getMemberPk())
