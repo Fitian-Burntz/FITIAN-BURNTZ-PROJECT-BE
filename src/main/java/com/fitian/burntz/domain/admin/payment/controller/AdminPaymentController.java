@@ -19,6 +19,8 @@ import com.fitian.burntz.global.exception.NotFoundException;
 import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +63,7 @@ public class AdminPaymentController {
   }
 
   @GetMapping("/purchase/log/{boxPk}")
-  public ApiResponse<List<AdminPurchaseLogResponse>> getPurchaseLog(
+  public ApiResponse<AdminPurchaseLogResponse> getPurchaseLog(
       @PathVariable(value = "boxPk") Long boxPk,
       HttpServletRequest request) {
 
@@ -83,12 +85,10 @@ public class AdminPaymentController {
           .build();
 
 
-      return ApiResponse.success(List.of(adminPurchaseLogResponse));
+      return ApiResponse.success(adminPurchaseLogResponse);
     }
-    return ApiResponse.success(List.of());
+    return ApiResponse.success(null);
   }
-
-
 
 
 
@@ -114,12 +114,12 @@ public class AdminPaymentController {
         SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
             member,
             box,
-            boxSubscription.getProductId(),
+            boxSubscription.getProductId() + "(관리자에 의해 활성화됨)",
             boxSubscription.getStore(),
             SubscriptionStatus.ACTIVE,
             null,
             null,
-            boxSubscription.getPrice(),
+            0.0,
             null,
             boxSubscription.getMember().getMemberId(),
             null,
@@ -134,12 +134,12 @@ public class AdminPaymentController {
         SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
             member,
             box,
-            boxSubscription.getProductId(),
+            boxSubscription.getProductId() + "(관리자에 의해 만료 처리됨)",
             boxSubscription.getStore(),
             SubscriptionStatus.EXPIRED,
             null,
             null,
-            boxSubscription.getPrice(),
+            0.0,
             null,
             boxSubscription.getMember().getMemberId(),
             null,
@@ -154,12 +154,12 @@ public class AdminPaymentController {
         SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
             member,
             box,
-            boxSubscription.getProductId(),
+            boxSubscription.getProductId() + "(관리자에 의해 취소 처리됨)",
             boxSubscription.getStore(),
             SubscriptionStatus.CANCELLED,
             null,
             null,
-            boxSubscription.getPrice(),
+            0.0,
             null,
             boxSubscription.getMember().getMemberId(),
             null,
@@ -174,12 +174,12 @@ public class AdminPaymentController {
         SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
             member,
             box,
-            boxSubscription.getProductId(),
+            boxSubscription.getProductId() + "(관리자에 의해 환불 처리됨)",
             boxSubscription.getStore(),
             SubscriptionStatus.REFUNDED,
             null,
             null,
-            boxSubscription.getPrice(),
+            0.0,
             null,
             boxSubscription.getMember().getMemberId(),
             null,
@@ -194,12 +194,12 @@ public class AdminPaymentController {
         SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
             member,
             box,
-            boxSubscription.getProductId(),
+            boxSubscription.getProductId() + "(관리자에 의해 보류 처리됨)",
             boxSubscription.getStore(),
             SubscriptionStatus.PENDING,
             null,
             null,
-            boxSubscription.getPrice(),
+            0.0,
             null,
             boxSubscription.getMember().getMemberId(),
             null,

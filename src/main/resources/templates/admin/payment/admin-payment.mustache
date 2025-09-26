@@ -369,8 +369,8 @@
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data && result.data.length > 0) {
-          const subscriptionData = result.data[0];
+        if (result.success && result.data) {
+          const subscriptionData = result.data;
           renderModalContent(subscriptionData);
         } else {
           modalBody.innerHTML = '<div class="modal-error">구독 정보가 없습니다.</div>';
@@ -421,8 +421,9 @@
       daysClass = 'color: #f44336;';
     }
 
-    // 결제 내역 렌더링
-    const paymentItems = data.logs.map(log => {
+    // 결제 내역 렌더링 - 역순으로 정렬
+    const sortedLogs = [...data.logs].reverse();
+    const paymentItems = sortedLogs.map(log => {
       const paymentDate = new Date(log.purchasedAt);
       const formattedDate = paymentDate.toLocaleString('ko-KR', {
         year: 'numeric',
@@ -549,8 +550,8 @@
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data && result.data.length > 0) {
-          const subscriptionData = result.data[0];
+        if (result.success && result.data) {
+          const subscriptionData = result.data;
           renderModalContent(subscriptionData);
         }
       }
