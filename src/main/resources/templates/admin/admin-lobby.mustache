@@ -28,7 +28,7 @@
     .admin-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.12);border-color:var(--bw15)}
     .admin-card:active{transform:translateY(0)}
 
-    .card-icon{width:56px;height:56px;border-radius:12px;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin-bottom:20px}
+    .card-icon{width:56px;height:56px;border-radius:12px;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin-bottom:20px;flex-shrink:0}
     .card-title{font-size:20px;font-weight:700;color:var(--bw100);margin-bottom:8px}
     .card-description{font-size:14px;color:var(--bw40);line-height:1.6;margin-bottom:20px}
     .card-footer{display:flex;justify-content:flex-end;align-items:center}
@@ -73,10 +73,20 @@
 
     <div class="admin-grid">
       <div class="admin-card" onclick="goToPaymentManagement()">
-        <div class="card-icon">📦️</div>
+        <div class="card-icon">📦</div>
         <div class="card-title">박스 구독 관리</div>
         <div class="card-description">
           사용자의 박스 결제내역, 구독관리 기능입니다.
+        </div>
+        <div class="card-footer">
+        </div>
+      </div>
+
+      <div class="admin-card" onclick="goToUserManagement()">
+        <div class="card-icon">👥</div>
+        <div class="card-title">이용자 관리</div>
+        <div class="card-description">
+          사용자 계정 관리 및 이용 현황을 확인할 수 있습니다.
         </div>
         <div class="card-footer">
         </div>
@@ -126,6 +136,10 @@
 
   function goToPaymentManagement() {
     window.location.href = '/api/v1/admin/payments';
+  }
+
+  function goToUserManagement() {
+    window.location.href = '/api/v1/admin/users';
   }
 
   function logout() {
