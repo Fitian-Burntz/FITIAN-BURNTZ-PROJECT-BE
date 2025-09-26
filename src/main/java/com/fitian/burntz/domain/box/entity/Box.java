@@ -8,6 +8,8 @@ import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Objects;
+
 import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
 
 /**
@@ -72,7 +74,7 @@ public class  Box extends BaseTime {
     private SubscribeYN subscribe = SubscribeYN.N; // Y/N
 
 
-    /** Box 생성 적적 팩토리 매서드 **/
+    /** Box 생성 정적 팩토리 매서드 **/
     public static Box create(Long ownerPk, CreateBoxRequest createBoxRequest) {
         return Box.builder()
                 .boxName(trimToNull(createBoxRequest.getBoxName()))
@@ -108,6 +110,16 @@ public class  Box extends BaseTime {
 
     public void unsubscribe() {
         this.subscribe = SubscribeYN.N;
+    }
+
+
+    /** changeBoxOwnerPk **/
+    public void changeBoxOwnerPk(Long ownerPk){
+        Objects.requireNonNull(ownerPk, "ownerPk required");
+
+        // 이미 같은 owner면 아무 작업도 하지 않음 -> 불필요한 dirty 체크/DB UPDATE 방지
+        if (Objects.equals(this.ownerPk, ownerPk)) return;
+        this.ownerPk = ownerPk;
     }
 
 }

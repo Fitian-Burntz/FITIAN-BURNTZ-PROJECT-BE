@@ -2,9 +2,11 @@ package com.fitian.burntz.domain.box.repository;
 
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.global.common.entity.BaseTime;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,5 +41,9 @@ public interface BoxRepository extends JpaRepository<Box, Long> {
     boolean existsActiveByBoxCode(@Param("boxCode") String boxCode);
 
 
+    /** update 시 경쟁 상황 회피를 위해 lock 걸고 활성화 박스 조회 (OWNER 는 반드시 한명이므로)**/
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Box b WHERE b.boxPk = :boxPk AND b.deletedYN = 'N'")
+    Optional<Box> findActiveBoxByIdWithLock(@Param("boxPk") Long boxPk);
 
 }

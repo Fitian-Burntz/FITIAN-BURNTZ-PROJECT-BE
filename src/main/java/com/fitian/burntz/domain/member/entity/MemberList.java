@@ -44,8 +44,15 @@ public class MemberList extends BaseTime {
 
     // 멤버 role 변경
     public void changeRole(MemberRole newRole) {
-        if (newRole == null) throw new IllegalArgumentException("newRole required");
+        Objects.requireNonNull(newRole, "newRole required");
+
+        // 이미 같은 role 이면 아무 작업도 하지 않음 -> 불필요한 dirty 체크/DB UPDATE 방지
+        if (Objects.equals(this.role, newRole)) return;
+
         this.role = newRole;
+
+        // BaseTime 에 updatedAt 현재로 바꾸는 메서드 호출
+        this.setUpdatedAtToNow();
     }
 
     // 멤버 멤버 리스트 생성

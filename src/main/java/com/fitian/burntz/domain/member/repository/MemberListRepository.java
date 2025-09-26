@@ -5,9 +5,11 @@ import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.global.common.entity.BaseTime;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -49,7 +51,23 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
             nativeQuery = true)
     boolean existsActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
 
+    // 해당 box의 memberList 에서 role 에 해당하는 행 수 반환
     long countByBox_BoxPkAndRole(Long boxPk, MemberRole role);
 
     Optional<MemberList> findByMemberListPkAndBoxBoxPkAndDeletedYN(Long memberListPk, Long boxPk, BaseTime.Yn yn);
+
+
+    /** update 시 경생 상황을 피하기 위해서 row lock 을 걸고 member 가 box 에 속해있는지 확인 **/
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM MemberList m WHERE m.box.boxPk = :boxPk AND m.member.memberPk = :memberPk AND m.deletedYN = 'N'")
+    Optional<MemberList> findActiveMemberListByBoxAndMemberWithLock(@Param("boxPk") Long boxPk,
+                                                                    @Param("memberPk") Long memberPk);
+
+    /**
+     * update 시 경쟁 상황을 피하기 위해서 row lock 을 걸고
+     * 해당 활성화 memberList 에서 해당 box의 OWNER row 개수 구함 (OWNER 수 검증) **/
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<MemberList> findTop2ByBox_BoxPkAndRoleAndDeletedYN(Long boxPk, MemberRole role, BaseTime.Yn yn);
+
+
 }
