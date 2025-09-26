@@ -13,6 +13,7 @@ import com.fitian.burntz.domain.wod.enums.WodType;
 import org.springframework.stereotype.Component;
 
 /**
+ * 운동 기록을 숫자와 문자열로 바꾸는 클래스
  * 레벨 → (타입별 지표 필드) → 동점 시 닉네임 → memberListPk → recordPk 
  * 순으로 정렬되도록 "score(숫자)" + "member(문자)"를 만들어 ZSET에 넣는 로직
  */
@@ -35,91 +36,88 @@ public class RankingScoreEncoder {
         }
     }
 
-    /** 타입별 지표 숫자화에 쓸 상한(역변환용). 여유있게 크게. */
+    // 기존 상수
     private static final long R_MAX   = 1_000_000L;
     private static final long REP_MAX = 1_000_000L;
+    private static final long AMRAP_MULT = 1_000_000L; // rounds에 곱하는 배수
 
-    /** 레벨 영역을 완전히 분리하기 위한 step. (double 정밀도 안전 영역) */
-    private static final double LVL_STEP = 1_000_000_000_000.0; // 1e12
+    /** 각 레벨 내에서 가능한 최대 offset (AMRAP 계산식의 최대값) */
+    private static final long IN_LEVEL_MAX = R_MAX * AMRAP_MULT + REP_MAX; // 1_000_001_000_000
+
+    /** 레벨 영역을 완전히 분리하기 위한 step: in-level 최대값보다 약간 큰 값으로 동적으로 설정 */
+    private static final double LVL_STEP = (double)(IN_LEVEL_MAX + 10L); // 안전 마진
 
     /**
-     * 하나의 기록을 오름차순 정렬 가능한 단일 score로 만든다.
-     * - ForTime: 시간 낮을수록 상위 → ms 그대로 더함
-     * - AMRAP: 라운드/렙스 높을수록 상위 → 역변환해 작은 수가 상위가 되도록
-     * - EMOM/SF: S(0) < F(1)
-     * - MAXREPS/EMOMMAX: 렙스 높을수록 상위 → 역변환
+     * Public API: enum-based score 계산기 (완전 타입 안전)
      */
-
     public double scoreFor(WodType wodType, String level, Integer rounds, Integer reps,
                            Float timeSeconds, RecordResult result) {
-        return scoreFor(wodType == null ? null : wodType.name(),
-                level, rounds, reps, timeSeconds,
-                result == null ? null : result.name());
-    }
-    public String metricKey(WodType wodType, Integer rounds, Integer reps,
-                            Float timeSeconds, RecordResult result) {
-        return metricKey(wodType == null ? null : wodType.name(),
-                rounds, reps, timeSeconds,
-                result == null ? null : result.name());
-    }
-
-    public double scoreFor(String wodType, String level, Integer rounds, Integer reps,
-                           Float timeSeconds, String result) {
         int lvl = LevelRank.of(level);
-        double base = lvl * LVL_STEP;
-        String t = wodType == null ? "" : wodType.trim().toUpperCase();
+        double base = (double) lvl * LVL_STEP;
 
-        switch (t) {
-            case "FORTIME": {
-                long ms = (timeSeconds == null) ? Long.MAX_VALUE/2
-                        : (long)Math.round(timeSeconds * 1000.0);
-                return base + ms; // 낮을수록 상위
-            }
-            case "AMRAP": {
-                long r = (rounds == null) ? 0 : rounds;
-                long p = (reps   == null) ? 0 : reps;
-                return base + (R_MAX - clamp(r, 0, R_MAX)) * 1_000_000L
-                        + (REP_MAX - clamp(p, 0, REP_MAX)); // 높을수록 상위(역변환)
-            }
-            case "EMOM":
-            case "SUCCESSFAIL": {
-                int sf = isSuccess(nullToEmpty(result)) ? 0 : 1; // S 상위
-                return base + sf;
-            }
-            case "EMOMMAX":
-            case "MAXREPS": {
-                long p = (reps == null) ? 0 : reps;
-                return base + (REP_MAX - clamp(p, 0, REP_MAX)); // 높을수록 상위(역변환)
-            }
-            default:
-                return base + LVL_STEP - 1; // 정의 안 됨 → 뒤로
+        // null wodType -> 뒤로 보냄
+        if (wodType == null) {
+            return base + LVL_STEP - 1;
         }
-    }
 
-    public String metricKey(String wodType, Integer rounds, Integer reps,
-                            Float timeSeconds, String result) {
-        String t = wodType == null ? "" : wodType.trim().toUpperCase();
-        switch (t) {
-            case "FORTIME":   return "t=" + ((timeSeconds == null) ? "NA" : Math.round(timeSeconds * 1000.0));
-            case "AMRAP":     return "r=" + (rounds==null?0:rounds) + ",p=" + (reps==null?0:reps);
-            case "EMOM":
-            case "SUCCESSFAIL": return "sf=" + (result==null?"F":result.toUpperCase());
-            case "EMOMMAX":
-            case "MAXREPS":   return "p=" + (reps==null?0:reps);
-            default:          return "NA";
+        switch (wodType) {
+            case ForTime -> {
+                // time null이면 in-level 최대값을 사용하여 같은 레벨 내 최하위로 보냄
+                long ms = (timeSeconds == null) ? IN_LEVEL_MAX : Math.round(timeSeconds * 1000.0);
+                return base + (double) ms;
+            }
+            case AMRAP -> {
+                long r = (rounds == null) ? 0L : rounds;
+                long p = (reps == null) ? 0L : reps;
+                long clampedR = clamp(r, 0L, R_MAX);
+                long clampedP = clamp(p, 0L, REP_MAX);
+                double offset = (double) ( (R_MAX - clampedR) * AMRAP_MULT ) + (double)(REP_MAX - clampedP);
+                return base + offset;
+            }
+            case EMOM, SuccessFail -> {
+                boolean sf = isSuccess(result);
+                int sfInt = sf ? 0 : 1;
+                return base + (double) sfInt;
+            }
+            case EMOMMAX, MaxReps -> {
+                long p = (reps == null) ? 0L : reps;
+                long clampedP2 = clamp(p, 0L, REP_MAX);
+                double offset = (double)(REP_MAX - clampedP2);
+                return base + offset;
+            }
+            default -> {
+                return base + LVL_STEP - 1; // 정의 안 됨 -> 뒤로
+            }
         }
     }
 
     /**
-     * 동점 해소용 멤버 문자열.
-     * - ZSET은 score가 같을 때 "멤버 문자열"을 사전식으로 비교한다.
-     * - 요구사항: 닉네임 오름차순 → (같으면) memberListPk → (그래도 같으면) recordPk
-     * - 문자열 비교가 숫자 오름차순과 같아지도록 memberListPk는 0패딩 고정폭.
+     * Enum-based metricKey (사람/로그용)
+     */
+    public String metricKey(WodType wodType, Integer rounds, Integer reps,
+                            Float timeSeconds, RecordResult result) {
+        if (wodType == null) return "NA";
+        switch (wodType) {
+            case ForTime:
+                return "t=" + ((timeSeconds == null) ? "NA" : Math.round(timeSeconds * 1000.0));
+            case AMRAP:
+                return "r=" + (rounds==null?0:rounds) + ",p=" + (reps==null?0:reps);
+            case EMOM, SuccessFail:
+                return "sf=" + (result==null?"F":result.name().toUpperCase());
+            case EMOMMAX, MaxReps:
+                return "p=" + (reps==null?0:reps);
+            default:
+                return "NA";
+        }
+    }
+
+    /**
+     * memberString unchanged logic (동점 해소용)
      */
     public String memberString(String level, String metricKey, String nickname,
                                Long recordPk, Long memberListPk) {
-        String nick = normalizeNick(nickname);                 // 사전식 안정화
-        String ml   = zeroPad(memberListPk==null?0L:memberListPk, 12); // "000000000045"
+        String nick = normalizeNick(nickname);
+        String ml   = zeroPad(memberListPk==null?0L:memberListPk, 12);
         return String.format("lvl=%d|met=%s|nick=%s|ml=%s|rid=%d",
                 LevelRank.of(level), metricKey, nick, ml, recordPk);
     }
@@ -127,9 +125,10 @@ public class RankingScoreEncoder {
     // ===== helpers =====
     private static long clamp(long v, long min, long max){ return Math.max(min, Math.min(max, v)); }
     private static String nullToEmpty(String s){ return s==null?"":s; }
-    private static boolean isSuccess(String s){
-        String u = s.toUpperCase();
-        return u.equals("S") || u.equals("SUCCESS") || u.equals("PASS"); // 안전 폭 넓힘
+    private static boolean isSuccess(RecordResult r){
+        if (r == null) return false;
+        String u = r.name().toUpperCase();
+        return u.equals("S") || u.equals("SUCCESS") || u.equals("PASS");
     }
     private static String normalizeNick(String s){ return nullToEmpty(s).trim().toLowerCase(); }
     private static String zeroPad(long v, int width) {
