@@ -58,7 +58,7 @@ public class RankingQueryService {
     }
 
     // ===== DB ORDER BY → ZSET 재적재용 rows (기존 코드 유지) =====
-    private List<RankingService.RankingRow> rebuildFromDb(Long boxPk, LocalDate date, WodType type) {
+    public List<RankingRow> rebuildFromDb(Long boxPk, LocalDate date, WodType type) {
         // 1) 타입별 ORDER BY로 DB에서 정렬된 레코드 조회
         List<Record> records;
         switch (type) {
@@ -136,4 +136,5 @@ public class RankingQueryService {
 
         return new RankingResponse(boxPk, date.toString(), type.name(), items.size(), items);
     }
+
 }
