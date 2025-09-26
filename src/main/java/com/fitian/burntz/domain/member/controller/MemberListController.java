@@ -1,11 +1,12 @@
 package com.fitian.burntz.domain.member.controller;
 
-import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.member.dto.memberList_dto.ChangeOwnerSuccessDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.MemberListWithMembershipDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleRequest;
 import com.fitian.burntz.domain.member.service.MemberListService;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.common.util.ControllerValidationHelper;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
@@ -29,6 +30,8 @@ import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
 public class MemberListController {
 
     private final MemberListService memberListService;
+    private final ControllerValidationHelper controllerValidationHelper;
+    private static final int MAX_PAGE_SIZE = 100;
 
 
     /**  box 멤버 역할 변경 MEMBER, MANAGER (양도 x) **/
@@ -39,15 +42,10 @@ public class MemberListController {
             @Valid @RequestBody UpdateMemberRoleRequest updateMemberRoleRequest
             ){
 
-        Long loginMemberPk = customUserDetails == null ? null : customUserDetails.getMemberPk();
-
-        // 컨트롤러에서 빠르게 인증 확인
-        if (loginMemberPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        Long loginMemberPk = controllerValidationHelper.requireLogin(customUserDetails);
 
         UpdateMemberRoleDto updateResponse = memberListService.updateMemberRole(
-                loginMemberPk, UpdateMemberRoleDto.from(updateMemberRoleRequest));
+                loginMemberPk, UpdateMemberRoleDto.fromRequest(updateMemberRoleRequest));
 
         return ResponseEntity.ok(ApiResponse.success(updateResponse, "The member's role has been successfully changed."));
     }
@@ -62,30 +60,43 @@ public class MemberListController {
             @SortDefault(sort = "boxNickname", direction = Sort.Direction.ASC)
             Pageable pageable
     ){
-        Long loginMemberPk = customUserDetails == null ? null : customUserDetails.getMemberPk();
+        Long loginMemberPk = controllerValidationHelper.requireLogin(customUserDetails);
 
-        if (loginMemberPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
-
-        boxCode = trimToNull(boxCode);
-
-        if (boxCode == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+        String targetBoxCode = controllerValidationHelper.requireBoxCode(boxCode);
 
         // 안전: 클라이언트가 큰 size를 요청하면 제한
-        int maxSize = 100;
-        pageable = PageRequest.of(pageable.getPageNumber(),
-                Math.min(pageable.getPageSize(), maxSize),
-                pageable.getSort());
+        Pageable safePageable = controllerValidationHelper.limitPageable(pageable, MAX_PAGE_SIZE);
 
         Page<MemberListWithMembershipDto> AllMemberListResponsePage =
-                memberListService.getMemberListsWithMembership(boxCode, loginMemberPk, pageable);
+                memberListService.getMemberListsWithMembership(targetBoxCode, loginMemberPk, safePageable);
 
         return ResponseEntity.ok(ApiResponse.success(
                 AllMemberListResponsePage, "멤버 목록 조회 성공 (" + AllMemberListResponsePage.getTotalElements() + "건)"
         ));
+    }
+
+
+    @PostMapping("/assignment")
+    public ResponseEntity<ApiResponse<ChangeOwnerSuccessDto>> changeOwner(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "targetMemberPk",  required = false) Long targetMemberPk,
+            @RequestParam(value = "boxPk", required = false) Long boxPk
+    ){
+        Long loginMemberPk = controllerValidationHelper.requireLogin(customUserDetails);
+
+        if (targetMemberPk == null) {
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Long targetBoxPk = controllerValidationHelper.requireBoxPk(boxPk);
+
+        ChangeOwnerSuccessDto changeOwnerResponse = memberListService.changeOwnerForBox(
+                loginMemberPk, targetMemberPk, targetBoxPk
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(
+                changeOwnerResponse, "The transfer of owner rights has been successfully completed.")
+        );
     }
 
 }

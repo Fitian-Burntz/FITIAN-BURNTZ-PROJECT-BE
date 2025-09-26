@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.member.service;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.member.dto.memberList_dto.ChangeOwnerSuccessDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.CreateMemberListResponse;
 import com.fitian.burntz.domain.member.dto.memberList_dto.MemberListWithMembershipDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleDto;
@@ -13,8 +14,10 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.domain.membership.repository.MembershipRepository;
 import com.fitian.burntz.domain.membership.v1.dto.MembershipDto;
+import com.fitian.burntz.global.common.util.RetryTransactionalHandler;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,9 +31,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.fitian.burntz.global.common.entity.BaseTime.Yn.N;
+
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class MemberListServiceImpl implements MemberListService{
 
@@ -38,20 +42,22 @@ public class MemberListServiceImpl implements MemberListService{
     private final BoxRepository boxRepository;
     private final MemberRepository memberRepository;
     private final MembershipRepository membershipRepository;
+    private final RetryTransactionalHandler retryTransactionalHandler;
+    private final EntityManager em;
 
     /**
      * owner: 로그인한 사용자의 owner (권한 체크 필요 시 사용)
      * updateMemberRoleDto: newBox, owner(target), role(optional)
      */
     @Override
-    public CreateMemberListResponse createMemberList(Member owner, Box newBox) {
+    @Transactional
+    public CreateMemberListResponse createMemberList(Member owner, Long newBoxPk) {
         // 인증 체크: 컨트롤러에서 이미 처리하더라도 방어적으로 검사
         if (owner == null) {
             throw new ValidationException(ErrorCode.UNAUTHORIZED);
         }
 
         Long ownerPk = owner.getMemberPk();
-        Long newBoxPk = newBox.getBoxPk();
 
         // 이미 해당 박스에 멤버가 존재하는지 확인
         if (memberListRepository.existsActiveByBoxPkAndMemberPk(newBoxPk, ownerPk)) {
@@ -59,11 +65,11 @@ public class MemberListServiceImpl implements MemberListService{
         }
 
         // 이미 박스 생성 로직에서 요청 멤버의 DB 존재 여부를 확인했음.
-        // 박스 조회
-        Box box = boxRepository.findActiveById(newBoxPk)
+        // 활성화 box DB 존재 여부 검증 및 엔티티 조회
+        Box newBox = boxRepository.findActiveById(newBoxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
-        //생성 후 저장한 박스 엔티티를 바로 받아오는거라서 재조회 필요 없음
+
         // 정적 팩토리 메서드로 객체 생성
         MemberList memberList = MemberList.create(newBox, owner);
 
@@ -80,7 +86,8 @@ public class MemberListServiceImpl implements MemberListService{
 
     /** MANAGER, MEMBER 로 역할 변경 가능 (양도 X) **/
     @Override
-    public UpdateMemberRoleDto updateMemberRole(Long operatorPk, UpdateMemberRoleDto dto) {
+    @Transactional
+    public UpdateMemberRoleDto updateMemberRole(Long operatorPk, UpdateMemberRoleDto updateMemberRoleDto) {
         //서비스에서 한 번 더 필요 데이터 체크 (방어적 코딩)
         // 인증 실패
         if (operatorPk == null) {
@@ -88,17 +95,23 @@ public class MemberListServiceImpl implements MemberListService{
         }
 
         // 필요 데이터 불충분
-        if (dto == null || dto.getBoxPk() == null || dto.getMemberPk() == null || dto.getRole() == null) {
+        if (updateMemberRoleDto == null ||
+                updateMemberRoleDto.getBoxPk() == null ||
+                updateMemberRoleDto.getMemberPk() == null ||
+                updateMemberRoleDto.getRole() == null)
+        {
             throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
         }
 
-        Long boxPk = dto.getBoxPk();
-        Long targetMemberPk = dto.getMemberPk();
-        MemberRole newRole = dto.getRole();
+        Long boxPk = updateMemberRoleDto.getBoxPk();
+        Long targetMemberPk = updateMemberRoleDto.getMemberPk();
+        MemberRole newRole = updateMemberRoleDto.getRole();
 
         // 요청 멤버, 변경 멤버 활성 상태 DB 존재 여부 검증
-        memberRepository.findActiveById(operatorPk);
-        memberRepository.findActiveById(targetMemberPk);
+        memberRepository.findActiveById(operatorPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        memberRepository.findActiveById(targetMemberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         // 박스 활성 상태 검증
         boxRepository.findActiveById(boxPk)
@@ -108,40 +121,14 @@ public class MemberListServiceImpl implements MemberListService{
         MemberList operator = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, operatorPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.FORBIDDEN));
 
-        // 요청자는 OWNER 또는 MANAGER 여야 함
-        if (!(operator.getRole() == MemberRole.OWNER || operator.getRole() == MemberRole.MANAGER)) {
-            throw new ValidationException(ErrorCode.FORBIDDEN);
-        }
-
-        // 이 메서드로 OWNER 양도를 시도하는 경우
-        if (newRole == MemberRole.OWNER){
-            throw new ValidationException(ErrorCode.PROMOTE_TO_OWNER_NOT_ALLOWED);
-        }
 
         // 대상 멤버가 박스에 존재하는지 확인
         MemberList targetMember = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, targetMemberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-        MemberRole oldRole = targetMember.getRole();
+        // updateMemberRole 메서드 관련 필요 검증 헬퍼 호출
+        MemberRole oldRole = updateMemberRoleValidate(operator, targetMember, newRole);
 
-        // 같은 역할로 변경하려는 경우
-        if (oldRole == newRole) {
-            throw new ValidationException(ErrorCode.NO_CHANGE_REQUIRED);
-        }
-
-        // 권한 계층 관련 검증
-        // MANAGER는 OWNER의 역할을 변경할 수 없다
-        if (operator.getRole() == MemberRole.MANAGER && oldRole == MemberRole.OWNER) {
-            throw new ValidationException(ErrorCode.FORBIDDEN);
-        }
-
-//        // 6) OWNER를 강등할 경우, 박스에 최소한 한 명의 OWNER는 남아야 함
-//        if (oldRole == MemberRole.OWNER && newRole != MemberRole.OWNER) {
-//            long ownerCount = memberListRepository.countByBox_BoxPkAndRole(boxPk, MemberRole.OWNER);
-//            if (ownerCount <= 1) {
-//                throw new ValidationException(ErrorCode.OPERATION_NOT_ALLOWED);
-//            }
-//        }
 
         // 변경 수행 (도메인 메서드 사용)
         targetMember.changeRole(newRole);
@@ -150,12 +137,13 @@ public class MemberListServiceImpl implements MemberListService{
         log.info("Changed member role: boxPk={} operatorPk={} from={} to={} byOperator={}",
                 boxPk, targetMemberPk, oldRole, newRole, operatorPk);
 
-        return UpdateMemberRoleDto.builder()
-                .boxPk(boxPk)
-                .memberPk(targetMemberPk)
-                .role(newRole)
-                .build();
+        return UpdateMemberRoleDto.UpdateMemberRoleSuccessDto(
+                boxPk, targetMemberPk, newRole, targetMember.getUpdatedAt()
+        );
+
     }
+
+
 
 
     @Override
@@ -229,6 +217,149 @@ public class MemberListServiceImpl implements MemberListService{
         }).collect(Collectors.toList());
 
         return new PageImpl<>(dtos, pageable, memberListPage.getTotalElements());
+    }
+
+    /** OWNER 양도 서비스 로직
+     * lock 거는 row를 최소화 하기 위해서
+     * 코드 순서 매우 중요 **/
+    @Override
+    public ChangeOwnerSuccessDto changeOwnerForBox(Long operatorPk, Long targetMemberPk, Long boxPk){
+        return retryTransactionalHandler.executeWithRetry(() -> {
+
+            // 기본 파라미터 검증
+            if (operatorPk == null) {
+                throw new ValidationException(ErrorCode.UNAUTHORIZED);
+            }
+
+            if (targetMemberPk == null) {
+                throw new ValidationException(ErrorCode.UNAUTHORIZED);
+            }
+
+            if (boxPk == null) {
+                throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+            }
+
+            // 활성화 targetMemberPk DB 존재 여부 검증
+            memberRepository.findActiveById(operatorPk)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.UNAUTHORIZED));
+            memberRepository.findActiveById(targetMemberPk)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.UNAUTHORIZED));
+
+            // 엔티티 꺼내기 및 활성화 box 검증 (해당 row 에 lock)
+            Box targetBox = boxRepository.findActiveBoxByIdWithLock(boxPk)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+            // box owner 권한 검증
+            if (!Objects.equals(targetBox.getOwnerPk(), operatorPk)) {
+                throw new ValidationException(ErrorCode.FORBIDDEN);
+            }
+
+            // lock 걸고 활성화 memberList 에서 해당 box 에 OWNER 가 한 명인지 검증
+            // OWNER 는 반드시 한 명만 존재
+            // 상위 결과 2개만 lock
+            List<MemberList> ownerList = memberListRepository.findTop2ByBox_BoxPkAndRoleAndDeletedYN(boxPk, MemberRole.OWNER, N);
+            if (ownerList.size() != 1) throw new ValidationException(ErrorCode.OWNER_INVALID_STATE);
+
+            // memberList 에서 OWNER 정보 가져오기
+            MemberList currentOwner = ownerList.get(0);
+
+            // box.ownerPk 와 memberList 상의 owner 일치 여부 확인
+            if (!Objects.equals(currentOwner.getMember().getMemberPk(), targetBox.getOwnerPk())) {
+                // 데이터 정합성 깨짐: 운영 이슈로 처리
+                throw new ValidationException(ErrorCode.OWNER_INVALID_STATE);
+            }
+
+
+            // memberList 상의 OWNER 의 memberPk 값 가져오기
+            Long currentOwnerPk = currentOwner.getMember().getMemberPk();
+
+            // operatorPk 가 활성화 해당 박스에 속해있는지 확인 및  memberList 상의 정보와 일치하는지 확인
+            MemberList operatorMember;
+            if (Objects.equals(currentOwnerPk, operatorPk)) {
+                operatorMember = currentOwner; // 이미 락 걸려 있음 -> 재사용
+            } else {
+                // 이 분기는 정상 상태라면 발생하지 않음. 발생하면 데이터 정합성 문제.
+                log.error("Operator does not match current owner: box.ownerPk={}, currentOwner.memberPk={}, operatorPk={}",
+                        targetBox.getOwnerPk(), currentOwner.getMember().getMemberPk(), operatorPk);
+                throw new ValidationException(ErrorCode.OWNER_INVALID_STATE);
+            }
+
+            // 양도 대상자가 이미 OWNER 이면 에러
+            if (Objects.equals(currentOwnerPk, targetMemberPk)) {
+                throw new ValidationException(ErrorCode.NO_CHANGE_REQUIRED);
+            }
+
+            // 양도 대상자가 해당 박스에 속해있는지 확인
+            MemberList targetMember = memberListRepository.findActiveMemberListByBoxAndMemberWithLock(boxPk, targetMemberPk)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
+
+
+
+
+            // 변경 순서: 기존 Owner 먼저 강등 -> 대상자 승격 -> box.ownerPk 동기화
+            operatorMember.changeRole(MemberRole.MEMBER); // 기존 owner 강등
+            targetMember.changeRole(MemberRole.OWNER);   // 대상자 승격
+            targetBox.changeBoxOwnerPk(targetMemberPk);  // box.ownerPk 동기화
+
+            em.flush(); // JPA 더티 체킹으로 자동으로 변경 사항이 반영되지만 명시적으로 DB 반영
+
+             // targetBox 에 대한 변경 사항 반영 다시 덮어쓰기
+            // (이미 lock 을 걸어서 targetBox 를 조회 했으므로 여전히 해당 row lock 상태에서 refresh)
+            em.refresh(targetBox);
+
+            //== 재검증 로직 ==/
+
+            // lock 걸고 OWNER 양도 후 활성화 memberList 에서 해당 box 에 OWNER 가 한 명인지 재검증 (OWNER 는 반드시 한 명만 존재)
+            List<MemberList> newOwnerList = memberListRepository.findTop2ByBox_BoxPkAndRoleAndDeletedYN(boxPk, MemberRole.OWNER, N);
+            if (newOwnerList.size() != 1) throw new ValidationException(ErrorCode.OWNER_INVALID_STATE);
+
+            MemberList newOwnerMember = newOwnerList.get(0);
+            Long  newOwnerPk = newOwnerMember.getMember().getMemberPk();
+
+            // memberList 에 OWNER 의 memberPk 가 targetMemberPk 로 잘 변경됐는지 검증
+            if (!Objects.equals(newOwnerPk, targetMemberPk)) {
+                throw new ValidationException(ErrorCode.CHANGE_OWNER_FAIL);
+            }
+
+            // box 에서도 ownerPk 가 newOwnerPk 로 잘 동기화 변경 됐는지 확인
+            if (!Objects.equals(targetBox.getOwnerPk(), newOwnerPk)) {
+                throw new ValidationException(ErrorCode.CHANGE_OWNER_FAIL);
+            }
+
+
+            return ChangeOwnerSuccessDto.from(newOwnerMember, boxPk, targetMemberPk);
+        });
+    }
+
+
+    /** 헬퍼 메서드 **/
+
+    // box memberList 에서 특정 멤버의 role 변경 수행 시(MEMBER, MANAGER) 검증 수행 (양도 x)
+    private MemberRole updateMemberRoleValidate(MemberList operator, MemberList targetMember, MemberRole newRole) {
+        MemberRole oldRole = targetMember.getRole();
+
+        // updateMemberRole 메서드로 OWNER 양도를 시도하는 경우 에러
+        if (newRole == MemberRole.OWNER){
+            throw new ValidationException(ErrorCode.PROMOTE_TO_OWNER_NOT_ALLOWED);
+        }
+
+        // 요청자는 OWNER 또는 MANAGER 여야 함
+        if (!(operator.getRole() == MemberRole.OWNER || operator.getRole() == MemberRole.MANAGER)) {
+            throw new ValidationException(ErrorCode.FORBIDDEN);
+        }
+
+        // 같은 역할로 변경하려는 경우
+        if (oldRole == newRole) {
+            throw new ValidationException(ErrorCode.NO_CHANGE_REQUIRED);
+        }
+
+        // 권한 계층 관련 검증
+        // MANAGER는 OWNER의 역할을 변경할 수 없다
+        if (operator.getRole() == MemberRole.MANAGER && oldRole == MemberRole.OWNER) {
+            throw new ValidationException(ErrorCode.FORBIDDEN);
+        }
+
+        return oldRole;
     }
 
 }
