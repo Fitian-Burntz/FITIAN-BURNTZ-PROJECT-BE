@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burntz Admin - 결제 관리</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bw05:#f8f9fa;--bw08:#f1f3f4;--bw15:#e8eaed;--bw20:#dadce0;--bw30:#9aa0a6;--bw40:#80868b;--bw70:#5f6368;--bw80:#3c4043;--bw100:#202124}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80)}
+    .container{max-width:1200px;margin:0 auto;padding:0 16px}
+
+    .header{background:white;padding:20px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .header-content{display:flex;justify-content:space-between;align-items:center}
+    .logo{font-family:'Sofia Sans Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--bw100)}
+    .back-btn{background:none;border:none;cursor:pointer;padding:8px;border-radius:4px;transition:background-color 0.2s;display:flex;align-items:center;justify-content:center}
+    .back-btn:hover{background:var(--bw08)}
+    .back-btn svg{width:20px;height:20px;fill:var(--bw70)}
+
+    .main-content{padding:20px 0 100px 0}
+    .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    .page-title-section{display:flex;align-items:center;gap:12px}
+    .page-icon{width:56px;height:56px;border-radius:12px;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+    .page-title-info{display:flex;flex-direction:column}
+    .page-title{font-size:28px;font-weight:700;color:var(--bw100);margin-bottom:4px}
+    .page-subtitle{font-size:14px;color:var(--bw40)}
+
+    .tabs{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto}
+    .tab-btn{padding:0 16px;height:36px;background:var(--bw15);color:var(--bw80);border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;white-space:nowrap;transition:all 0.2s}
+    .tab-btn.active{background:var(--bw100);color:white}
+
+    .search-section{display:flex;gap:8px;margin-bottom:16px}
+    .search-type-selector{padding:0 12px;height:36px;background:var(--bw15);color:var(--bw80);border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;min-width:100px}
+    .search-type-selector.active{background:var(--bw100);color:white}
+    .search-box{flex:1;padding:10px 16px;border:2px solid var(--bw15);border-radius:4px;font-family:inherit;font-size:14px;background:white;color:var(--bw80)}
+    .search-box:focus{outline:none;border-color:var(--bw100)}
+
+    .filter-buttons{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+    .filter-btn{padding:0 12px;height:32px;background:var(--bw15);color:var(--bw80);border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all 0.2s}
+    .filter-btn.active{background:var(--bw100);color:white}
+
+    .content-area{background:white;border-radius:8px;overflow:hidden}
+    .list-item{padding:16px 20px;border-bottom:1px solid var(--bw15);display:flex;align-items:center;gap:16px;background:white}
+    .list-item:last-child{border-bottom:none}
+    .avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--bw70);font-weight:700;font-size:16px}
+    .item-content{flex:1}
+    .item-title{font-weight:700;font-size:16px;color:var(--bw80);margin-bottom:4px}
+    .item-subtitle{font-size:12px;color:var(--bw40);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .item-actions{display:flex;gap:8px}
+    .action-btn{padding:8px 12px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all 0.2s;min-height:32px}
+    .action-btn.danger{background:#ea4335;color:white}
+    .action-btn.secondary{background:var(--bw08);color:var(--bw80)}
+
+    .status-badge{padding:2px 6px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
+    .status-active{background:#34a853;color:white}
+    .status-expired{background:#ea4335;color:white}
+    .status-pending{background:#fbbc04;color:var(--bw80)}
+
+    .no-data{text-align:center;padding:150px 20px;color:var(--bw40);background:white}
+
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s}
+    .modal.active{opacity:1;visibility:visible}
+    .modal-content{background:white;border-radius:20px 20px 0 0;padding:30px;max-width:400px;width:100vw;transform:translateY(100%);transition:transform 0.3s}
+    .modal.active .modal-content{transform:translateY(0)}
+    .modal-title{font-size:20px;font-weight:700;margin-bottom:16px;color:var(--bw80)}
+    .modal-text{margin-bottom:24px;color:var(--bw70);line-height:1.5}
+    .modal-actions{display:flex;gap:12px;justify-content:flex-end}
+    .modal-btn{padding:12px 24px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px}
+    .modal-btn.cancel{background:var(--bw15);color:var(--bw80)}
+    .modal-btn.confirm{background:#ea4335;color:white}
+
+    @media (max-width:768px){
+      .container{padding:0 12px}
+      .page-header{flex-direction:column;gap:16px;align-items:flex-start}
+      .page-title-section{align-items:flex-start}
+      .page-icon{width:48px;height:48px;font-size:20px}
+      .page-title{font-size:24px}
+      .search-section{flex-direction:column}
+      .search-type-selector{width:100%}
+      .list-item{padding:12px 16px}
+      .item-subtitle{flex-direction:column;align-items:flex-start;gap:4px}
+      .item-actions{flex-wrap:wrap}
+      .modal-content{border-radius:20px 20px 0 0;max-width:100vw}
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <div class="header-content">
+      <div class="logo">Burntz Admin</div>
+      <button class="back-btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-title-section">
+        <div class="page-icon">💳</div>
+        <div class="page-title-info">
+          <div class="page-title">결제 관리</div>
+          <div class="page-subtitle">사용자 결제내역 및 구독 관리</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="payments" onclick="switchTab('payments')">결제 내역</button>
+      <button class="tab-btn" data-tab="subscriptions" onclick="switchTab('subscriptions')">구독 관리</button>
+    </div>
+
+    <div class="search-section">
+      <button class="search-type-selector active" data-search-type="name" onclick="setSearchType('name')">사용자 이름</button>
+      <button class="search-type-selector" data-search-type="plan" onclick="setSearchType('plan')">플랜명</button>
+      <input type="text" class="search-box" id="searchBox" placeholder="사용자 이름으로 검색..." onkeyup="handleSearch()">
+    </div>
+
+    <div class="filter-buttons">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">ALL</button>
+      <button class="filter-btn" data-filter="active" onclick="setFilter('active')">ACTIVE</button>
+      <button class="filter-btn" data-filter="expired" onclick="setFilter('expired')">EXPIRED</button>
+      <button class="filter-btn" data-filter="pending" onclick="setFilter('pending')">PENDING</button>
+    </div>
+
+    <div class="content-area" id="contentArea"></div>
+  </div>
+</div>
+
+<div id="refundModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">환불 처리</div>
+    <div class="modal-text" id="refundModalText">
+      이 구독을 환불 처리하시겠습니까?<br>
+      처리 후에는 되돌릴 수 없습니다.
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeRefundModal()">취소</button>
+      <button class="modal-btn confirm" onclick="confirmRefund()">환불 처리</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentTab = 'payments';
+  let currentFilter = 'all';
+  let currentSearchType = 'name';
+  let selectedRefundItem = null;
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    await validateAuth();
+    renderContent();
+  });
+
+  async function validateAuth() {
+    const token = localStorage.getItem('A_Token');
+    const password = localStorage.getItem('A_Password');
+
+    if (!token || !password) {
+      window.location.href = '/api/v1/admin/error';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/v1/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.data !== true) {
+          window.location.href = '/api/v1/admin/error';
+        }
+      } else {
+        window.location.href = '/api/v1/admin/error';
+      }
+    } catch (error) {
+      console.error('Auth validation error:', error);
+      window.location.href = '/api/v1/admin/error';
+    }
+  }
+
+  const samplePayments = [
+    {id:1,userId:'user001',userName:'김철수',plan:'Premium Monthly',amount:'9,900원',date:'2025-09-20',status:'active',expirationDate:'2025-10-20'}
+  ];
+
+  const sampleSubscriptions = [
+    {id:1,userId:'user001',userName:'김철수',plan:'Premium Monthly',status:'active',startDate:'2025-09-20',expirationDate:'2025-10-20'}
+  ];
+
+  function goBack() {
+    window.location.href = '/api/v1/admin/lobby';
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    renderContent();
+  }
+
+  function setSearchType(type) {
+    currentSearchType = type;
+    document.querySelectorAll('.search-type-selector').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-search-type="${type}"]`).classList.add('active');
+
+    const placeholder = type === 'name' ? '사용자 이름으로 검색...' : '플랜명으로 검색...';
+    document.getElementById('searchBox').placeholder = placeholder;
+    handleSearch();
+  }
+
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+    renderContent();
+  }
+
+  function handleSearch() {
+    renderContent();
+  }
+
+  function getProfileColor(userId) {
+    const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FECA57','#FF9FF3','#54A0FF'];
+    const hash = userId.split('').reduce((a,b) => {a = ((a<<5)-a) + b.charCodeAt(0); return a&a}, 0);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  function formatRemainingDays(expirationDate) {
+    if (!expirationDate) return '-';
+    const today = new Date();
+    const expiration = new Date(expirationDate);
+    const diffTime = expiration - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) {
+      return `D+${Math.abs(diffDays)}`;
+    } else if (diffDays === 0) {
+      return 'D-Day';
+    } else {
+      return `D-${diffDays}`;
+    }
+  }
+
+  function renderContent() {
+    const contentArea = document.getElementById('contentArea');
+    const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+    let data = currentTab === 'payments' ? samplePayments : sampleSubscriptions;
+
+    if (currentFilter !== 'all') {
+      data = data.filter(item => item.status === currentFilter);
+    }
+
+    if (searchTerm) {
+      if (currentSearchType === 'name') {
+        data = data.filter(item => item.userName?.toLowerCase().includes(searchTerm));
+      } else {
+        data = data.filter(item => item.plan?.toLowerCase().includes(searchTerm));
+      }
+    }
+
+    if (data.length === 0) {
+      contentArea.innerHTML = '<div class="no-data">No data</div>';
+      return;
+    }
+
+    const html = data.map(item => {
+      if (currentTab === 'payments') {
+        return `
+            <div class="list-item">
+              <div class="avatar" style="background-color:${getProfileColor(item.userId)}">
+                ${item.userName[0]}
+              </div>
+              <div class="item-content">
+                <div class="item-title">${item.userName}</div>
+                <div class="item-subtitle">
+                  <span>${item.plan} • ${item.amount} • ${item.date}</span>
+                  <span class="status-badge status-${item.status}">${item.status}</span>
+                </div>
+              </div>
+              <div class="item-actions">
+                ${item.status === 'active' ? `<button class="action-btn danger" onclick="showRefundModal(${item.id},'${item.userName}','${item.plan}')">환불</button>` : ''}
+                <button class="action-btn secondary" onclick="viewDetails(${item.id})">상세</button>
+              </div>
+            </div>
+          `;
+      } else {
+        return `
+            <div class="list-item">
+              <div class="avatar" style="background-color:${getProfileColor(item.userId)}">
+                ${item.userName[0]}
+              </div>
+              <div class="item-content">
+                <div class="item-title">${item.userName}</div>
+                <div class="item-subtitle">
+                  <span>${item.plan} • ${formatRemainingDays(item.expirationDate)}</span>
+                  <span class="status-badge status-${item.status}">${item.status}</span>
+                </div>
+              </div>
+              <div class="item-actions">
+                ${item.status === 'active' ? `<button class="action-btn danger" onclick="cancelSubscription(${item.id},'${item.userName}','${item.plan}')">구독 취소</button>` : ''}
+                <button class="action-btn secondary" onclick="viewSubscriptionDetails(${item.id})">상세</button>
+              </div>
+            </div>
+          `;
+      }
+    }).join('');
+
+    contentArea.innerHTML = html;
+  }
+
+  function showRefundModal(id, name, plan) {
+    selectedRefundItem = {id, name, plan, tab: currentTab};
+    document.getElementById('refundModalText').innerHTML =
+        `<strong>${name}</strong>님의<br><strong>${plan}</strong> 결제를 환불 처리하시겠습니까?<br><br>처리 후에는 되돌릴 수 없습니다.`;
+    document.getElementById('refundModal').classList.add('active');
+  }
+
+  function cancelSubscription(id, name, plan) {
+    if (confirm(`${name}님의 ${plan} 구독을 취소하시겠습니까?`)) {
+      const subscriptionIndex = sampleSubscriptions.findIndex(sub => sub.id === id);
+      if (subscriptionIndex !== -1) {
+        sampleSubscriptions[subscriptionIndex].status = 'expired';
+      }
+      alert(`${name}님의 구독이 취소되었습니다.`);
+      renderContent();
+    }
+  }
+
+  function closeRefundModal() {
+    document.getElementById('refundModal').classList.remove('active');
+    selectedRefundItem = null;
+  }
+
+  function confirmRefund() {
+    if (selectedRefundItem) {
+      const paymentIndex = samplePayments.findIndex(payment => payment.id === selectedRefundItem.id);
+      if (paymentIndex !== -1) {
+        samplePayments[paymentIndex].status = 'expired';
+      }
+      alert(`${selectedRefundItem.name}님의 결제가 환불 처리되었습니다.`);
+      closeRefundModal();
+      renderContent();
+    }
+  }
+
+  function viewDetails(id) {
+    const item = samplePayments.find(payment => payment.id === id);
+    if (item) {
+      alert(`결제 상세 정보:\n사용자: ${item.userName}\n플랜: ${item.plan}\n금액: ${item.amount}\n결제일: ${item.date}\n만료일: ${item.expirationDate}\n상태: ${item.status}`);
+    }
+  }
+
+  function viewSubscriptionDetails(id) {
+    const item = sampleSubscriptions.find(sub => sub.id === id);
+    if (item) {
+      alert(`구독 상세 정보:\n사용자: ${item.userName}\n플랜: ${item.plan}\n시작일: ${item.startDate}\n만료일: ${item.expirationDate}\n상태: ${item.status}`);
+    }
+  }
+
+  document.getElementById('refundModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeRefundModal();
+    }
+  });
+</script>
+</body>
+</html>
