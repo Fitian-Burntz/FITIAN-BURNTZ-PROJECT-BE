@@ -8,11 +8,13 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.record.entity.Record;
+import com.fitian.burntz.domain.record.ranking.RankingScoreEncoder;
 import com.fitian.burntz.domain.record.repository.RecordRepository;
 import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
 import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
 import com.fitian.burntz.domain.record.v1.dto.RecordUpdateRequest;
 import com.fitian.burntz.domain.wod.entity.Wod;
+import com.fitian.burntz.domain.wod.enums.WodType;
 import com.fitian.burntz.domain.wod.repository.WodRespository;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
@@ -22,9 +24,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import com.fitian.burntz.domain.record.service.RankingService.RankingRow;
+import com.fitian.burntz.domain.record.service.RankingService.RankingSnapshot;
+import com.fitian.burntz.domain.record.service.RankingQueryService.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -39,10 +50,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RecordService {
     private final WodRespository wodRespository;
-    private final BoxRepository boxRepository;
     private final MemberListRepository memberListRepository;
     private final ClassesRepository classesRepository;
     private final RecordRepository recordRepository;
+
+    private final RankingService rankingService;
+    private  final RankingQueryService rankingQueryService;
+    private final RankingScoreEncoder encoder;
     /*
      * record 생성
      * */
@@ -102,10 +116,26 @@ public class RecordService {
             // DB 유니크 제약 위반 등 동시성 문제로 인해 발생할 수 있음
             throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
         }
+
+        // IMPORTANT: DB 커밋 이후에 Redis 반영을 하도록 등록 (트랜잭션 안전)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    rankingService.upsert(record);
+                    System.out.println("Ranking upsert failed after create");
+                } catch (Exception e) {
+                    log.warn("Ranking upsert failed after create (box={}, date={}, recordPk={}): {}",
+                            boxPk, date, record.getRecordPk(), e.toString());
+
+                }
+            }
+        });
     }
 
+
     /*
-     * record 목록 조회
+     * record 목록 조회(Redis 우선 -> db 폴백)
      * */
     @Transactional(readOnly = true)
     public List<RecordResponse> getRecord(Long boxPk, Long memberPk, LocalDate date){
@@ -123,13 +153,26 @@ public class RecordService {
 
         //2. wod 존재 및 소속 검증
         Wod wod = requireActiveWod(boxPk, date);
+        WodType type =wod.getWodType();
 
-        //해당 날짜의 record 모두 조회
-        List<Record> records = recordRepository.findAllByWodWithMemberAndClasses(wod, BaseTime.Yn.N);
+        // redis 우선 조회
+        List<RankingRow> rows = rankingService.getRanking(boxPk, date, () -> rankingQueryService.rebuildFromDb(boxPk, date, type));
 
-        return records.stream()
-                .map(RecordResponse::from)
-                .collect(Collectors.toList());
+
+        //rows -> record 목록으로 변환 (DB에서 한 번에 조회)
+        List<Long> ids = rows.stream().map(RankingRow::getRecordPk).toList();
+        if (ids.isEmpty()) return Collections.emptyList();
+
+        List<Record> records = recordRepository.findAllByRecordPkInWithJoins(ids);
+        Map<Long, Record> byId = records.stream().collect(Collectors.toMap(Record::getRecordPk, Function.identity()));
+
+        List<RecordResponse> result = new ArrayList<>(rows.size());
+        for (RankingRow r : rows) {
+            Record rec = byId.get(r.getRecordPk());
+            if (rec == null) continue;
+            result.add(RecordResponse.fromWithRank(rec, r.getRank()));  //랭킹포함
+        }
+        return result;
     }
 
     /*
@@ -152,6 +195,9 @@ public class RecordService {
 
         //4. memberPk/nickname 규칙 검사 (둘다 있거나 둘다 없으면 에러)
         validateMemberOrNickname(req);
+
+        // 이전 상태 스냅샷 생성 (삭제/제거에 사용)
+        RankingSnapshot beforeSnapshot = RankingSnapshot.fromRecord(record);
 
         // 5. targetMemberList (null 허용) 및 nickname 결정 (null => 변경 없음)
         MemberList targetMemberList = null;
@@ -190,6 +236,24 @@ public class RecordService {
             // DB 유니크 제약 위반 등 동시성 문제로 인해 발생할 수 있음
             throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
         }
+
+        // 트랜잭션 커밋 후에 레디스 동기화 (기존 스냅샷 제거 후 새 값 upsert)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    // remove old snapshot (정확히 이전 문자열 제거)
+                    rankingService.remove(beforeSnapshot);
+                } catch (Exception e) {
+                    log.warn("Ranking remove(before) failed for update recordPk={}: {}", recordPk, e.toString());
+                }
+                try {
+                    rankingService.upsert(record);
+                } catch (Exception e) {
+                    log.warn("Ranking upsert(after update) failed for recordPk={}: {}", recordPk, e.toString());
+                }
+            }
+        });
     }
 
     /*
@@ -206,9 +270,26 @@ public class RecordService {
         Record record = recordRepository.findById(recordPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
 
+        // 삭제 전 snapshot(현재 항목이 레디스에 있는 문자열을 Build하는데 사용)
+        RankingSnapshot snapshot = RankingSnapshot.fromRecord(record);
+
         //delete
         record.markDeleted();
+        recordRepository.flush();
+
+        // 커밋 이후에 레디스에서 제거
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    rankingService.remove(snapshot);
+                } catch (Exception e) {
+                    log.warn("Ranking remove failed after delete recordPk={}: {}", recordPk, e.toString());
+                }
+            }
+        });
     }
+
 
 
     /*
@@ -244,4 +325,5 @@ public class RecordService {
             throw new ValidationException(ErrorCode.EMPTY_NICKNAME_MEMBERPK);
         }
     }
+
 }
