@@ -8,7 +8,7 @@ public interface MemberService {
 
     MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender);
 
-    MemberDto removeMember(Long memberPk);
+    MemberDto withdrawMember(Long memberPk);
 
     /** 최근에 접속한 Box 업데이트 **/
     void updateLastVisitedBox(Long memberPk, Long boxPk);

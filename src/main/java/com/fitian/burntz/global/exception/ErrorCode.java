@@ -40,6 +40,8 @@ public enum ErrorCode {
     PASSWORD_SPACE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_SPACE_NOT_ALLOWED", "공백은 포함될 수 없습니다."),
     PASSWORD_EMOJI_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_EMOJI_NOT_ALLOWED", "이모티콘은 사용할 수 없습니다."),
     PASSWORD_KOREAN_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_KOREAN_NOT_ALLOWED", "한글은 포함될 수 없습니다."),
+    NO_CHANGE_REQUIRED(HttpStatus.BAD_REQUEST, "NO_CHANGE_REQUIRED", "변경할 내용이 없습니다."),
+    OPERATION_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "OPERATION_NOT_ALLOWED", "이 작업은 현재 상태에서 허용되지 않습니다. 마지막 소유자는 강등할 수 없습니다."),
 
 
     // 401 Unauthorized
@@ -59,6 +61,7 @@ public enum ErrorCode {
     // 404 Not Found
     NOT_FOUND(HttpStatus.NOT_FOUND, "NOT_FOUND", "요청한 자원이 존재하지 않습니다."),
     BOX_NOT_FOUND(HttpStatus.NOT_FOUND, "BOX_NOT_FOUND", "해당 박스를 찾을 수 없습니다."),
+    BOX_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "BOX_CODE_NOT_FOUND", "해당 박스 코드를 찾을 수 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."),
     CHANNEL_NOT_FOUND(HttpStatus.NOT_FOUND, "CHANNEL_NOT_FOUND", "해당 채널을 찾을 수 없습니다."),
     CLASS_NOT_FOUND(HttpStatus.NOT_FOUND, "CLASS_NOT_FOUND", "해당 수업을 찾을 수 없습니다."),
@@ -76,6 +79,7 @@ public enum ErrorCode {
 
     //409 중복 생성/리소스 충돌
     DUPLICATE_BOX_CODE(HttpStatus.CONFLICT, "DUPLICATE_BOX_CODE", "이미 사용중인 boxCode 입니다."),
+    DUPLICATE_MEMBER(HttpStatus.CONFLICT, "DUPLICATE_MEMBER", "이미 해당 박스에 가입된 멤버입니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),

@@ -1,6 +1,6 @@
 package com.fitian.burntz.domain.box.dto;
 
-import com.fitian.burntz.domain.box.enums.SubscribeYN;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
@@ -10,14 +10,18 @@ import lombok.*;
 @Builder
 public class CreateBoxRequest {
 
+    @NotNull(message = "boxName is required")
     private String boxName;
+
+    @NotNull(message = "boxCode is required")
     private String boxCode;
+
     private String boxContact;
     private String boxAddress;
     private String boxScript;
     private String placeId;
     private String boxFeeUrl;
     private String boxTimetableUrl;
-    private String boxInsta;// Y/N
+    private String boxInsta;
 
 }

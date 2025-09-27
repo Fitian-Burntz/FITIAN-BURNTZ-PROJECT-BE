@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "MembershipDeleteRequest", description = "멤버십 삭제 요청")
+@Schema(name = "MembershipIdentifierRequest", description = "멤버십 요청 모델")
 public class MembershipIdentifierRequest {
     @NotNull(message = "membershipPk must not be blank")
     @Schema(description = "멤버십 PK", example = "1")

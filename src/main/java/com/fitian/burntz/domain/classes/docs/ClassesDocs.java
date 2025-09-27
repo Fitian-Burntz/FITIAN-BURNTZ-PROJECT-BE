@@ -1,6 +1,5 @@
 package com.fitian.burntz.domain.classes.docs;
 
-import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.v1.dto.*;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
@@ -24,7 +23,7 @@ import java.util.List;
 @Tag(name = "수업 관련 api 입니다.", description = "수업 생성하거나 수정, 삭제할 수 있습니다.")
 public interface ClassesDocs {
     @Operation(summary = "수업 목록 조회", description = "기간 조건으로 박스의 수업을 조회합니다.")
-    ResponseEntity<ApiResponse<List<Classes>>> getClasses(
+    ResponseEntity<ApiResponse<List<ClassesResponse>>> getClasses(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ClassesSearchRequest request
     );

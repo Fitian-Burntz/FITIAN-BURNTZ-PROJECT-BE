@@ -6,6 +6,7 @@ import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.enums.WodType;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -23,19 +24,22 @@ import java.time.LocalDate;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Wod Create DTO")
+@Schema(name = "WodCreateRequest", description = "Wod 생성 요청")
 public class WodCreateRequest{
-    @NotNull
-    @Schema(description = "wod 제목")
+    @NotBlank(message = "wodTitle must not be blank")
+    @Schema(description = "wod 제목", example="HSPU+HPCL")
     private String wodTitle;
-    @NotNull
-    @Schema(description = "wod 내용")
+
+    @NotBlank(message = "wodScript must not be blank")
+    @Schema(description = "wod 내용", example="Strength Every 2:00 x 6 set")
     private String wodScript;
-    @NotNull
-    @Schema(description = "wod 종류")
+
+    @NotNull(message = "wodType is required")
+    @Schema(description = "wod 종류", example="AMRAP")
     private WodType wodType;
-    @NotNull
-    @Schema(description = "wod 날짜")
+
+    @NotNull(message = "wodDate is required")
+    @Schema(description = "wod 날짜", example="2025-10-01")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate wodDate;
 

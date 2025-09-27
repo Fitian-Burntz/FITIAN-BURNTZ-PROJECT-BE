@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,6 +42,10 @@ public class BoxSubscription extends BaseTime {
   @JoinColumn(name = "owner_member_id")
   private Member member; //구매자 id
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "box_pk")
+  private Box box;
+
   private String productId; //구매한 상품 id
 
   @Enumerated(EnumType.STRING)
@@ -56,11 +61,13 @@ public class BoxSubscription extends BaseTime {
   private Double price;
 
   @Builder
-  private BoxSubscription(Member member, String productId,
+  private BoxSubscription(Long boxSubscriptionPk, Member member, Box box, String productId,
       PaymentStore store, SubscriptionStatus status,
       LocalDateTime startedAt, LocalDateTime expiredAt,
       Double price) {
+    this.boxSubscriptionPk = boxSubscriptionPk;
     this.member = member;
+    this.box = box;
     this.productId = productId;
     this.store = store;
     this.status = status;
@@ -69,11 +76,12 @@ public class BoxSubscription extends BaseTime {
     this.price = price;
   }
 
-  public static BoxSubscription of(Member member, String productId,
+  public static BoxSubscription of(Member member ,Box box, String productId,
       PaymentStore store, SubscriptionStatus status,
       LocalDateTime startedAt, LocalDateTime expiredAt, Double price) {
     return BoxSubscription.builder()
         .member(member)
+        .box(box)
         .productId(productId)
         .store(store)
         .status(status)
@@ -82,6 +90,37 @@ public class BoxSubscription extends BaseTime {
         .price(price)
         .build();
   }
+
+  public BoxSubscription replaceTo(BoxSubscription boxSubscription) {
+    return BoxSubscription
+        .builder()
+        .boxSubscriptionPk(this.getBoxSubscriptionPk())
+        .member(boxSubscription.getMember())
+        .box(boxSubscription.getBox())
+        .productId(boxSubscription.getProductId())
+        .store(boxSubscription.getStore())
+        .status(boxSubscription.getStatus())
+        .startedAt(boxSubscription.getStartedAt())
+        .expiredAt(boxSubscription.getExpiredAt())
+        .price(boxSubscription.getPrice())
+        .build();
+  }
+
+  public BoxSubscription updateStatus(SubscriptionStatus status) {
+    this.status = status;
+    return this;
+  }
+
+  public long getRemainingDays() {
+    LocalDateTime now = LocalDateTime.now();
+    if (now.isAfter(expiredAt)) {
+      return 0;
+    }
+
+    return ChronoUnit.DAYS.between(now, expiredAt);
+  }
+
+
 
 
 

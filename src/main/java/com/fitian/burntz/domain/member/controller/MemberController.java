@@ -7,11 +7,8 @@ import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/member")
@@ -34,13 +31,14 @@ public class MemberController {
     }
 
 
+    /** 멤버 자진 탈퇴 **/
     @DeleteMapping
-    public ResponseEntity<ApiResponse<MemberInfoResponse>> removeMember(
+    public ResponseEntity<ApiResponse<MemberInfoResponse>> withdrawMember(
             @AuthenticationPrincipal CustomUserDetails customUserDetails){
 
         Long memberPk = customUserDetails.getMemberPk();
 
-        MemberDto removeResponse = memberService.removeMember(memberPk);
+        MemberDto removeResponse = memberService.withdrawMember(memberPk);
 
         return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(removeResponse),
                 "Your membership withdrawal has been completed."));
