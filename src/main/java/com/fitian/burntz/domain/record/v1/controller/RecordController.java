@@ -58,7 +58,6 @@ public class RecordController implements RecordDocs {
             ){
 
         Long memberPk = 3L;
-        List<RecordResponse> records = recordService.getRecord(boxPk, memberPk, date);
 
         return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, memberPk, date),"해당 날짜의 records 조회 완료")));
     }
