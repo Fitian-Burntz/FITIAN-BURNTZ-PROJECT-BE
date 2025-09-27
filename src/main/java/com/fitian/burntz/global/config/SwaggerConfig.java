@@ -57,7 +57,7 @@ public class SwaggerConfig {
     public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
                 .group("🔐 인증 API")
-                .pathsToMatch("/api/auth/**")
+                .pathsToMatch("/api/v1/auth/**")
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
@@ -68,6 +68,11 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
             .group("📦 박스 API")
             .pathsToMatch("/api/v1/boxes/**")
+                //wod랑 record경로 제외
+                .pathsToExclude(
+                        "/api/v1/boxes/**/wods",     
+                        "/api/v1/boxes/**/wods/**"
+                )
             .addOpenApiCustomizer(jwtSecurityCustomizer())
             .build();
     }
@@ -91,4 +96,53 @@ public class SwaggerConfig {
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
+
+    //Wod API 그룹
+    @Bean
+    public GroupedOpenApi wodApi() {
+        return GroupedOpenApi.builder()
+                .group("\uD83C\uDFCB\uFE0F WOD API")
+                .pathsToMatch(
+                        "/api/v1/boxes/*/wods",
+                        "/api/v1/boxes/*/wods/*"
+                )
+                .pathsToExclude("/api/v1/boxes/**/wods/**/records/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // Record API 그룹 (records 하위만 포함)
+    @Bean
+    public GroupedOpenApi recordApi() {
+        return GroupedOpenApi.builder()
+                .group("📝 Record API")
+                .pathsToMatch(
+                        "/api/v1/boxes/*/wods/*/records",
+                        "/api/v1/boxes/*/wods/*/records/*"
+                )
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // 채널 API 그룹
+    @Bean
+    public GroupedOpenApi membershipApi() {
+        return GroupedOpenApi.builder()
+                .group("🪪 멤버십 API")
+                .pathsToMatch("/api/v1/boxPk/{boxPk}/membership/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+
+    // 결제 API 그룹
+    @Bean
+    public GroupedOpenApi paymentApi() {
+        return GroupedOpenApi.builder()
+                .group("💰 결제 API")
+                .pathsToMatch("/api/v1/payments/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
 }

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burntz Admin Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bw05:#f8f9fa;--bw08:#f1f3f4;--bw15:#e8eaed;--bw20:#dadce0;--bw30:#9aa0a6;--bw40:#80868b;--bw70:#5f6368;--bw80:#3c4043;--bw100:#202124}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80)}
+    .login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bw05);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;padding:20px}
+    .login-title{font-family:'Sofia Sans Condensed',sans-serif;font-size:48px;font-weight:700;margin-bottom:40px;color:var(--bw100)}
+    .form-group{margin-bottom:20px;width:100%;max-width:400px}
+    .form-label{display:block;margin-bottom:8px;font-weight:500;color:var(--bw80)}
+    .form-input{width:100%;padding:16px;border:2px solid var(--bw15);border-radius:4px;font-family:inherit;font-size:16px;transition:border-color 0.2s;background:white}
+    .form-input:focus{outline:none;border-color:var(--bw100)}
+    .login-btn{width:100%;max-width:400px;padding:16px;background:var(--bw100);color:white;border:none;border-radius:4px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;transition:background-color 0.2s}
+    .login-btn:hover{background:var(--bw70)}
+    .login-btn:disabled{background:var(--bw30);cursor:not-allowed}
+    .forgot-account{margin-top:16px;text-align:center}
+    .forgot-account a{color:var(--bw70);text-decoration:underline;cursor:pointer;font-size:14px}
+    .forgot-account a:hover{color:var(--bw100)}
+    @media (max-width:768px){
+      .login-title{font-size:32px;margin-bottom:30px}
+    }
+  </style>
+</head>
+<body>
+<div class="login-screen">
+  <h1 class="login-title">Burntz Admin</h1>
+  <div class="form-group">
+    <label class="form-label">인증 토큰</label>
+    <input type="text" class="form-input" id="authToken" placeholder="인증 토큰을 입력하세요">
+  </div>
+  <div class="form-group">
+    <label class="form-label">비밀번호</label>
+    <input type="password" class="form-input" id="adminPassword" placeholder="비밀번호를 입력하세요">
+  </div>
+  <button class="login-btn" id="loginBtn" onclick="login()">로그인</button>
+  <div class="forgot-account">
+    <a onclick="checkAccount()">계정을 잊어버리셨나요?</a>
+  </div>
+</div>
+
+<script>
+  async function login(){
+    const token = document.getElementById('authToken').value;
+    const password = document.getElementById('adminPassword').value;
+    const loginBtn = document.getElementById('loginBtn');
+
+    if(!token || !password) {
+      alert('인증 토큰과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    // 로딩 상태 표시
+    loginBtn.disabled = true;
+    loginBtn.textContent = '로그인 중...';
+
+    try {
+      const response = await fetch('/api/v1/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.data === true) {
+
+          localStorage.setItem('A_Token', token);
+          localStorage.setItem('A_Password', password);
+
+          window.location.href = '/api/v1/admin/lobby';
+        } else {
+          alert('접근 권한이 없습니다.');
+          // 인증 실패 시 입력 필드 비우고 localStorage 삭제
+          document.getElementById('authToken').value = '';
+          document.getElementById('adminPassword').value = '';
+          localStorage.removeItem('A_Token');
+          localStorage.removeItem('A_Password');
+          document.getElementById('authToken').focus();
+        }
+      } else {
+        alert('접근 권한이 없습니다.');
+        // 인증 실패 시 입력 필드 비우고 localStorage 삭제
+        document.getElementById('authToken').value = '';
+        document.getElementById('adminPassword').value = '';
+        localStorage.removeItem('A_Token');
+        localStorage.removeItem('A_Password');
+        document.getElementById('authToken').focus();
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('접근 권한이 없습니다.');
+      // 인증 실패 시 입력 필드 비우고 localStorage 삭제
+      document.getElementById('authToken').value = '';
+      document.getElementById('adminPassword').value = '';
+      localStorage.removeItem('A_Token');
+      localStorage.removeItem('A_Password');
+      document.getElementById('authToken').focus();
+    } finally {
+      // 로딩 상태 해제
+      loginBtn.disabled = false;
+      loginBtn.textContent = '로그인';
+    }
+  }
+
+  async function checkAccount(){
+    try {
+      const response = await fetch('/api/v1/admin/account', {
+        method: 'GET'
+      });
+
+      alert('전송된 계정을 확인하세요');
+    } catch (error) {
+      console.error('Account check error:', error);
+      alert('전송된 계정을 확인하세요');
+    }
+  }
+
+  document.addEventListener('keypress', function(e){
+    if(e.key === 'Enter' && !document.getElementById('loginBtn').disabled){
+      login();
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // localStorage에서 저장된 값 불러오기
+    const savedToken = localStorage.getItem('A_Token');
+    const savedPassword = localStorage.getItem('A_Password');
+
+    if (savedToken) {
+      document.getElementById('authToken').value = savedToken;
+    }
+
+    if (savedPassword) {
+      document.getElementById('adminPassword').value = savedPassword;
+    }
+
+    document.getElementById('authToken').focus();
+  });
+</script>
+</body>
+</html>

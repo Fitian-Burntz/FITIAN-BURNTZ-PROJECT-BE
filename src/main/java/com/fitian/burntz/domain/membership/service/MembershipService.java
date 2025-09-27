@@ -58,6 +58,8 @@ public class MembershipService {
 
         Membership membership = membershipRepository.findByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+        MemberList target = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         return MembershipResponse.builder()
                 .membershipPk(membership.getMembershipPk())
@@ -67,6 +69,7 @@ public class MembershipService {
                 .status(membership.getStatus())
                 .memo(membership.getMemo())
                 .boxPk(membership.getBox().getBoxPk())
+                .boxNickname(target.getBoxNickname())
                 .build();
     }
 
@@ -98,7 +101,7 @@ public class MembershipService {
             Member createdBy = memberRepository.findById(userDetails.getMemberPk())
                     .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-            String newValue = objectMapper.writeValueAsString(membership);
+            String newValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
             MembershipHistory history = MembershipHistory.builder()
                     .membership(membership)
                     .actionType(HistoryActionType.CREATE)
@@ -111,7 +114,7 @@ public class MembershipService {
             historyRepository.save(history);
         } catch (JsonProcessingException e) {
             log.error("Failed to save Membership History. membershipPk={}, boxPk={}, memberPk={}",
-                    membership.getMembershipPk(), boxPk, memberPk);
+                    membership.getMembershipPk(), boxPk, memberPk, e);
             throw new RuntimeException("Failed to save Membership History.", e);
         }
     }
@@ -128,9 +131,9 @@ public class MembershipService {
         if(!memberPk.equals(membership.getMember().getMemberPk())) throw new ValidationException(ErrorCode.USER_NOT_FOUND);
 
         try {
-            String preValue = objectMapper.writeValueAsString(membership);
+            String preValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
             membership.updateFrom(request);
-            String newValue = objectMapper.writeValueAsString(membership);
+            String newValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
 
             Member createdBy = memberRepository.findById(userDetails.getMemberPk())
                     .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
@@ -147,7 +150,7 @@ public class MembershipService {
             historyRepository.save(history);
         } catch (JsonProcessingException e) {
             log.error("Failed to save Membership History. membershipPk={}, boxPk={}, memberPk={}",
-                    membership.getMembershipPk(), boxPk, memberPk);
+                    membership.getMembershipPk(), boxPk, memberPk, e);
             throw new RuntimeException("Failed to save Membership History.", e);
         }
     }
@@ -164,7 +167,7 @@ public class MembershipService {
         if(!memberPk.equals(membership.getMember().getMemberPk())) throw new ValidationException(ErrorCode.USER_NOT_FOUND);
 
         try{
-            String preValue = objectMapper.writeValueAsString(membership);
+            String preValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
             membership.markDeleted();
 
             Member createdBy = memberRepository.findById(userDetails.getMemberPk())

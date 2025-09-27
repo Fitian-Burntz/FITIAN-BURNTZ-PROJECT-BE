@@ -44,7 +44,10 @@ public class SecurityConfig {
 
                                 // 스웨거
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+
+                                // 어드민 페이지
+                                "/api/v1/admin/**"
                         ).permitAll()
 
 

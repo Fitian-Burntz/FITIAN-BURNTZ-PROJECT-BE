@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burntz Admin - 박스 구독 관리</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bw05:#f8f9fa;--bw08:#f1f3f4;--bw15:#e8eaed;--bw20:#dadce0;--bw30:#9aa0a6;--bw40:#80868b;--bw70:#5f6368;--bw80:#3c4043;--bw100:#202124}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80)}
+    .container{max-width:1200px;margin:0 auto;padding:0 16px}
+
+    .header{background:white;padding:20px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .header-content{display:flex;justify-content:space-between;align-items:center}
+    .logo{font-family:'Sofia Sans Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--bw100)}
+    .back-btn{background:none;border:none;cursor:pointer;padding:8px;border-radius:4px;transition:background-color 0.2s;display:flex;align-items:center;justify-content:center}
+    .back-btn:hover{background:var(--bw08)}
+    .back-btn svg{width:20px;height:20px;fill:var(--bw70)}
+
+    .main-content{padding:20px 0 100px 0}
+    .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    .page-title-section{display:flex;align-items:center;gap:12px}
+    .page-icon{width:56px;height:56px;border-radius:12px;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+    .page-title-info{display:flex;flex-direction:column}
+    .page-title{font-size:28px;font-weight:700;color:var(--bw100);margin-bottom:4px}
+    .page-subtitle{font-size:14px;color:var(--bw40)}
+
+    .search-section{display:flex;gap:8px;margin-bottom:16px}
+    .search-box{flex:1;padding:10px 16px;border:2px solid var(--bw15);border-radius:4px;font-family:inherit;font-size:14px;background:white;color:var(--bw80)}
+    .search-box:focus{outline:none;border-color:var(--bw100)}
+
+    .content-area{background:white;border-radius:8px;overflow:hidden}
+    .list-item{padding:16px 20px;border-bottom:1px solid var(--bw15);display:flex;align-items:center;gap:16px;background:white}
+    .list-item:last-child{border-bottom:none}
+    .avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--bw70);font-weight:700;font-size:16px}
+    .item-content{flex:1}
+    .item-title{font-weight:700;font-size:16px;color:var(--bw80);margin-bottom:4px}
+    .item-subtitle{font-size:12px;color:var(--bw40);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .item-actions{display:flex;gap:8px}
+    .action-btn{padding:8px 12px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all 0.2s;min-height:32px}
+    .action-btn.primary{background:var(--bw100);color:white}
+
+    .no-data{text-align:center;padding:150px 20px;color:var(--bw40);background:white}
+    .loading{text-align:center;padding:150px 20px;color:var(--bw40);background:white}
+
+    .pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:20px;padding:20px 0}
+    .pagination-btn{padding:8px 12px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;transition:all 0.2s;background:white;color:var(--bw80);border:1px solid var(--bw15)}
+    .pagination-btn:hover{background:var(--bw08)}
+    .pagination-btn:disabled{background:var(--bw08);color:var(--bw40);cursor:not-allowed}
+    .pagination-btn.active{background:var(--bw100);color:white;border-color:var(--bw100)}
+    .pagination-info{color:var(--bw70);font-size:14px;margin:0 16px}
+
+    /* 모달 스타일 */
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;align-items:center;justify-content:center}
+    .modal{background:white;border-radius:12px;width:90%;max-width:600px;max-height:90vh;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
+    .modal-header{padding:20px 24px;border-bottom:1px solid var(--bw15);display:flex;justify-content:space-between;align-items:center}
+    .modal-title{font-size:20px;font-weight:700;color:var(--bw100)}
+    .modal-close{background:none;border:none;cursor:pointer;padding:8px;border-radius:4px;transition:background-color 0.2s}
+    .modal-close:hover{background:var(--bw08)}
+    .modal-close svg{width:20px;height:20px;fill:var(--bw70)}
+    .modal-body{padding:24px;overflow-y:auto;max-height:calc(90vh - 120px)}
+
+    .subscription-info{margin-bottom:24px;padding:24px;border-radius:12px;color:white;position:relative}
+    .subscription-info.active{background:var(--bw100)}
+    .subscription-info.inactive{background:#f44336;opacity:0.8}
+    .subscription-status{font-size:18px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+    .subscription-days{font-size:28px;font-weight:900;margin-bottom:8px}
+    .subscription-period{font-size:13px;opacity:0.9}
+    .status-dropdown{position:relative;display:inline-block}
+    .status-select{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;padding:6px 12px;font-size:14px;font-weight:600;cursor:pointer;outline:none}
+    .status-select:hover{background:rgba(255,255,255,0.3)}
+
+    .payment-history{margin-top:24px}
+    .payment-history-title{font-size:16px;font-weight:700;color:var(--bw100);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .payment-list{max-height:300px;overflow-y:auto;border:1px solid var(--bw15);border-radius:8px}
+    .payment-item{padding:16px;border-bottom:1px solid var(--bw15);display:flex;justify-content:space-between;align-items:center}
+    .payment-item:last-child{border-bottom:none}
+    .payment-info{flex:1}
+    .payment-date{font-size:14px;font-weight:500;color:var(--bw80);margin-bottom:4px}
+    .payment-product{font-size:12px;color:var(--bw40)}
+    .payment-price{font-size:16px;font-weight:700;color:#2196F3}
+
+    .modal-loading{text-align:center;padding:60px 20px;color:var(--bw40)}
+    .modal-error{text-align:center;padding:60px 20px;color:#f44336}
+
+    @media (max-width:768px){
+      .container{padding:0 12px}
+      .page-header{flex-direction:column;gap:16px;align-items:flex-start}
+      .page-title-section{align-items:flex-start}
+      .page-icon{width:48px;height:48px;font-size:20px}
+      .page-title{font-size:24px}
+      .search-section{flex-direction:column}
+      .list-item{padding:12px 16px}
+      .item-subtitle{flex-direction:column;align-items:flex-start;gap:4px}
+      .item-actions{flex-wrap:wrap}
+
+      .modal{width:95%;max-width:none}
+      .modal-header{padding:16px 20px}
+      .modal-body{padding:20px}
+      .subscription-info{padding:16px}
+      .payment-item{padding:12px}
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <div class="header-content">
+      <div class="logo">Burntz Admin</div>
+      <button class="back-btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-title-section">
+        <div class="page-icon">📦️</div>
+        <div class="page-title-info">
+          <div class="page-title">박스 구독 관리</div>
+          <div class="page-subtitle">박스 결제내역, 구독관리</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-section">
+      <input type="text" class="search-box" id="searchBox" placeholder="박스명 또는 박스 번호로 검색..." oninput="handleSearch()">
+    </div>
+
+    <div class="content-area" id="contentArea">
+      <div class="loading">박스 정보를 불러오는 중...</div>
+    </div>
+
+    <div class="pagination" id="pagination" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- 모달 -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">박스 관리</div>
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <div class="modal-loading">구독 정보를 불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let allBoxes = [];
+  let filteredBoxes = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    await validateAuth();
+    await loadBoxes();
+  });
+
+  async function validateAuth() {
+    const token = localStorage.getItem('A_Token');
+    const password = localStorage.getItem('A_Password');
+
+    if (!token || !password) {
+      window.location.href = '/api/v1/admin/error';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/v1/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.data !== true) {
+          window.location.href = '/api/v1/admin/error';
+        }
+      } else {
+        window.location.href = '/api/v1/admin/error';
+      }
+    } catch (error) {
+      console.error('Auth validation error:', error);
+      window.location.href = '/api/v1/admin/error';
+    }
+  }
+
+  async function loadBoxes() {
+    const token = localStorage.getItem('A_Token');
+    const password = localStorage.getItem('A_Password');
+
+    try {
+      const response = await fetch('/api/v1/admin/boxes', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          allBoxes = result.data;
+          filteredBoxes = [...allBoxes];
+          renderBoxes();
+        } else {
+          document.getElementById('contentArea').innerHTML = '<div class="no-data">박스 정보를 불러올 수 없습니다.</div>';
+        }
+      } else {
+        document.getElementById('contentArea').innerHTML = '<div class="no-data">박스 정보를 불러올 수 없습니다.</div>';
+      }
+    } catch (error) {
+      console.error('Load boxes error:', error);
+      document.getElementById('contentArea').innerHTML = '<div class="no-data">박스 정보를 불러올 수 없습니다.</div>';
+    }
+  }
+
+  function goBack() {
+    window.location.href = '/api/v1/admin/lobby';
+  }
+
+  function getProfileColor(boxPk) {
+    const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FECA57','#FF9FF3','#54A0FF'];
+    const hash = boxPk.toString().split('').reduce((a,b) => {a = ((a<<5)-a) + b.charCodeAt(0); return a&a}, 0);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  function handleSearch() {
+    const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+
+    if (searchTerm === '') {
+      filteredBoxes = [...allBoxes];
+    } else {
+      filteredBoxes = allBoxes.filter(box =>
+          box.boxName.toLowerCase().includes(searchTerm) ||
+          box.boxPk.toString().includes(searchTerm)
+      );
+    }
+
+    currentPage = 1;
+    renderBoxes();
+  }
+
+  function renderBoxes() {
+    const contentArea = document.getElementById('contentArea');
+    const paginationArea = document.getElementById('pagination');
+
+    if (filteredBoxes.length === 0) {
+      contentArea.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
+      paginationArea.style.display = 'none';
+      return;
+    }
+
+    const totalPages = Math.ceil(filteredBoxes.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageBoxes = filteredBoxes.slice(startIndex, endIndex);
+
+    const html = currentPageBoxes.map(box => {
+      return `
+        <div class="list-item">
+          <div class="item-content">
+            <div class="item-title">${box.boxName}</div>
+            <div class="item-subtitle">
+              <span>박스 번호: ${box.boxPk}</span>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="action-btn primary" onclick="viewPaymentHistory(${box.boxPk}, '${box.boxName}')">관리</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    contentArea.innerHTML = html;
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    const paginationArea = document.getElementById('pagination');
+
+    if (totalPages <= 1) {
+      paginationArea.style.display = 'none';
+      return;
+    }
+
+    paginationArea.style.display = 'flex';
+
+    let paginationHtml = '';
+
+    paginationHtml += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">‹</button>`;
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
+      if (startPage > 2) {
+        paginationHtml += `<span class="pagination-info">...</span>`;
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      paginationHtml += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        paginationHtml += `<span class="pagination-info">...</span>`;
+      }
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+    }
+
+    paginationHtml += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">›</button>`;
+
+    paginationArea.innerHTML = paginationHtml;
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    renderBoxes();
+  }
+
+  // 모달 관련 함수들
+  async function viewPaymentHistory(boxPk, boxName) {
+    const modal = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+
+    // 현재 박스 PK 저장
+    window.currentBoxPk = boxPk;
+
+    modalTitle.textContent = boxName;
+    modalBody.innerHTML = '<div class="modal-loading">구독 정보를 불러오는 중...</div>';
+    modal.style.display = 'flex';
+
+    try {
+      const token = localStorage.getItem('A_Token');
+      const password = localStorage.getItem('A_Password');
+
+      const response = await fetch(`/api/v1/admin/purchase/log/${boxPk}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const subscriptionData = result.data;
+          renderModalContent(subscriptionData);
+        } else {
+          modalBody.innerHTML = '<div class="modal-error">구독 정보가 없습니다.</div>';
+        }
+      } else {
+        modalBody.innerHTML = '<div class="modal-error">구독 정보를 불러올 수 없습니다.</div>';
+      }
+    } catch (error) {
+      console.error('Load subscription data error:', error);
+      modalBody.innerHTML = '<div class="modal-error">구독 정보를 불러오는 중 오류가 발생했습니다.</div>';
+    }
+  }
+
+  function renderModalContent(data) {
+    const modalBody = document.getElementById('modalBody');
+
+    // 상태 매핑
+    const statusMap = {
+      "ACTIVE": "활성",
+      "EXPIRED": "만료",
+      "CANCELLED": "취소",
+      "REFUNDED": "환불",
+      "PENDING": "보류"
+    };
+
+    // 구독 기간 계산 - currentAt과 expiredAt 기준으로 변경
+    const currentDate = new Date(data.currentAt);
+    const expireDate = new Date(data.expiredAt);
+    const startDate = new Date(data.startedAt);
+
+    let daysText = '';
+    let daysClass = '';
+
+    if (data.status === 'ACTIVE') {
+      const diffTime = expireDate - currentDate;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 0) {
+        daysText = `D-${diffDays}`;
+        daysClass = 'color: #4CAF50;';
+      } else {
+        // 음수이거나 0일 때는 D-0으로 표시
+        daysText = 'D-0';
+        daysClass = 'color: #f44336;';
+      }
+    } else {
+      daysText = 'D-0';
+      daysClass = 'color: #f44336;';
+    }
+
+    // 결제 내역 렌더링 - 역순으로 정렬
+    const sortedLogs = [...data.logs].reverse();
+    const paymentItems = sortedLogs.map(log => {
+      const paymentDate = new Date(log.purchasedAt);
+      const formattedDate = paymentDate.toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      return `
+        <div class="payment-item">
+          <div class="payment-info">
+            <div class="payment-date">${formattedDate}</div>
+            <div class="payment-product">${log.productId}</div>
+          </div>
+          <div class="payment-price">$${log.price.toFixed(2)}</div>
+        </div>
+      `;
+    }).join('');
+
+    // 전체 결제 금액 계산
+    const totalAmount = data.logs.reduce((sum, log) => sum + log.price, 0);
+
+    modalBody.innerHTML = `
+      <div class="subscription-info ${data.status === 'ACTIVE' ? 'active' : 'inactive'}">
+        <div class="subscription-status">
+          <span>구독 상태</span>
+          <div class="status-dropdown">
+            <select class="status-select" onchange="changeStatus(this.value)">
+              <option value="ACTIVE" ${data.status === 'ACTIVE' ? 'selected' : ''}>활성</option>
+              <option value="EXPIRED" ${data.status === 'EXPIRED' ? 'selected' : ''}>만료</option>
+              <option value="CANCELLED" ${data.status === 'CANCELLED' ? 'selected' : ''}>취소</option>
+              <option value="REFUNDED" ${data.status === 'REFUNDED' ? 'selected' : ''}>환불</option>
+              <option value="PENDING" ${data.status === 'PENDING' ? 'selected' : ''}>보류</option>
+            </select>
+          </div>
+        </div>
+        <div class="subscription-days">${daysText}</div>
+        <div class="subscription-period">
+          ${startDate.toLocaleDateString('ko-KR')} ~ ${expireDate.toLocaleDateString('ko-KR')}
+        </div>
+      </div>
+
+      <div class="payment-history">
+        <div class="payment-history-title">
+          결제 내역
+          <span style="font-size: 14px; color: var(--bw40); font-weight: 500;">
+            (총 ${data.logs.length}건, $${totalAmount.toFixed(2)})
+          </span>
+        </div>
+        <div class="payment-list">
+          ${paymentItems}
+        </div>
+      </div>
+    `;
+  }
+
+  // 상태 변경 함수
+  async function changeStatus(newStatus) {
+    const currentBoxPk = window.currentBoxPk; // 현재 열린 모달의 박스 PK
+    if (!currentBoxPk) {
+      alert('박스 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // 상태 매핑 (영어 -> 한국어)
+    const statusMap = {
+      "ACTIVE": "활성",
+      "EXPIRED": "만료",
+      "CANCELLED": "취소",
+      "REFUNDED": "환불",
+      "PENDING": "보류"
+    };
+
+    const koreanStatus = statusMap[newStatus];
+    if (!koreanStatus) {
+      alert('유효하지 않은 상태입니다.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('A_Token');
+      const password = localStorage.getItem('A_Password');
+
+      console.log('A_Token:', token);
+      console.log('A_Password:', password);
+
+      // 상태 변경 API 호출
+      const response = await fetch(`/api/v1/admin/purchase/status/${currentBoxPk}/${koreanStatus}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        // 성공 시 현재 박스 정보 다시 로드
+        await reloadCurrentBoxData(currentBoxPk);
+      } else {
+        alert('상태 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Status change error:', error);
+      alert('상태 변경 중 오류가 발생했습니다.');
+    }
+  }
+
+  // 현재 박스 데이터 다시 로드
+  async function reloadCurrentBoxData(boxPk) {
+    try {
+      const token = localStorage.getItem('A_Token');
+      const password = localStorage.getItem('A_Password');
+
+      const response = await fetch(`/api/v1/admin/purchase/log/${boxPk}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const subscriptionData = result.data;
+          renderModalContent(subscriptionData);
+        }
+      }
+    } catch (error) {
+      console.error('Reload data error:', error);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').style.display = 'none';
+  }
+
+  // 모달 외부 클릭 시 닫기
+  document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+
+  // ESC 키로 모달 닫기
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  });
+</script>
+</body>
+</html>

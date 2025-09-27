@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burntz Admin - 관리 대시보드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bw05:#f8f9fa;--bw08:#f1f3f4;--bw15:#e8eaed;--bw20:#dadce0;--bw30:#9aa0a6;--bw40:#80868b;--bw70:#5f6368;--bw80:#3c4043;--bw100:#202124}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80);min-height:100vh}
+    .container{max-width:1200px;margin:0 auto;padding:0 16px}
+
+    .header{background:white;padding:20px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .header-content{display:flex;justify-content:space-between;align-items:center}
+    .logo{font-family:'Sofia Sans Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--bw100)}
+    .logout-btn{background:none;border:none;cursor:pointer;padding:8px;border-radius:4px;transition:background-color 0.2s;display:flex;align-items:center;justify-content:center}
+    .logout-btn:hover{background:var(--bw08)}
+    .logout-btn svg{width:20px;height:20px;fill:var(--bw70)}
+
+    .main-content{padding:40px 0}
+    .welcome-section{text-align:center;margin-bottom:48px}
+    .welcome-title{font-family:'Sofia Sans Condensed',sans-serif;font-size:42px;font-weight:700;color:var(--bw100);margin-bottom:12px}
+    .welcome-subtitle{font-size:16px;color:var(--bw40);line-height:1.5}
+
+    .admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-bottom:48px}
+    .admin-card{background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.3s ease;cursor:pointer;border:2px solid transparent}
+    .admin-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.12);border-color:var(--bw15)}
+    .admin-card:active{transform:translateY(0)}
+
+    .card-icon{width:56px;height:56px;border-radius:12px;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin-bottom:20px;flex-shrink:0}
+    .card-title{font-size:20px;font-weight:700;color:var(--bw100);margin-bottom:8px}
+    .card-description{font-size:14px;color:var(--bw40);line-height:1.6;margin-bottom:20px}
+    .card-footer{display:flex;justify-content:flex-end;align-items:center}
+
+    @media (max-width:768px){
+      .container{padding:0 12px}
+      .welcome-title{font-size:32px;margin-bottom:8px}
+      .welcome-subtitle{font-size:14px}
+      .admin-grid{grid-template-columns:1fr;gap:16px}
+      .admin-card{padding:24px}
+      .card-icon{width:48px;height:48px;font-size:20px;margin-bottom:16px}
+      .card-title{font-size:18px}
+      .card-description{font-size:13px;margin-bottom:16px}
+      .main-content{padding:24px 0}
+      .welcome-section{margin-bottom:32px}
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <div class="header-content">
+      <div class="logo">Burntz Admin</div>
+      <button class="logout-btn" onclick="logout()">
+        <svg viewBox="0 0 24 24">
+          <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="container">
+    <div class="welcome-section">
+      <h1 class="welcome-title">Dashboard</h1>
+      <p class="welcome-subtitle">
+        Burntz 서비스의 전반적인 관리 기능에 접근할 수 있습니다.<br>
+        원하시는 관리 항목을 선택해 주세요.
+      </p>
+    </div>
+
+    <div class="admin-grid">
+      <div class="admin-card" onclick="goToPaymentManagement()">
+        <div class="card-icon">📦</div>
+        <div class="card-title">박스 구독 관리</div>
+        <div class="card-description">
+          사용자의 박스 결제내역, 구독관리 기능입니다.
+        </div>
+        <div class="card-footer">
+        </div>
+      </div>
+
+      <div class="admin-card" onclick="goToUserManagement()">
+        <div class="card-icon">👥</div>
+        <div class="card-title">이용자 관리</div>
+        <div class="card-description">
+          사용자 계정 관리 및 이용 현황을 확인할 수 있습니다.
+        </div>
+        <div class="card-footer">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    await validateAuth();
+  });
+
+  async function validateAuth() {
+    const token = localStorage.getItem('A_Token');
+    const password = localStorage.getItem('A_Password');
+
+    if (!token || !password) {
+      window.location.href = '/api/v1/admin/error';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/v1/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'A_Token': token,
+          'A_Password': password
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.data !== true) {
+          window.location.href = '/api/v1/admin/error';
+        }
+      } else {
+        window.location.href = '/api/v1/admin/error';
+      }
+    } catch (error) {
+      console.error('Auth validation error:', error);
+      window.location.href = '/api/v1/admin/error';
+    }
+  }
+
+  function goToPaymentManagement() {
+    window.location.href = '/api/v1/admin/payments';
+  }
+
+  function goToUserManagement() {
+    window.location.href = '/api/v1/admin/users';
+  }
+
+  function logout() {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      window.location.href = '/api/v1/admin/login';
+    }
+  }
+</script>
+</body>
+</html>
