@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface SubscriptionEventLogRepository extends JpaRepository<SubscriptionEventLog, Long> {
 
-  @Query("select s from SubscriptionEventLog s where s.box.boxPk = :boxPk order by s.box.boxPk desc")
+  @Query("select s from SubscriptionEventLog s where s.box.boxPk = :boxPk order by s.box.boxPk")
   List<SubscriptionEventLog> findAllByBoxPk(Long boxPk);
 }
