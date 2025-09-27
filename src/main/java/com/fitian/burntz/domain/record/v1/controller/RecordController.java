@@ -7,10 +7,12 @@ import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
 import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
 import com.fitian.burntz.domain.record.v1.dto.RecordUpdateRequest;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -38,11 +40,10 @@ public class RecordController implements RecordDocs {
     public ApiResponse<Void> createRecord(
             @Valid @RequestBody RecordCreateRequest request,
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
             ){
-        Long memberPk = 2L;
-        recordService.createRecord(request, date, boxPk, memberPk);
+        recordService.createRecord(request, date, boxPk, userDetails.getMemberPk());
         return ApiResponse.success(null,"record 생성 완료");
     }
 
@@ -53,13 +54,10 @@ public class RecordController implements RecordDocs {
     @GetMapping()
     public ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
             ){
-
-        Long memberPk = 3L;
-
-        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, memberPk, date),"해당 날짜의 records 조회 완료")));
+        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, userDetails.getMemberPk(), date),"해당 날짜의 records 조회 완료")));
     }
 
     /*
@@ -70,12 +68,10 @@ public class RecordController implements RecordDocs {
             @Valid @RequestBody RecordUpdateRequest request,
             @PathVariable Long boxPk,
             @PathVariable Long recordPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-
-        Long memberPk = 2L;
-        recordService.updateRecord(boxPk,memberPk,recordPk,date,request);
+        recordService.updateRecord(boxPk,userDetails.getMemberPk(),recordPk,date,request);
         return ApiResponse.success(null,"record 수정 완료");
     }
 
@@ -86,12 +82,10 @@ public class RecordController implements RecordDocs {
     public ApiResponse<Void> deleteRecord(
             @PathVariable Long boxPk,
             @PathVariable Long recordPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        Long memberPk = 2L;
-        recordService.deleteRecord(boxPk, memberPk, recordPk, date);
-
+        recordService.deleteRecord(boxPk, userDetails.getMemberPk(), recordPk, date);
         return ApiResponse.success(null,"record 삭제 완료");
     }
 

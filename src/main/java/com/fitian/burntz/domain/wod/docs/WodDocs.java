@@ -27,29 +27,29 @@ public interface WodDocs {
     @Operation(summary = "Wod 생성", description = "해당 날짜의 Wod를 생성합니다.")
     ApiResponse<Void> createWod(
             @Valid @RequestBody WodCreateRequest request,
-            @PathVariable Long boxPk
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable Long boxPk,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(summary = "Wod 조회", description = "지정한 박스(boxPk)와 날짜를 기준으로 해당 날짜의 WOD 정보를 조회합니다.")
     ApiResponse<WodResponse> getWod(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(summary = "Wod 수정", description = "지정한 박스(boxPk)와 날짜를 기준으로 기존 WOD 정보를 수정합니다.")
     ApiResponse<Void> updateWod(
             @Valid @RequestBody WodUpdateRequest request,
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(summary = "Wod 삭제", description = "지정한 박스(boxPk)와 날짜를 기준으로 해당 날짜의 WOD를 삭제합니다.")
     ApiResponse<Void> deleteWod(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }
