@@ -34,11 +34,10 @@ public class WodController implements WodDocs {
     @PostMapping()
     public ApiResponse<Void> createWod(
             @Valid @RequestBody WodCreateRequest request,
-            @PathVariable Long boxPk
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable Long boxPk,
+            @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
-        Long memberPk = 2L;
-        wodService.createWod(request, boxPk, memberPk);
+        wodService.createWod(request, boxPk, userDetails.getMemberPk());
         return ApiResponse.success(null, "wod 생성 완료");
     }
 
@@ -48,11 +47,10 @@ public class WodController implements WodDocs {
     @GetMapping("/{date}")
     public ApiResponse<WodResponse> getWod(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        Long memberPk = 2L;
-        WodResponse res = wodService.getWod(boxPk, memberPk, date);
+        WodResponse res = wodService.getWod(boxPk, userDetails.getMemberPk(), date);
         return ApiResponse.success(res,"해당 날짜의 Wod 조회 완료");
     }
 
@@ -63,11 +61,10 @@ public class WodController implements WodDocs {
     public ApiResponse<Void> updateWod(
             @Valid @RequestBody WodUpdateRequest request,
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        Long memberPk = 2L;
-        wodService.updateWod(boxPk, memberPk, date,request);
+        wodService.updateWod(boxPk, userDetails.getMemberPk(), date,request);
         return ApiResponse.success(null,"해당 날짜의 Wod 수정 완료");
     }
 
@@ -77,11 +74,10 @@ public class WodController implements WodDocs {
     @DeleteMapping("/{date}")
     public ApiResponse<Void> deleteWod(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        Long memberPk = 2L;
-        wodService.deleteWod(boxPk, memberPk, date);
+        wodService.deleteWod(boxPk, userDetails.getMemberPk(), date);
         return ApiResponse.success(null,"해당 날짜의 Wod 삭제 완료");
 
     }
