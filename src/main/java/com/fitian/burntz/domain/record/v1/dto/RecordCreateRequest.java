@@ -77,6 +77,7 @@ public class RecordCreateRequest {
         if (this.round != null)    builder.round(this.round);
         if (this.reps != null)     builder.reps(this.reps);
         if (this.result != null)   builder.result(this.result);
+        if (this.time != null)      builder.time(this.time);
         if (this.team != null)     builder.team(this.team);
         if (this.memo != null)     builder.memo(this.memo);
 
