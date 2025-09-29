@@ -55,9 +55,10 @@ public class RecordController implements RecordDocs {
     public ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            //@AuthenticationPrincipal CustomUserDetails userDetails
             ){
-        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, userDetails.getMemberPk(), date),"해당 날짜의 records 조회 완료")));
+        Long MemberPk = 2L;
+        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, MemberPk, date),"해당 날짜의 records 조회 완료")));
     }
 
     /*
