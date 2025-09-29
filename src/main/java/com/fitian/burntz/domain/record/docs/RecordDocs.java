@@ -40,8 +40,7 @@ public interface RecordDocs {
                                                         "회원/비회원 기록을 모두 포합합니다.")
     ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     );
 
     @Operation(summary = "Record 수정", description = "지정한 박스(boxPk)와 날짜에 속한 특정 Record(recordPk)를 수정합니다.")
