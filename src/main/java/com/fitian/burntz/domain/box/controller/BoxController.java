@@ -4,13 +4,11 @@ import com.fitian.burntz.domain.box.docs.BoxDocs;
 import com.fitian.burntz.domain.box.dto.*;
 import com.fitian.burntz.domain.box.service.BoxService;
 import com.fitian.burntz.global.common.response.ApiResponse;
-import com.fitian.burntz.global.exception.ErrorCode;
-import com.fitian.burntz.global.exception.ValidationException;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -25,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class BoxController implements BoxDocs {
 
     private final BoxService boxService;
+    private final PreconditionValidator preconditionValidator;
     private static final int MAX_PAGE_SIZE = 100;
 
   @GetMapping("/test")
@@ -39,12 +38,7 @@ public class BoxController implements BoxDocs {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody CreateBoxRequest createBoxRequest
     ){
-        Long loginMemberPk = customUserDetails.getMemberPk();
-
-        //컨트롤러에서 빠르게 인증예외 처리
-        if (loginMemberPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
         // 실제 생성 로직 실행 (예외는 글로벌 핸들러로 처리)
         BoxDto boxDtoResponse = boxService.createBox(loginMemberPk, createBoxRequest);
@@ -61,11 +55,9 @@ public class BoxController implements BoxDocs {
     @GetMapping
     public ResponseEntity<?> getBoxForPk(@RequestParam(value = "boxPk", required = false) Long boxPk){
 
-        if (boxPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
 
-        BoxDto getBoxResponse = boxService.getBoxForPk(boxPk);
+        BoxDto getBoxResponse = boxService.getBoxForPk(targetBoxPk);
 
         return ResponseEntity.ok(ApiResponse.success(getBoxResponse));
     }
@@ -74,11 +66,10 @@ public class BoxController implements BoxDocs {
     @GetMapping("/code")
     public ResponseEntity<?> getBoxForCode(@RequestParam(value = "boxCode", required = false) String boxCode){
 
-        if (boxCode == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+        // 빈 문자열일 경우 null 처리
+        String targetBoxCode = preconditionValidator.requireBoxCode(boxCode);
 
-        BoxDto getBoxResponse = boxService.getBoxForBoxCode(boxCode);
+        BoxDto getBoxResponse = boxService.getBoxForBoxCode(targetBoxCode);
 
         return ResponseEntity.ok(ApiResponse.success(getBoxResponse));
     }
@@ -90,8 +81,7 @@ public class BoxController implements BoxDocs {
             @PageableDefault(size = 20, sort = "boxPk", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // 클라이언트가 과도한 size 요청을 못하도록 방어
-        int safeSize = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
-        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), safeSize, pageable.getSort());
+        Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
 
         Page<BoxDto> boxDtoPage = boxService.getAllActiveBoxes(safePageable);
 
@@ -107,20 +97,12 @@ public class BoxController implements BoxDocs {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(value = "boxCode", required = false) String boxCode
     ){
-        Long joinMemberPk = customUserDetails.getMemberPk();
 
-        //컨트롤러에서 빠르게 null 값 예외 처리
-        // 인증 예외
-        if (joinMemberPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        Long joinMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
+        String targetBoxCode = preconditionValidator.requireBoxCode(boxCode);
 
-        if (boxCode == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-
-        JoinBoxDto joinResponse = boxService.joinMemberToBox(joinMemberPk, boxCode);
+        JoinBoxDto joinResponse = boxService.joinMemberToBox(joinMemberPk, targetBoxCode);
 
         return ResponseEntity.ok(ApiResponse.success(joinResponse));
 
@@ -132,13 +114,7 @@ public class BoxController implements BoxDocs {
             @Valid @RequestBody UpdateBoxInfoRequest updateBoxInfoRequest
     ){
 
-        Long loginMemberPk = customUserDetails.getMemberPk();
-
-        //컨트롤러에서 빠르게 null 값 예외 처리
-        // 인증 예외
-        if (loginMemberPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
         UpdateBoxInfoDto updateBoxInfoResponse = boxService.updateBoxInfo(loginMemberPk, UpdateBoxInfoDto.from(updateBoxInfoRequest));
 
@@ -151,17 +127,11 @@ public class BoxController implements BoxDocs {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(value = "boxPk", required = false) Long boxPk
     ){
-        Long loginMemberPk = customUserDetails.getMemberPk();
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
-        if (loginMemberPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
 
-        if (boxPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-
-        boxService.removeBox(loginMemberPk, boxPk);
+        boxService.removeBox(loginMemberPk, targetBoxPk);
 
         return ResponseEntity.ok(ApiResponse.success("Box has been deleted."));
     }

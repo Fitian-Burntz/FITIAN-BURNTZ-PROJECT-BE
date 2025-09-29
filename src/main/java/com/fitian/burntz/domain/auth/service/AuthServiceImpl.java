@@ -78,23 +78,25 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
-    public void logoutCurrentDevice(String refreshToken, String deviceId) {
+    public String logoutCurrentDevice(String refreshToken, String deviceId) {
         // 검증 책임을 RefreshTokenService로 이동
         RefreshTokenService.ValidationResult validationResult = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
 
-        boolean deleted = refreshTokenService.softDeleteByMemberAndDeviceId(
+        boolean deletedAuth = refreshTokenService.softDeleteByMemberAndDeviceId(
                 validationResult.memberPk(), validationResult.deviceId()
         );
 
-        if (!deleted) {
+        if (!deletedAuth) {
             // 멱등성 보장: 이미 삭제되었거나 존재하지 않음. 예외 대신 경고 로그 후 정상 종료
             log.warn("logout noop: memberPk={} deviceId={}", validationResult.memberPk(), validationResult.deviceId());
-            return;
+            return "Device does not exist or is already logged out";
         }
 
         if (log.isDebugEnabled()) {
             log.debug("logoutCurrentDevice success memberPk={} deviceId={}", validationResult.memberPk(), validationResult.deviceId());
         }
+
+        return deviceId;
     }
 
     @Override

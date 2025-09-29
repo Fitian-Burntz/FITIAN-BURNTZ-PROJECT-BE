@@ -85,7 +85,7 @@ public class BoxServiceImpl implements BoxService {
             log.info("Box created: boxPk={} boxCode={} ownerPk={}", savedBox.getBoxPk(), savedBox.getBoxCode(), ownerPk);
 
             try {
-                memberListService.createMemberList(owner, savedBox);
+                memberListService.createMemberList(owner, savedBox.getBoxPk());
                 log.info("Owner added to Box as MemberList: boxPk={} ownerPk={}", savedBox.getBoxPk(), ownerPk);
             } catch (ValidationException e) {
                 // MemberList 생성 중 비즈니스 오류 발생 시 로그 후 전파(트랜잭션 전체 롤백)

@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.dto.MemberInfoResponse;
 import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
+    private final PreconditionValidator preconditionValidator;
 
     @PutMapping
     public ResponseEntity<ApiResponse<MemberInfoResponse>> updateMemberInfo(
@@ -23,9 +25,9 @@ public class MemberController {
             @RequestParam(required = false) String nickname,
             @RequestParam(required = false) String gender) {
 
-        Long memberPk = customUserDetails.getMemberPk();
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
-        MemberDto updateResponse = memberService.updateMemberInfo(memberPk, nickname, gender);
+        MemberDto updateResponse = memberService.updateMemberInfo(loginMemberPk, nickname, gender);
 
         return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(updateResponse)));
     }
@@ -36,9 +38,9 @@ public class MemberController {
     public ResponseEntity<ApiResponse<MemberInfoResponse>> withdrawMember(
             @AuthenticationPrincipal CustomUserDetails customUserDetails){
 
-        Long memberPk = customUserDetails.getMemberPk();
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
-        MemberDto removeResponse = memberService.withdrawMember(memberPk);
+        MemberDto removeResponse = memberService.withdrawMember(loginMemberPk);
 
         return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(removeResponse),
                 "Your membership withdrawal has been completed."));
