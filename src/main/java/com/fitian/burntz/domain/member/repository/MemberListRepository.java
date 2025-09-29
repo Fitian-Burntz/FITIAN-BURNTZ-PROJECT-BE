@@ -5,7 +5,11 @@ import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.global.common.entity.BaseTime;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,12 +37,37 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     @Query("SELECT m FROM MemberList m WHERE m.box.boxPk = :boxPk AND m.member.memberPk = :memberPk AND m.deletedYN = 'N'")
     Optional<MemberList> findActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
 
+
+    // box에 해당하는 memberList 페이징 조회
+    @Query(
+            value = "SELECT ml FROM MemberList ml JOIN FETCH ml.member m " +
+                    "WHERE ml.box.boxPk = :boxPk AND ml.deletedYN = 'N'",
+            countQuery = "SELECT COUNT(ml) FROM MemberList ml WHERE ml.box.boxPk = :boxPk AND ml.deletedYN = 'N'"
+    )
+    Page<MemberList> findActiveByBoxPkWithMember(@Param("boxPk") Long boxPk, Pageable pageable);
+
     // memberList 에서 삭제되지 않은 행 중 중복 데이터가 있는지 확인
     @Query(value = "select exists (select 1 from burntz.member_list where box_pk = :boxPk and member_pk = :memberPk and deleted_yn = 'N')",
             nativeQuery = true)
     boolean existsActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
 
+    // 해당 box의 memberList 에서 role 에 해당하는 행 수 반환
     long countByBox_BoxPkAndRole(Long boxPk, MemberRole role);
 
     Optional<MemberList> findByMemberListPkAndBoxBoxPkAndDeletedYN(Long memberListPk, Long boxPk, BaseTime.Yn yn);
+
+
+    /** update 시 경생 상황을 피하기 위해서 row lock 을 걸고 member 가 box 에 속해있는지 확인 **/
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM MemberList m WHERE m.box.boxPk = :boxPk AND m.member.memberPk = :memberPk AND m.deletedYN = 'N'")
+    Optional<MemberList> findActiveMemberListByBoxAndMemberWithLock(@Param("boxPk") Long boxPk,
+                                                                    @Param("memberPk") Long memberPk);
+
+    /**
+     * update 시 경쟁 상황을 피하기 위해서 row lock 을 걸고
+     * 해당 활성화 memberList 에서 해당 box의 OWNER row 개수 구함 (OWNER 수 검증) **/
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<MemberList> findTop2ByBox_BoxPkAndRoleAndDeletedYN(Long boxPk, MemberRole role, BaseTime.Yn yn);
+
+
 }

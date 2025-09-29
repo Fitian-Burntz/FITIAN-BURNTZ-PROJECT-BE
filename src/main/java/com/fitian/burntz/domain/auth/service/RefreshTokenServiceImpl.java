@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.auth.service;
 
 import com.fitian.burntz.domain.auth.repository.AuthRepository;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
@@ -21,6 +22,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final AuthRepository authRepository;
     private final JwtTokenProvider jwtTokenProvider; // 토큰 검증용 주입
+    private final PreconditionValidator preconditionValidator;
 
     private String hashToken(String token) {
         try {
@@ -57,12 +59,14 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     @Transactional
     public boolean softDeleteByMemberAndDeviceId(Long memberPk, String deviceId) {
-        if (deviceId == null || deviceId.isBlank()) return false;
+        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
 
-        String did = deviceId.trim();
+        if (targetDeviceId == null){
+            return false;
+        }
 
-        int affected = authRepository.softDeleteByMemberPkAndDeviceIdNative(memberPk, did);
-        log.debug("deleteByMemberAndDeviceId memberPk={} deviceId={} affected={}", memberPk, did, affected);
+        int affected = authRepository.softDeleteByMemberPkAndDeviceIdNative(memberPk, targetDeviceId);
+        log.debug("deleteByMemberAndDeviceId memberPk={} deviceId={} affected={}", memberPk, targetDeviceId, affected);
 
         return affected > 0;
     }
@@ -72,10 +76,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshTokenService.ValidationResult validateRefreshTokenAndDevice(String refreshToken, String deviceId) throws ValidationException {
         Long memberPk = getMemberPkFromValidRefreshToken(refreshToken);
 
-        if (deviceId == null || deviceId.isBlank()) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-        return new RefreshTokenService.ValidationResult(memberPk, deviceId.trim());
+        // deviceId 정제 및 null 체크
+        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
+        return new RefreshTokenService.ValidationResult(memberPk, targetDeviceId);
     }
 
     /** refreshToken 여부 및 JWT 검증 (더 세밀한 검증 수행) **/

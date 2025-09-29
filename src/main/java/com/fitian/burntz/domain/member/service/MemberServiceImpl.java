@@ -27,7 +27,9 @@ public class MemberServiceImpl implements MemberService {
     private final RefreshTokenService refreshTokenService;
 
     /**
-     * provider + memberId 조합으로 조회 후 없으면 생성. 동시성 발생 시 DataIntegrityViolationException을 잡아 재조회하여 정상화.
+     * 로그인 전용 멤버 정보 반환
+     * provider + memberId 조합으로 조회 후 없으면 생성.
+     * 동시성 발생 시 DataIntegrityViolationException을 잡아 재조회하여 정상화.
      */
     @Override
     public MemberCreateResult getOrCreateMember(String provider, String memberId, String nickname, String email) {
@@ -64,10 +66,8 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    /**
-     * 컨트롤러에서 memberPk를 직접 전달하는 버전 (권장)
-     */
 
+    /** member 정보 수정 (default nickname, gender) **/
     @Override
     public MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender) {
         if (memberPk == null) {

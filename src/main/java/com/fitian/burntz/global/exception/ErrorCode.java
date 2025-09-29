@@ -6,6 +6,9 @@ public enum ErrorCode {
 
     // 400 Bad Request
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "요청이 올바르지 않습니다."),
+    OWNER_INVALID_STATE(HttpStatus.BAD_REQUEST, "INVALID_STATE", "박스 OWNER 상태를 확인해주세요"),
+    CHANGE_OWNER_FAIL(HttpStatus.BAD_REQUEST, "CHANGE_OWNER_FAIL", "OWNER 변경 재검증에 실패했습니다."),
+
     //    DUPLICATED_EMAIL(HttpStatus.BAD_REQUEST, "DUPLICATED_EMAIL", "이미 등록된 이메일입니다."),
     MISSING_REQUIRED_FIELD(HttpStatus.BAD_REQUEST, "MISSING_REQUIRED_FIELD", "필수 입력값이 누락되었습니다."),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "INVALID_INPUT_VALUE", "입력값이 유효하지 않습니다."),
@@ -42,6 +45,8 @@ public enum ErrorCode {
     PASSWORD_KOREAN_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PASSWORD_KOREAN_NOT_ALLOWED", "한글은 포함될 수 없습니다."),
     NO_CHANGE_REQUIRED(HttpStatus.BAD_REQUEST, "NO_CHANGE_REQUIRED", "변경할 내용이 없습니다."),
     OPERATION_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "OPERATION_NOT_ALLOWED", "이 작업은 현재 상태에서 허용되지 않습니다. 마지막 소유자는 강등할 수 없습니다."),
+    PROMOTE_TO_OWNER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROMOTE_TO_OWNER_NOT_ALLOWED", "현재 페이지에서는 OWNER 로 승격할 수 없습니다."),
+    ONLY_MANAGER_CAN_BE_OWNER(HttpStatus.BAD_REQUEST, "ONLY_MANAGER_CAN_BE_OWNER", "매니저만 OWNER 를 양도 받을 수 있습니다."),
 
 
     // 401 Unauthorized
@@ -72,6 +77,7 @@ public enum ErrorCode {
     WOD_NOT_FOUND(HttpStatus.NOT_FOUND,"WOD_NOT_FOUND", "해당 WOD를 찾을 수 없습니다."),
     MEMBER_NOT_IN_BOX(HttpStatus.NOT_FOUND,"MEMBER_NOT_IN_BOX","해당 박스에 속해있지 않은 사용자입니다."),
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND,"RECORD_NOT_FOUND","운동기록을  찾을 수 없습니다."),
+    MEMBERLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBERLIST_NOT_FOUND", "memberList 에 해당 조건을 만족하는 값이 없습니다."),
 
     // 405 Method Not Allowed
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "허용되지 않은 HTTP 메서드입니다."),

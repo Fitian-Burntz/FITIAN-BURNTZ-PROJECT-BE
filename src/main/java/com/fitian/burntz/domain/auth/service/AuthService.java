@@ -10,7 +10,7 @@ import java.util.Map;
 public interface AuthService {
     LoginResponse loginWithSocial(String socialToken, String provider, String deviceId);
 
-    void logoutCurrentDevice(String refreshToken, String deviceId);
+    String logoutCurrentDevice(String refreshToken, String deviceId);
 
     void logoutAllDevices(String anyToken);
 
