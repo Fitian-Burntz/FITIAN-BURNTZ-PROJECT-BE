@@ -54,7 +54,7 @@ public class RecordController implements RecordDocs {
     @GetMapping()
     public ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
             //@AuthenticationPrincipal CustomUserDetails userDetails
             ){
         Long MemberPk = 2L;
