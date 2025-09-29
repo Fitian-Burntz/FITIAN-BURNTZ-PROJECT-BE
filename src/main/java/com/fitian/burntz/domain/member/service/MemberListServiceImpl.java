@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.member.service;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.member.dto.BoxWithMembershipDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.ChangeOwnerSuccessDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.CreateMemberListResponse;
 import com.fitian.burntz.domain.member.dto.memberList_dto.MemberListWithMembershipDto;
@@ -14,6 +15,7 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.domain.membership.repository.MembershipRepository;
 import com.fitian.burntz.domain.membership.v1.dto.MembershipDto;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.common.util.RetryTransactionalHandler;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
@@ -44,6 +46,7 @@ public class MemberListServiceImpl implements MemberListService{
     private final MembershipRepository membershipRepository;
     private final RetryTransactionalHandler retryTransactionalHandler;
     private final EntityManager em;
+    private final PreconditionValidator preconditionValidator;
 
     /** box 와 연관된 memberList 생성. box 생성 및 member 추가 시 종속적으로 생성 **/
     @Override
@@ -138,6 +141,44 @@ public class MemberListServiceImpl implements MemberListService{
                 boxPk, targetMemberPk, newRole, targetMember.getUpdatedAt()
         );
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BoxWithMembershipDto> getMyBoxesWithMembership(Long memberPk, Pageable pageable) {
+
+        preconditionValidator.requireMemberPk(memberPk);
+
+        memberRepository.findActiveById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.UNAUTHORIZED));
+
+        Page<MemberList> memberListPage = memberListRepository.findActiveByMemberPkWithBox(memberPk, pageable);
+
+        if (memberListPage.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        // boxPk 목록
+        List<Long> boxPks = memberListPage.stream()
+                .map(ml -> ml.getBox().getBoxPk())
+                .collect(Collectors.toList());
+
+        // 박스들에 대해 해당 멤버의 최신 멤버십들을 한 번에 조회
+        List<Membership> latestMemberships = membershipRepository.findLatestMembershipsForMemberByBoxes(boxPks, memberPk);
+
+        // boxPk -> membership 매핑
+        Map<Long, Membership> membershipByBoxPk = latestMemberships.stream()
+                .collect(Collectors.toMap(m -> m.getBox().getBoxPk(), m -> m));
+
+        // DTO 매핑 (memberList 정보 포함)
+        List<BoxWithMembershipDto> dtos = memberListPage.stream().map(memberList -> {
+            Box targetBox = memberList.getBox();
+            Membership targetMembership = membershipByBoxPk.get(targetBox.getBoxPk());
+            MembershipDto targetMembershipDto = targetMembership == null ? null : MembershipDto.from(targetMembership);
+            return BoxWithMembershipDto.from(memberList, targetBox, targetMembershipDto);
+        }).collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, memberListPage.getTotalElements());
     }
 
     /** 회원 정보 단건 조회 (OWNER, MANAGER 전용) **/
