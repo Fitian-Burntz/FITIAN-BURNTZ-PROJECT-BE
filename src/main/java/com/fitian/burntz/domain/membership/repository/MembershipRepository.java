@@ -42,5 +42,16 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     Optional<Membership> findLatestByBoxPkAndMemberPk(@Param("boxPk") Long boxPk,
                                                       @Param("memberPk") Long memberPk);
 
-    Long box(Box box);
+    /** box 별 사용자의 최신 membership 을 한번에 가져옴
+     * 사용자가 내가 속한 box 정보를 조회할 때 **/
+    @Query(value = """
+    SELECT DISTINCT ON (m.box_pk) m.*
+    FROM burntz.membership m
+    WHERE m.box_pk IN (:boxPks)
+      AND m.member_pk = :memberPk
+      AND m.deleted_yn = 'N'
+    ORDER BY m.box_pk, m.membership_pk DESC
+    """, nativeQuery = true)
+    List<Membership> findLatestMembershipsForMemberByBoxes(@Param("boxPks") List<Long> boxPks,
+                                                           @Param("memberPk") Long memberPk);
 }
