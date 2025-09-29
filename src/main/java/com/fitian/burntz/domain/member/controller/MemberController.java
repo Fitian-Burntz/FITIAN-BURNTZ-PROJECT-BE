@@ -19,6 +19,15 @@ public class MemberController {
     private final MemberService memberService;
     private final PreconditionValidator preconditionValidator;
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<MemberDto>> getMyInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        MemberDto getMemberResponse = memberService.getMyInfo(loginMemberPk);
+
+        return ResponseEntity.ok(ApiResponse.success(getMemberResponse));
+    }
+
     @PutMapping
     public ResponseEntity<ApiResponse<MemberInfoResponse>> updateMemberInfo(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,

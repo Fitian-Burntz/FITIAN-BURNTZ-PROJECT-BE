@@ -66,6 +66,18 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
+    /** 내 정보 가져오기 **/
+    @Override
+    public MemberDto getMyInfo(Long memberPk){
+        if (memberPk == null) {
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Member member = memberRepository.findActiveById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        return MemberDto.from(member);
+    }
 
     /** member 정보 수정 (default nickname, gender) **/
     @Override
