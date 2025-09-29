@@ -92,16 +92,14 @@ public class ClassesService {
 
     public void joinClass(ClassesIdentifierRequest request, CustomUserDetails userDetails) {
         //해당 박스에 존재하는 회원인지 검증
-        boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
-        if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+        MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
         //해당 수업에 참여중인지 검증
         boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(isInClass) throw new ValidationException(ErrorCode.DUPLICATED_USER);
 
         Classes classes = classesRepository.findById(request.getClassesPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
-        MemberList memberList = memberListRepository.findById(userDetails.getMemberPk())
-                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         ClassParticipant cp = ClassParticipant.builder()
                 .classes(classes)

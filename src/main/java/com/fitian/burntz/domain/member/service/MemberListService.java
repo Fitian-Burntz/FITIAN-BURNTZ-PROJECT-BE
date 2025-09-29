@@ -21,4 +21,7 @@ public interface MemberListService {
 
     /** box OWNER 양도 **/
     ChangeOwnerSuccessDto changeOwnerForBox(Long operatorPk, Long targetMemberPk, Long boxPk);
+
+    /** 회원 정보 단건 조회 (OWNER, MANAGER 전용) **/
+    MemberListWithMembershipDto getMemberWithMembership(Long boxPk, Long operatorPk, Long targetMemberPk);
 }

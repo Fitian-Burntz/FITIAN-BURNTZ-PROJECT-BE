@@ -6,6 +6,7 @@ import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import com.fitian.burntz.domain.auth.dto.LogoutResponse;
 import com.fitian.burntz.domain.auth.service.AuthService;
 import com.fitian.burntz.global.common.response.ApiResponse;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController implements AuthDocs {
 
     private final AuthService authService;
+    private final PreconditionValidator preconditionValidator;
 
     @Override
     @PostMapping("/login")
@@ -29,15 +31,10 @@ public class AuthController implements AuthDocs {
         //클라이언트로 부터 받은 토큰 검증 및 추출
         String token = extractBearer(authorization);
 
-        // deviceId 값 확인
-        if (deviceId == null || deviceId.isEmpty()) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+        // deviceId 정제 및 null 검증
+        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
 
-        //deviceId 정제(공백 제거)
-        deviceId = deviceId.trim();
-
-        LoginResponse loginResponse = authService.loginWithSocial(token, provider, deviceId);
+        LoginResponse loginResponse = authService.loginWithSocial(token, provider, targetDeviceId);
 
         return ResponseEntity.ok(ApiResponse.success(loginResponse));
     }
@@ -51,18 +48,13 @@ public class AuthController implements AuthDocs {
         //클라이언트로 부터 받은 토큰 검증 및 추출
         String refreshToken = extractBearer(authorization);
 
-        if (deviceId == null ||  deviceId.isEmpty()) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+        // deviceId 정제 및 null 검증
+        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
 
-        //deviceId 정제(공백 제거)
-        deviceId = deviceId.trim();
+        // 결과로 로그아웃된 기기 정보 받음
+        String loggedOutDevice = authService.logoutCurrentDevice(refreshToken, targetDeviceId);
 
-        authService.logoutCurrentDevice(refreshToken, deviceId);
-
-        LogoutResponse logoutResponse = new LogoutResponse("logged out", deviceId);
-
-        return ResponseEntity.ok(ApiResponse.success(logoutResponse));
+        return ResponseEntity.ok(ApiResponse.success(new LogoutResponse("logged out", loggedOutDevice)));
     }
 
     @Override
@@ -86,16 +78,12 @@ public class AuthController implements AuthDocs {
         //클라이언트로 부터 받은 토큰 검증 및 추출
         String refreshToken = extractBearer(authorization);
 
-        if (deviceId == null ||  deviceId.isEmpty()) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+        // deviceId 정제 및 null 검증
+        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
 
-        //deviceId 정제(공백 제거)
-        deviceId = deviceId.trim();
+        AuthTokenResponse refreshTokenResponse = authService.refreshTokenBased(refreshToken, targetDeviceId);
 
-        AuthTokenResponse response = authService.refreshTokenBased(refreshToken, deviceId);
-
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(refreshTokenResponse));
     }
 
 
@@ -114,7 +102,7 @@ public class AuthController implements AuthDocs {
         String token = authorization.substring(7).trim();
 
         if (token.isEmpty()) {
-            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED); // Bearer 뒤가 빈 값이 경우
+            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED); // Bearer 뒤가 빈 값인 경우
         }
 
         return token;

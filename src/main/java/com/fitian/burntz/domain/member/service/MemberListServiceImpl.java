@@ -45,10 +45,7 @@ public class MemberListServiceImpl implements MemberListService{
     private final RetryTransactionalHandler retryTransactionalHandler;
     private final EntityManager em;
 
-    /**
-     * owner: 로그인한 사용자의 owner (권한 체크 필요 시 사용)
-     * updateMemberRoleDto: newBox, owner(target), role(optional)
-     */
+    /** box 와 연관된 memberList 생성. box 생성 및 member 추가 시 종속적으로 생성 **/
     @Override
     @Transactional
     public CreateMemberListResponse createMemberList(Member owner, Long newBoxPk) {
@@ -84,7 +81,7 @@ public class MemberListServiceImpl implements MemberListService{
         }
     }
 
-    /** MANAGER, MEMBER 로 역할 변경 가능 (양도 X) **/
+    /** MANAGER, MEMBER, GUEST 로 역할 변경 가능 (양도 X) **/
     @Override
     @Transactional
     public UpdateMemberRoleDto updateMemberRole(Long operatorPk, UpdateMemberRoleDto updateMemberRoleDto) {
@@ -143,9 +140,64 @@ public class MemberListServiceImpl implements MemberListService{
 
     }
 
+    /** 회원 정보 단건 조회 (OWNER, MANAGER 전용) **/
+    @Transactional(readOnly = true)
+    public MemberListWithMembershipDto getMemberWithMembership(Long boxPk, Long operatorPk, Long targetMemberPk) {
+        // 기본 검증
+        if (operatorPk == null) {
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
+        }
+        if (targetMemberPk == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        if (boxPk == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+
+        // 활성화 member DB 존재 여부 확인
+        memberRepository.findActiveById(operatorPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        memberRepository.findActiveById(targetMemberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+
+        // 활성화 box DB 존재 여부 확인
+        Box targetBox = boxRepository.findActiveById(boxPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+
+        // 요청자가 OWNER 권한이면 통과, 아니면  memberList 정보로 권한 검증
+        if (!Objects.equals(targetBox.getOwnerPk(), operatorPk)) {
+            // memberList 에서 해당 정보 요청자(operator)가해당 box 에 속해있는지 검증
+            MemberList operator = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, operatorPk)
+                    .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
+
+
+            // 요청자가 MANAGER 권한 이상이 아닌 경우 권한 오류
+            if (operator.getRole() == MemberRole.MEMBER || operator.getRole() == MemberRole.GUEST) {
+                throw new ValidationException(ErrorCode.FORBIDDEN);
+            }
+        }
+
+        // memberList 에서 해당 회원이 해당 box 에 속해있는지 검증 및 조회
+        MemberList targetMember = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, targetMemberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
+
+        MembershipDto targetMembership = membershipRepository
+                .findLatestByBoxPkAndMemberPk(boxPk, targetMemberPk)
+                .map(MembershipDto::from)
+                .orElse(null);
+
+
+        return MemberListWithMembershipDto.from(targetMember, targetMemberPk, boxPk, targetMembership);
+
+    }
 
 
 
+    /** box memberList 정보 가져오기(with membership) **/
     @Override
     @Transactional(readOnly = true)
     public Page<MemberListWithMembershipDto> getMemberListsWithMembership(
@@ -293,8 +345,10 @@ public class MemberListServiceImpl implements MemberListService{
             MemberList targetMember = memberListRepository.findActiveMemberListByBoxAndMemberWithLock(boxPk, targetMemberPk)
                     .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
 
-
-
+            // 양도 대상자가 box의 매니저인지 확인(매니저에게만 양도 가능)
+            if (!Objects.equals(targetMember.getRole(), MemberRole.MANAGER)){
+                throw new ValidationException(ErrorCode.ONLY_MANAGER_CAN_BE_OWNER);
+            }
 
             // 변경 순서: 기존 Owner 먼저 강등 -> 대상자 승격 -> box.ownerPk 동기화
             operatorMember.changeRole(MemberRole.MEMBER); // 기존 owner 강등

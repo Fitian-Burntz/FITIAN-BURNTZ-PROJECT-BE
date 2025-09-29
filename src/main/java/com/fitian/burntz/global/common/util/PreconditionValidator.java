@@ -14,11 +14,11 @@ import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
  * @packageName : com.fitian.burntz.global.common.util
  * @fileName : ControllerValidationHelper
  * @date : 2025-09-26
- * @description : 컨트롤러 검증 로직 중복 제거를 위한 헬퍼
+ * @description : 주로 파라미터 null 값 체크 용으로 사용되는 검증 헬퍼 (null 체크 중복 제거)
  */
 
 @Component
-public class ControllerValidationHelper {
+public class PreconditionValidator {
 
     /**
      * 인증된 사용자의 memberPk를 반환합니다.
@@ -34,6 +34,26 @@ public class ControllerValidationHelper {
         return loginMemberPk;
     }
 
+    public String requireDeviceId(String deviceId) {
+        String trimDeviceId = trimToNull(deviceId);
+
+        if (trimDeviceId == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        return trimDeviceId;
+    }
+
+    /** 인증과 관계 없이 memberPk 값이 잘 넘어왔는지 검증 **/
+    public Long requireMemberPk(Long memberPk) {
+        if (memberPk == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        return memberPk;
+    }
+
+    /** boxPk 값이 잘 넘어왔는지 검증 **/
     public Long requireBoxPk(Long boxPk) {
         if (boxPk == null) {
             throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);

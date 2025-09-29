@@ -46,6 +46,7 @@ public enum ErrorCode {
     NO_CHANGE_REQUIRED(HttpStatus.BAD_REQUEST, "NO_CHANGE_REQUIRED", "변경할 내용이 없습니다."),
     OPERATION_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "OPERATION_NOT_ALLOWED", "이 작업은 현재 상태에서 허용되지 않습니다. 마지막 소유자는 강등할 수 없습니다."),
     PROMOTE_TO_OWNER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROMOTE_TO_OWNER_NOT_ALLOWED", "현재 페이지에서는 OWNER 로 승격할 수 없습니다."),
+    ONLY_MANAGER_CAN_BE_OWNER(HttpStatus.BAD_REQUEST, "ONLY_MANAGER_CAN_BE_OWNER", "매니저만 OWNER 를 양도 받을 수 있습니다."),
 
 
     // 401 Unauthorized
