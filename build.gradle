@@ -69,6 +69,9 @@ dependencies {
 	implementation 'com.google.firebase:firebase-admin:9.6.0'
 
     implementation 'com.google.cloud:google-cloud-firestore:3.32.2'
+
+	// 관리자 페이지를 위한 템플릿 엔진
+	implementation 'org.springframework.boot:spring-boot-starter-mustache'
 }
 
 dependencyManagement {

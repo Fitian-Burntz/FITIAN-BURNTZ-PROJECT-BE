@@ -4,15 +4,11 @@ import com.fitian.burntz.domain.box.docs.BoxDocs;
 import com.fitian.burntz.domain.box.dto.*;
 import com.fitian.burntz.domain.box.service.BoxService;
 import com.fitian.burntz.global.common.response.ApiResponse;
-import com.fitian.burntz.global.common.util.ControllerValidationHelper;
-import com.fitian.burntz.global.common.util.StringUtil;
-import com.fitian.burntz.global.exception.ErrorCode;
-import com.fitian.burntz.global.exception.ValidationException;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -21,15 +17,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/boxes")
 public class BoxController implements BoxDocs {
 
     private final BoxService boxService;
-    private final ControllerValidationHelper controllerValidationHelper;
+    private final PreconditionValidator preconditionValidator;
     private static final int MAX_PAGE_SIZE = 100;
 
   @GetMapping("/test")
@@ -44,7 +38,7 @@ public class BoxController implements BoxDocs {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody CreateBoxRequest createBoxRequest
     ){
-        Long loginMemberPk = controllerValidationHelper.requireLogin(customUserDetails);
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
         // 실제 생성 로직 실행 (예외는 글로벌 핸들러로 처리)
         BoxDto boxDtoResponse = boxService.createBox(loginMemberPk, createBoxRequest);
@@ -61,7 +55,7 @@ public class BoxController implements BoxDocs {
     @GetMapping
     public ResponseEntity<?> getBoxForPk(@RequestParam(value = "boxPk", required = false) Long boxPk){
 
-        Long targetBoxPk = controllerValidationHelper.requireBoxPk(boxPk);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
 
         BoxDto getBoxResponse = boxService.getBoxForPk(targetBoxPk);
 
@@ -73,7 +67,7 @@ public class BoxController implements BoxDocs {
     public ResponseEntity<?> getBoxForCode(@RequestParam(value = "boxCode", required = false) String boxCode){
 
         // 빈 문자열일 경우 null 처리
-        String targetBoxCode = controllerValidationHelper.requireBoxCode(boxCode);
+        String targetBoxCode = preconditionValidator.requireBoxCode(boxCode);
 
         BoxDto getBoxResponse = boxService.getBoxForBoxCode(targetBoxCode);
 
@@ -87,7 +81,7 @@ public class BoxController implements BoxDocs {
             @PageableDefault(size = 20, sort = "boxPk", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // 클라이언트가 과도한 size 요청을 못하도록 방어
-        Pageable safePageable = controllerValidationHelper.limitPageable(pageable, MAX_PAGE_SIZE);
+        Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
 
         Page<BoxDto> boxDtoPage = boxService.getAllActiveBoxes(safePageable);
 
@@ -104,9 +98,9 @@ public class BoxController implements BoxDocs {
             @RequestParam(value = "boxCode", required = false) String boxCode
     ){
 
-        Long joinMemberPk = controllerValidationHelper.requireLogin(customUserDetails);
+        Long joinMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
-        String targetBoxCode = controllerValidationHelper.requireBoxCode(boxCode);
+        String targetBoxCode = preconditionValidator.requireBoxCode(boxCode);
 
         JoinBoxDto joinResponse = boxService.joinMemberToBox(joinMemberPk, targetBoxCode);
 
@@ -120,7 +114,7 @@ public class BoxController implements BoxDocs {
             @Valid @RequestBody UpdateBoxInfoRequest updateBoxInfoRequest
     ){
 
-        Long loginMemberPk = controllerValidationHelper.requireLogin(customUserDetails);
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
         UpdateBoxInfoDto updateBoxInfoResponse = boxService.updateBoxInfo(loginMemberPk, UpdateBoxInfoDto.from(updateBoxInfoRequest));
 
@@ -133,9 +127,9 @@ public class BoxController implements BoxDocs {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(value = "boxPk", required = false) Long boxPk
     ){
-        Long loginMemberPk = controllerValidationHelper.requireLogin(customUserDetails);
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
-        Long targetBoxPk = controllerValidationHelper.requireBoxPk(boxPk);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
 
         boxService.removeBox(loginMemberPk, targetBoxPk);
 

@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.membership.repository;
 
+import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.global.common.entity.BaseTime.Yn;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,7 +20,7 @@ import java.util.Optional;
 public interface MembershipRepository extends JpaRepository<Membership, Long> {
     Optional<Membership> findByBoxBoxPkAndMemberMemberPkAndDeletedYN(Long boxPk, Long memberPk, Yn deletedYN);
 
-    // 해당 box 에 member 의 활성화 membershipPk 중 가장 큰 값 조회
+    /** 해당 box 에 member 의 활성화 membershipPk 중 가장 큰 값 조회 **/
     @Query(value =
             "SELECT DISTINCT ON (m.member_pk) m.* " +
                     "FROM burntz.membership m " +   // <-- 스키마 명시
@@ -28,4 +29,18 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             nativeQuery = true)
     List<Membership> findLatestMembershipPerMemberByBox(@Param("boxPk") Long boxPk,
                                                         @Param("memberPks") List<Long> memberPks);
+
+    /** 해당 box 에 member의 활성화 membership 중 가장 큰 값 단건 조회용 **/
+    @Query("""
+        SELECT m
+        FROM Membership m
+        WHERE m.box.boxPk = :boxPk
+          AND m.member.memberPk = :memberPk
+          AND m.deletedYN = 'N'
+        ORDER BY m.membershipPk DESC
+        """)
+    Optional<Membership> findLatestByBoxPkAndMemberPk(@Param("boxPk") Long boxPk,
+                                                      @Param("memberPk") Long memberPk);
+
+    Long box(Box box);
 }

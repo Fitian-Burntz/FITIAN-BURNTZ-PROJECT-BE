@@ -106,6 +106,11 @@ public class BoxSubscription extends BaseTime {
         .build();
   }
 
+  public BoxSubscription updateStatus(SubscriptionStatus status) {
+    this.status = status;
+    return this;
+  }
+
   public long getRemainingDays() {
     LocalDateTime now = LocalDateTime.now();
     if (now.isAfter(expiredAt)) {

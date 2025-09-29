@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>접근 권한 없음 - Burntz Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bw05:#f8f9fa;--bw08:#f1f3f4;--bw15:#e8eaed;--bw20:#dadce0;--bw30:#9aa0a6;--bw40:#80868b;--bw70:#5f6368;--bw80:#3c4043;--bw100:#202124}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80);min-height:100vh}
+
+    .header{background:white;padding:20px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .header-content{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center}
+    .logo{font-family:'Sofia Sans Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--bw100)}
+
+    .error-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 80px);padding:40px 16px;text-align:center}
+    .error-icon{font-size:120px;color:var(--bw30);margin-bottom:32px;font-family:'Sofia Sans Condensed',sans-serif;font-weight:700}
+    .error-title{font-family:'Sofia Sans Condensed',sans-serif;font-size:48px;font-weight:700;color:var(--bw100);margin-bottom:16px}
+    .error-subtitle{font-size:18px;color:var(--bw70);margin-bottom:8px;font-weight:500}
+    .error-description{font-size:14px;color:var(--bw40);max-width:500px;line-height:1.6;margin-bottom:40px}
+
+    .action-buttons{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+    .btn{padding:16px 24px;border:none;border-radius:4px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s}
+    .btn-primary{background:var(--bw100);color:white}
+    .btn-primary:hover{background:var(--bw70)}
+    .btn-secondary{background:var(--bw08);color:var(--bw80);border:1px solid var(--bw15)}
+    .btn-secondary:hover{background:var(--bw15)}
+
+    .error-code{position:absolute;top:20px;right:20px;font-size:12px;color:var(--bw40);font-family:monospace}
+
+    .floating-btn{position:fixed;bottom:20px;right:20px;width:64px;height:64px;border-radius:32px;background:var(--bw100);color:white;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;font-size:9px;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:100}
+
+    @media (max-width:768px){
+      .header-content{padding:0 12px}
+      .error-icon{font-size:80px;margin-bottom:24px}
+      .error-title{font-size:32px;margin-bottom:12px}
+      .error-subtitle{font-size:16px;margin-bottom:6px}
+      .error-description{font-size:13px;margin-bottom:32px}
+      .action-buttons{flex-direction:column;width:100%;max-width:300px}
+      .btn{width:100%;justify-content:center}
+    }
+  </style>
+</head>
+<body>
+
+
+<div class="header">
+  <div class="header-content">
+    <div class="logo">Burntz Admin</div>
+  </div>
+</div>
+
+<div class="error-container">
+  <div class="error-icon">⚠</div>
+  <h1 class="error-title">접근 권한 없음</h1>
+  <h2 class="error-subtitle">Access Denied</h2>
+  <p class="error-description">
+    요청하신 페이지에 접근할 권한이 없습니다.<br>
+    관리자 인증이 필요하거나 유효하지 않은 인증 정보입니다.<br>
+    올바른 관리자 계정으로 다시 로그인해 주세요.
+  </p>
+
+  <div class="action-buttons">
+    <button class="btn btn-primary" onclick="goToLogin()">
+      로그인 페이지로
+    </button>
+  </div>
+</div>
+
+
+<script>
+  function goToLogin() {
+    window.location.href = '/api/v1/admin/login';
+  }
+</script>
+</body>
+</html>
