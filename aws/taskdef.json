@@ -22,9 +22,9 @@
         { "name": "BURNTZ_APPLE_PRIVATE_KEY_FILE", "value": "/tmp/apple_private_key.p8" }
       ],
       "secrets": [
-        { "name": "DB_URL",      "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:DB_URL::" },
-        { "name": "DB_USERNAME", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:DB_USERNAME::" },
-        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:DB_PASSWORD::" },
+        { "name": "DB_URL",      "valueFrom": "burntz/db-url" },
+        { "name": "DB_USERNAME", "valueFrom": "burntz/db-username" },
+        { "name": "DB_PASSWORD", "valueFrom": "burntz/db-password" },
 
         { "name": "BURNTZ_DEV_GOOGLE_CLIENT_ID",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_DEV_GOOGLE_CLIENT_ID::" },
         { "name": "BURNTZ_DEV_GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_DEV_GOOGLE_CLIENT_SECRET::" },
@@ -40,7 +40,7 @@
         { "name": "BURNTZ_APPLE_PRIVATE_KEY_PEM", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:BURNTZ_APPLE_PRIVATE_KEY_PEM::" },
 
         { "name": "REDIS_HOST",       "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:REDIS_HOST::" },
-        { "name": "REDIS_AUTH_TOKEN", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:REDIS_AUTH_TOKEN::" },
+        { "name": "REDIS_AUTH_TOKEN", "valueFrom": "burntz/redis/auth-token" },
 
         { "name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:209479269102:secret:burntz/app/config:JWT_SECRET::" },
 
