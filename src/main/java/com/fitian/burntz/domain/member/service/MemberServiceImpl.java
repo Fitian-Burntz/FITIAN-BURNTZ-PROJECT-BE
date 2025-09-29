@@ -66,7 +66,7 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    /** 내 정보 가져오기 **/
+    /** 내 정보 가져오기 (box 관련 내 정보랑은 별개) **/
     @Override
     public MemberDto getMyInfo(Long memberPk){
         if (memberPk == null) {

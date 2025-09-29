@@ -6,7 +6,7 @@ import com.fitian.burntz.domain.member.dto.MemberDto;
 public interface MemberService {
     MemberCreateResult getOrCreateMember(String provider, String memberId, String name, String email);
 
-    /** 내 정보 가져오기 **/
+    /** 내 정보 가져오기 (box 관련 내 정보랑은 별개) **/
     MemberDto getMyInfo(Long memberPk);
 
     MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender);
