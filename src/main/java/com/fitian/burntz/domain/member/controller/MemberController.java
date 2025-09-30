@@ -19,6 +19,16 @@ public class MemberController {
     private final MemberService memberService;
     private final PreconditionValidator preconditionValidator;
 
+    /** 내 정보 가져오기 (box 관련 내 정보랑은 별개) **/
+    @GetMapping
+    public ResponseEntity<ApiResponse<MemberDto>> getMyInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        MemberDto getMemberResponse = memberService.getMyInfo(loginMemberPk);
+
+        return ResponseEntity.ok(ApiResponse.success(getMemberResponse));
+    }
+
     @PutMapping
     public ResponseEntity<ApiResponse<MemberInfoResponse>> updateMemberInfo(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,

@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
+import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -69,5 +70,13 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<MemberList> findTop2ByBox_BoxPkAndRoleAndDeletedYN(Long boxPk, MemberRole role, BaseTime.Yn yn);
 
+
+    /**
+     * memberList + box 페이징
+     * 사용자가 내가 속한 box 정보를 조회할 때 **/
+    @Query(value = "SELECT ml FROM MemberList ml JOIN FETCH ml.box b " +
+            "WHERE ml.member.memberPk = :memberPk AND ml.deletedYN = 'N'",
+            countQuery = "SELECT COUNT(ml) FROM MemberList ml WHERE ml.member.memberPk = :memberPk AND ml.deletedYN = 'N'")
+    Page<MemberList> findActiveByMemberPkWithBox(@Param("memberPk") Long memberPk, Pageable pageable);
 
 }

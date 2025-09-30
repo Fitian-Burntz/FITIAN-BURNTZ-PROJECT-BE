@@ -7,6 +7,7 @@ import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.common.util.SecureLogUtil;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
@@ -28,6 +29,7 @@ public class AuthServiceImpl implements AuthService{
     private final MemberRepository memberRepository;
     private final com.fitian.burntz.domain.auth.oauth.OAuthService oAuthService;
     private final RefreshTokenService refreshTokenService;
+    private final PreconditionValidator preconditionValidator;
 
     @Value("${jwt.accessTokenExpirationTime}")
     private Long jwtAccessTokenExpirationTime;
@@ -40,21 +42,19 @@ public class AuthServiceImpl implements AuthService{
         if (socialToken == null || socialToken.isBlank()) {
             throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
         }
-        if (deviceId == null || deviceId.isBlank()) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-        deviceId = deviceId.trim();
+
+        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
 
         if (log.isDebugEnabled()) {
             log.debug("loginWithSocial called provider={} tokenHashPrefix={} deviceId={}",
                     provider,
                     SecureLogUtil.sha256Prefix(socialToken, 8),
-                    deviceId);
+                    targetDeviceId);
         }
 
         MemberCreateResult memberCreateResult;
         try {
-            memberCreateResult = oAuthService.findOrCreateUserBySocialToken(socialToken, deviceId, provider);
+            memberCreateResult = oAuthService.findOrCreateUserBySocialToken(socialToken, targetDeviceId, provider);
         } catch (IllegalArgumentException iae) {
             // 예: provider가 없을 때 등 - OAuthService에서 IllegalArgumentException을 던진다면 적절한 ErrorCode로 변환
             throw new ValidationException(ErrorCode.PROVIDER_NOT_FOUND);
@@ -67,20 +67,21 @@ public class AuthServiceImpl implements AuthService{
         boolean isNewMember = memberCreateResult.isNewMember();
 
         JwtTokenPair pair = jwtTokenProvider.createTokenPair(member);
-        refreshTokenService.saveOrUpdateRefreshToken(member.getMemberPk(), pair.getRefreshToken(), deviceId);
+        refreshTokenService.saveOrUpdateRefreshToken(member.getMemberPk(), pair.getRefreshToken(), targetDeviceId);
 
         return LoginResponse.builder()
                 .jwtTokenPair(pair)
                 .member(MemberDto.from(member))
                 .newMember(isNewMember)
-                .deviceId(deviceId)
+                .deviceId(targetDeviceId)
                 .build();
     }
 
     @Override
     public String logoutCurrentDevice(String refreshToken, String deviceId) {
         // 검증 책임을 RefreshTokenService로 이동
-        RefreshTokenService.ValidationResult validationResult = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
+        RefreshTokenService.ValidationResult validationResult =
+                refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
 
         boolean deletedAuth = refreshTokenService.softDeleteByMemberAndDeviceId(
                 validationResult.memberPk(), validationResult.deviceId()
@@ -114,7 +115,8 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthTokenResponse refreshTokenBased(String refreshToken, String deviceId) {
-        RefreshTokenService.ValidationResult validationResult = refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
+        RefreshTokenService.ValidationResult validationResult =
+                refreshTokenService.validateRefreshTokenAndDevice(refreshToken, deviceId);
 
         Member member = memberRepository.findById(validationResult.memberPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));

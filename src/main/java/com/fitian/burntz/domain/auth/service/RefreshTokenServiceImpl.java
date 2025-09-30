@@ -37,16 +37,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     @Transactional
     public void saveOrUpdateRefreshToken(Long memberPk, String newRefreshToken, String deviceId) {
-        if (deviceId == null || deviceId.isBlank()) {
-            throw new IllegalArgumentException("deviceId is required");
-        }
-        String did = deviceId.trim();
+        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
         String hashed = hashToken(newRefreshToken);
 
         // 원자적으로 INSERT or UPDATE 처리 (Postgres)
-        authRepository.upsertAuth(memberPk, did, hashed);
+        authRepository.upsertAuth(memberPk, targetDeviceId, hashed);
 
-        log.debug("saveOrUpdateRefreshToken: memberPk={} deviceId={} upsertDone", memberPk, did);
+        log.debug("saveOrUpdateRefreshToken: memberPk={} deviceId={} upsertDone", memberPk, targetDeviceId);
     }
 
     @Override

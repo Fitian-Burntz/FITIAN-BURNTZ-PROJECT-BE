@@ -10,6 +10,7 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.member.service.MemberListService;
 import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.entity.BaseTime;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class BoxServiceImpl implements BoxService {
     private final MemberRepository memberRepository;
     private final MemberListService memberListService;
     private final MemberListRepository memberListRepository;
+    private final PreconditionValidator preconditionValidator;
 
     @Override
     @Transactional(readOnly = true)
@@ -116,9 +118,6 @@ public class BoxServiceImpl implements BoxService {
         // 이미 해당 박스에 멤버가 존재하는지 확인
         if (memberListRepository.existsActiveByBoxPkAndMemberPk(belongBox.getBoxPk(), joinMemberPk)) {
             throw new ValidationException(ErrorCode.DUPLICATE_MEMBER);
-
-
-
         }
 
         MemberList joinNewMember = MemberList.joinNewMemberToBox(joinMember, belongBox);
@@ -191,11 +190,8 @@ public class BoxServiceImpl implements BoxService {
     @Override
     public void removeBox(Long operatorPk, Long boxPk){
 
-        if (boxPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-
-        Box targetBox = boxRepository.findActiveById(boxPk)
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
+        Box targetBox = boxRepository.findActiveById(targetBoxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
         // 권한 체크 (owner인지 확인)
@@ -206,26 +202,26 @@ public class BoxServiceImpl implements BoxService {
         try {
             targetBox.markDeleted();
             boxRepository.save(targetBox);
-            log.info("Box soft-deleted. boxPk={}", boxPk);
+            log.info("Box soft-deleted. boxPk={}", targetBoxPk);
 
         } catch (DataIntegrityViolationException dive) {
             // DB 제약조건 위반(UNIQUE / NOT NULL / FK 등)
             dive.getMostSpecificCause();
             log.warn("Failed to soft-delete box. boxPk={}, cause={}",
-                    boxPk,
+                    targetBoxPk,
                     dive.getMostSpecificCause().getMessage());
             log.debug("DataIntegrityViolationException stacktrace:", dive);
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
 
         } catch (OptimisticLockingFailureException olfe) {
             // 낙관적 락 충돌(@Version 필드 관련)
-            log.warn("Optimistic lock during box delete. boxPk={}, cause={}", boxPk, olfe.getMessage());
+            log.warn("Optimistic lock during box delete. boxPk={}, cause={}", targetBoxPk, olfe.getMessage());
             log.debug("OptimisticLockingFailureException stacktrace:", olfe);
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
 
         } catch (Exception e) {
             // 그 외 예기치 못한 오류(네트워크/타임아웃/NPE 등)
-            log.error("Unexpected error while deleting box. boxPk={}", boxPk, e);
+            log.error("Unexpected error while deleting box. boxPk={}", targetBoxPk, e);
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }
