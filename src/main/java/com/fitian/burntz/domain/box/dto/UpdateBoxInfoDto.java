@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.box.dto;
 
 
 import com.fitian.burntz.domain.box.entity.Box;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
@@ -12,6 +13,7 @@ import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema(description = "box 정보 수정 시 서비스용 DTO")
 public class UpdateBoxInfoDto {
 
     private Long boxPk;
