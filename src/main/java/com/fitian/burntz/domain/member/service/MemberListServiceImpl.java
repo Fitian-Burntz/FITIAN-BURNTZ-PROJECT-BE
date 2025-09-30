@@ -139,9 +139,11 @@ public class MemberListServiceImpl implements MemberListService{
 
     }
 
-    /** 내 box 정보와 멤버십 통합 정보 단건 조회 **/
+    /** 내 box 정보와 멤버십 통합 정보 단건 조회
+     * 조회용 메서드지만 연쇄 작용으로 마지막 방문 boxPk 를 업데이트하므로
+     * Transactional 이 필요합니다. **/
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public BoxWithMembershipDto getMyBoxWithMembership(Long memberPk, Long boxPk) {
         // 기본 파라미터 검증
         memberPk = preconditionValidator.requireMemberPk(memberPk);
