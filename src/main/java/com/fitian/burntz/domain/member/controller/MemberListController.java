@@ -29,9 +29,9 @@ public class MemberListController implements MemberListDocs {
 
 
     /**  box 멤버 역할 변경 MEMBER, MANAGER (양도 x) **/
-    // 컨트롤러에서 반드시 필요한 값 null 체크 (방어적 코드)
+    @Override
     @PostMapping
-    public ResponseEntity<?> updateMemberRole(
+    public ResponseEntity<ApiResponse<UpdateMemberRoleDto>> updateMemberRole(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UpdateMemberRoleRequest updateMemberRoleRequest
             ){
@@ -45,8 +45,9 @@ public class MemberListController implements MemberListDocs {
     }
 
     /** 내 box 정보 리스트 보기 **/
+    @Override
     @GetMapping("/my-boxes")
-    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxes(
+    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxesWithMembership(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PageableDefault(page = 0, size = 20) Pageable pageable
     ) {
@@ -64,6 +65,7 @@ public class MemberListController implements MemberListDocs {
     }
 
     /** 내 box nickname 바꾸기 **/
+    @Override
     @PutMapping
     public ResponseEntity<ApiResponse<ChangeMyBoxNicknameDto>> changeMyBoxNickname(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -83,6 +85,7 @@ public class MemberListController implements MemberListDocs {
 
 
     /** 회원 정보 단건 조회 (OWNER, MANAGER 전용) **/
+    @Override
     @GetMapping
     public ResponseEntity<ApiResponse<MemberListWithMembershipDto>> getMemberWithMembership(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -101,6 +104,7 @@ public class MemberListController implements MemberListDocs {
 
 
     /** boxCode 로 해당 box 의 모든 memberList 를 membership 과 함께 조회 **/
+    @Override
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<Page<MemberListWithMembershipDto>>> getAllBoxMemberList(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -125,6 +129,10 @@ public class MemberListController implements MemberListDocs {
     }
 
 
+    /** OWNER 양도
+     * MANAGER 등급 회원에게만 양도가능
+     * 기존 OWNER 는 MEMBER 로 강등 **/
+    @Override
     @PostMapping("/assignment")
     public ResponseEntity<ApiResponse<ChangeOwnerSuccessDto>> changeOwner(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,

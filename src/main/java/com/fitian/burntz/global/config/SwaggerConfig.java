@@ -62,6 +62,26 @@ public class SwaggerConfig {
                 .build();
     }
 
+    // 멤버 API 그룹
+    @Bean
+    public GroupedOpenApi memberApi() {
+        return GroupedOpenApi.builder()
+                .group("👤 멤버 API")
+                .pathsToMatch("/api/v1/member/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // 멤버 리스트 API 그룹
+    @Bean
+    public GroupedOpenApi memberListApi() {
+        return GroupedOpenApi.builder()
+                .group("📝 멤버리스트 API")
+                .pathsToMatch("/api/v1/member-list/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
     // 박스 API 그룹
     @Bean
     public GroupedOpenApi boxApi() {

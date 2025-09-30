@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.member.dto.memberList_dto;
 
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.MemberList;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema(description = "OWNER 양도 시 양도 완료 결과 전달 DTO")
 public class ChangeOwnerSuccessDto {
 
     private Long boxPk;
