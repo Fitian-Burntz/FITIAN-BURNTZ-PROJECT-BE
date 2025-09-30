@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.box.dto;
 
 import com.fitian.burntz.domain.box.enums.MemberRole;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 @Getter
@@ -8,6 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "사용자 box 가입 시 DTO")
 public class JoinBoxDto {
 
     private Long memberPk;

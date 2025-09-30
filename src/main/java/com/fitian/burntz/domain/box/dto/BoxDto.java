@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.box.dto;
 
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.SubscribeYN;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 @Getter
@@ -9,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema(description = "box 조회 시 box 정보 교환 DTO")
 public class BoxDto {
 
     private Long boxPk;
