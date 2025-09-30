@@ -80,4 +80,16 @@ public class MemberList extends BaseTime {
                 .build();
 
     }
+
+
+    /** 내 box nickname 변경하기 **/
+    public void changeMyBoxNickname(String newBoxNickname) {
+        Objects.requireNonNull(newBoxNickname, "new box_nickname required");
+
+        if (Objects.equals(this.boxNickname, newBoxNickname)) return;
+
+        this.boxNickname = newBoxNickname;
+        this.setUpdatedAtToNow();
+
+    }
 }
