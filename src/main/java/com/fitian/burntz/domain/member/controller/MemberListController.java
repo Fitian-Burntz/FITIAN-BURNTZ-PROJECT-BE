@@ -166,4 +166,24 @@ public class MemberListController implements MemberListDocs {
         );
     }
 
+    /** memberList soft-delete
+     * box OWNER 가 해당 memberList 에서 특정 회원 삭제 시 호출
+     * 연쇄 작용 설계는 따로 없습니다. 필요 시 추가 **/
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<RemoveMemberListDto>>  removeMemberList(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "memberListPk", required = false) Long memberListPk,
+            @RequestParam(value = "boxPk", required = false) Long boxPk
+    ){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+        Long targetMemberListPk = preconditionValidator.requireLongValue(memberListPk);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        RemoveMemberListDto removeMemberListResponse =
+                memberListService.removeMemberList(targetMemberListPk, loginMemberPk, targetBoxPk);
+
+        return ResponseEntity.ok(ApiResponse.success(removeMemberListResponse,
+                "memberList was successfully deleted."));
+    }
+
 }

@@ -7,6 +7,8 @@ import com.fitian.burntz.domain.membership.v1.dto.MembershipDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.util.Objects;
+
 /**
  * @author : 김남이
  * @packageName : com.fitian.burntz.domain.member.dto
@@ -34,6 +36,10 @@ public class BoxWithMembershipDto {
 
 
     public static BoxWithMembershipDto from(MemberList memberList, Box targetBox, MembershipDto membershipDto) {
+        Objects.requireNonNull(memberList, "memberList required.");
+        Objects.requireNonNull(targetBox, "targetBox required.");
+        Objects.requireNonNull(membershipDto, "membershipDto required.");
+
         return BoxWithMembershipDto.builder()
                 .memberListPk(memberList.getMemberListPk())
                 .boxPk(targetBox.getBoxPk())

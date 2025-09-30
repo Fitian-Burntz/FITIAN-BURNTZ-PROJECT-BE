@@ -5,6 +5,8 @@ import com.fitian.burntz.domain.member.entity.MemberList;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -20,6 +22,8 @@ public class CreateMemberListResponse {
     private MemberRole role;
 
     public static CreateMemberListResponse toDto(MemberList memberList){
+        Objects.requireNonNull(memberList, "memberList required.");
+
         return CreateMemberListResponse.builder()
                 .memberListPk(memberList.getMemberListPk())
                 .boxPk(memberList.getBox().getBoxPk())

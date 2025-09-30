@@ -2,6 +2,8 @@ package com.fitian.burntz.domain.member.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Objects;
+
 @Schema(description = "")
 public record MemberInfoResponse (
         Long memberPk,
@@ -12,6 +14,8 @@ public record MemberInfoResponse (
         String provider
 ) {
     public static MemberInfoResponse from(MemberDto memberDto) {
+        Objects.requireNonNull(memberDto, "memberDto required.");
+
         return new MemberInfoResponse(
                 memberDto.getMemberPk(),
                 memberDto.getMemberId(),

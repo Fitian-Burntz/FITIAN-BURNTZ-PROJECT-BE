@@ -5,6 +5,8 @@ import com.fitian.burntz.domain.box.entity.Box;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.util.Objects;
+
 import static com.fitian.burntz.global.common.util.StringUtil.trimToNull;
 
 
@@ -28,6 +30,8 @@ public class UpdateBoxInfoDto {
     private String boxInsta;
 
     public static UpdateBoxInfoDto from(UpdateBoxInfoRequest updateBoxInfoRequest){
+        Objects.requireNonNull(updateBoxInfoRequest, "updateBoxInfoRequest required.");
+
         return UpdateBoxInfoDto.builder()
                 .boxPk(updateBoxInfoRequest.getBoxPk())
                 .boxName(trimToNull(updateBoxInfoRequest.getBoxName()))
@@ -43,6 +47,8 @@ public class UpdateBoxInfoDto {
     }
 
     public static UpdateBoxInfoDto entityToDto(Box box){
+        Objects.requireNonNull(box, "box required.");
+
         return UpdateBoxInfoDto.builder()
                 .boxPk(box.getBoxPk())
                 .boxName(box.getBoxName())

@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.Objects;
+
 @Getter
 @Builder
 @Schema(description = "member 정보 수정 및 탈퇴 시 멤버 정보 반환용 DTO")
@@ -17,6 +19,8 @@ public class MemberDto {
     private String provider;
 
     public static MemberDto from(Member member) {
+        Objects.requireNonNull(member, "member required.");
+
         return MemberDto.builder()
                 .memberPk(member.getMemberPk())
                 .memberId(member.getMemberId())

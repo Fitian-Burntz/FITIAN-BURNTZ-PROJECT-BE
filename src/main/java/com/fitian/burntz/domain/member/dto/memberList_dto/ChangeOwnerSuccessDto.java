@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * @author : 김남이
@@ -30,6 +31,10 @@ public class ChangeOwnerSuccessDto {
     private LocalDateTime updatedAt;
 
     public static ChangeOwnerSuccessDto from(MemberList newOwnerMember, Long boxPk, Long targetMemberPk) {
+        Objects.requireNonNull(newOwnerMember, "newOwnerMember required.");
+        Objects.requireNonNull(boxPk, "boxPk required.");
+        Objects.requireNonNull(targetMemberPk, "targetMemberPk required.");
+
         return ChangeOwnerSuccessDto.builder()
                 .boxPk(boxPk)
                 .memberPk(targetMemberPk)
