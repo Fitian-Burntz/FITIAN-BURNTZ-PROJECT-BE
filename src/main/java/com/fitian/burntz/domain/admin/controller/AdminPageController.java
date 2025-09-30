@@ -13,18 +13,18 @@ public class AdminPageController {
   @GetMapping("/login")
   public String loginPage() {
     log.info("Admin Login Page Accessed");
-    return "/admin/admin-login";
+    return "admin/admin-login";
   }
 
   @GetMapping("/lobby")
   public String lobbyPage() {
     log.info("lobby Page Accessed");
-    return "/admin/admin-lobby";
+    return "admin/admin-lobby";
   }
 
   @GetMapping("/error")
   public String errorPage() {
-    return "/admin/admin-error";
+    return "admin/admin-error";
   }
 
 }
