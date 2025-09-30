@@ -4,10 +4,7 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.dto.BoxWithMembershipDto;
-import com.fitian.burntz.domain.member.dto.memberList_dto.ChangeOwnerSuccessDto;
-import com.fitian.burntz.domain.member.dto.memberList_dto.CreateMemberListResponse;
-import com.fitian.burntz.domain.member.dto.memberList_dto.MemberListWithMembershipDto;
-import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleDto;
+import com.fitian.burntz.domain.member.dto.memberList_dto.*;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
@@ -159,16 +156,17 @@ public class MemberListServiceImpl implements MemberListService{
         }
 
         // boxPk 목록
-        List<Long> boxPks = memberListPage.stream()
-                .map(ml -> ml.getBox().getBoxPk())
+        List<Long> boxPkList = memberListPage.stream()
+                .map(memberList -> memberList.getBox().getBoxPk())
                 .collect(Collectors.toList());
 
         // 박스들에 대해 해당 멤버의 최신 멤버십들을 한 번에 조회
-        List<Membership> latestMemberships = membershipRepository.findLatestMembershipsForMemberByBoxes(boxPks, memberPk);
+        List<Membership> latestMemberships = membershipRepository.findLatestMembershipsForMemberByBoxes(boxPkList, memberPk);
 
         // boxPk -> membership 매핑
         Map<Long, Membership> membershipByBoxPk = latestMemberships.stream()
-                .collect(Collectors.toMap(m -> m.getBox().getBoxPk(), m -> m));
+                .collect(Collectors.toMap(membership -> membership.getBox().getBoxPk(),
+                        membership -> membership));
 
         // DTO 매핑 (memberList 정보 포함)
         List<BoxWithMembershipDto> dtos = memberListPage.stream().map(memberList -> {
@@ -181,7 +179,36 @@ public class MemberListServiceImpl implements MemberListService{
         return new PageImpl<>(dtos, pageable, memberListPage.getTotalElements());
     }
 
+    /** 내 box nickname 바꾸기 **/
+    @Override
+    @Transactional
+    public ChangeMyBoxNicknameDto changeMyBoxNickname(Long memberPk, Long boxPk, String boxNickname) {
+
+        Long loginMemberPk = preconditionValidator.requireMemberPk(memberPk);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
+        String newBoxNickname = preconditionValidator.requiredStringValue(boxNickname);
+
+        // 멤버 DB 존재 여부 검증
+        memberRepository.findActiveById(loginMemberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        // box DB 존재 여부 검증
+        boxRepository.findActiveById(targetBoxPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        // member 가 해당 box 에 속해있는지 검증
+        MemberList loginMember = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, loginMemberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
+
+
+        loginMember.changeMyBoxNickname(newBoxNickname);
+        memberListRepository.save(loginMember);
+
+        return ChangeMyBoxNicknameDto.from(loginMember, targetBoxPk);
+    }
+
     /** 회원 정보 단건 조회 (OWNER, MANAGER 전용) **/
+    @Override
     @Transactional(readOnly = true)
     public MemberListWithMembershipDto getMemberWithMembership(Long boxPk, Long operatorPk, Long targetMemberPk) {
         // 기본 검증
