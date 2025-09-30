@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.member.dto.memberList_dto;
 
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.MemberList;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 @Getter
@@ -9,6 +10,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+
+@Schema(description = "box 생성 시 연쇄적으로 생성되는 MemberList 정보 생성완료 응답 DTO")
 public class CreateMemberListResponse {
 
     private Long memberListPk;

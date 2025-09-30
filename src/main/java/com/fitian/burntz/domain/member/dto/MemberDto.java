@@ -1,11 +1,13 @@
 package com.fitian.burntz.domain.member.dto;
 
 import com.fitian.burntz.domain.member.entity.Member;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
+@Schema(description = "member 정보 수정 및 탈퇴 시 멤버 정보 반환용 DTO")
 public class MemberDto {
     private Long memberPk;
     private String memberId;

@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.member.dto.memberList_dto;
 
 import com.fitian.burntz.domain.member.entity.MemberList;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema(description = "내 boxNickname 변경 시 데이터 전달 DTO")
 public class ChangeMyBoxNicknameDto {
     private Long memberListPk;
     private Long boxPk;
