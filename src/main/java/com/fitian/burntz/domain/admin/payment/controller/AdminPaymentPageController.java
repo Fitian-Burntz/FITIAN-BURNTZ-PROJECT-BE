@@ -14,7 +14,7 @@ public class AdminPaymentPageController {
 
   @GetMapping
   public String paymentPage() {
-    return "/admin/payment/admin-payment";
+    return "admin/payment/admin-payment";
   }
 
 
