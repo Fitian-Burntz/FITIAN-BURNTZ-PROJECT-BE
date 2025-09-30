@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.member.dto.memberList_dto;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.membership.v1.dto.MembershipDto;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "회원들의 memberList 정보와 Membership 정보를 결합하여 반환하는 DTO")
 public class MemberListWithMembershipDto {
 
     private Long memberListPk;

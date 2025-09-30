@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.membership.v1.dto.MembershipDto;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 /**
@@ -19,6 +20,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "내 박스 정보 조회 시 멤버십과 결합한 데이터 DTO")
 public class BoxWithMembershipDto {
 
     private Long memberListPk;

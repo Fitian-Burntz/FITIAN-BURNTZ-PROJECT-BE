@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.member.dto.memberList_dto;
 
 import com.fitian.burntz.domain.box.enums.MemberRole;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema(description = "memberRole 변경 시 정보 전달용 DTO")
 public class UpdateMemberRoleDto {
     private Long boxPk;
     private Long memberPk;
