@@ -47,7 +47,7 @@ public class PreconditionValidator {
     /** 인증과 관계 없이 memberPk 값이 잘 넘어왔는지 검증 **/
     public Long requireMemberPk(Long memberPk) {
         if (memberPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
         }
 
         return memberPk;

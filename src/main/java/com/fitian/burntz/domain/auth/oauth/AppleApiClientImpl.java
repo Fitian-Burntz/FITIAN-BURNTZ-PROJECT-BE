@@ -73,11 +73,11 @@ public class AppleApiClientImpl implements AppleApiClient {
                 throw new IllegalArgumentException("Invalid audience for Apple id_token");
             }
 
-            // MODIFIED: expiry 검사에 clock skew 허용 (예: 60초)
+            // expiry 검사에 clock skew 허용 (예: 60초)
             Date exp = claims.getExpirationTime();
             long now = System.currentTimeMillis();
-            final long CLOCK_SKEW_MS = 60_000L; // ADDED
-            if (exp == null || exp.getTime() + CLOCK_SKEW_MS < now) { // ADDED (clock skew allowance)
+            final long CLOCK_SKEW_MS = 60_000L;
+            if (exp == null || exp.getTime() + CLOCK_SKEW_MS < now) {
                 log.warn("Apple id_token is expired or missing exp: exp={}", exp);
                 throw new IllegalArgumentException("Apple id_token is expired");
             }
@@ -85,7 +85,7 @@ public class AppleApiClientImpl implements AppleApiClient {
             // subject (sub) 는 Apple의 고유 사용자 ID
             String sub = claims.getSubject();
 
-            // ADDED: email 파싱을 더 안전하게 처리 (getStringClaim 예외 대비)
+            // email 파싱을 더 안전하게 처리 (getStringClaim 예외 대비)
             String email = null;
             try {
                 email = claims.getStringClaim("email"); // may throw if claim type unexpected
@@ -98,23 +98,23 @@ public class AppleApiClientImpl implements AppleApiClient {
                 }
             }
 
-            // ADDED: email_verified 다양한 타입(boolean/string 등) 처리
+            // email_verified 다양한 타입(boolean/string 등) 처리
             Boolean emailVerified = null;
-            Object emailVerifiedObj = claims.getClaim("email_verified"); // ADDED
-            if (emailVerifiedObj != null) { // ADDED
-                if (emailVerifiedObj instanceof Boolean) { // ADDED
-                    emailVerified = (Boolean) emailVerifiedObj; // ADDED
-                } else { // ADDED
-                    emailVerified = Boolean.valueOf(String.valueOf(emailVerifiedObj)); // ADDED
+            Object emailVerifiedObj = claims.getClaim("email_verified");
+            if (emailVerifiedObj != null) {
+                if (emailVerifiedObj instanceof Boolean) {
+                    emailVerified = (Boolean) emailVerifiedObj;
+                } else {
+                    emailVerified = Boolean.valueOf(String.valueOf(emailVerifiedObj));
                 }
-            } // ADDED
+            }
 
             log.info("Apple id_token validated: sub='{}' email='{}' email_verified='{}'", sub, email == null ? "(none)" : email, emailVerified);
 
             return OAuthUserInfo.builder()
                     .memberId(sub)
                     .email(email)
-                    .emailVerified(emailVerified) // ADDED
+                    .emailVerified(emailVerified)
                     .nickname(null)
                     .build();
         } catch (IllegalArgumentException iae) {

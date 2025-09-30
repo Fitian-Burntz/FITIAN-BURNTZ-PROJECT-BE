@@ -9,6 +9,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -93,6 +94,15 @@ public class Member extends BaseTime {
             changed = true;
         }
         return changed;
+    }
+
+    public void updateLastVisitedBoxPk(Long lastVisitedBoxPk) {
+        Objects.requireNonNull(lastVisitedBoxPk);
+
+        if (Objects.equals(this.lastVisitedBoxPk,  lastVisitedBoxPk)) return ;
+
+        this.lastVisitedBoxPk = lastVisitedBoxPk;
+
     }
 
 }

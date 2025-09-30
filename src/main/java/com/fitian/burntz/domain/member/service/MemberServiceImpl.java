@@ -6,7 +6,9 @@ import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.member_enum.Gender;
+import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,10 @@ import java.util.Optional;
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
+    private final MemberListRepository memberListRepository;
     private final RefreshTokenService refreshTokenService;
+    private final PreconditionValidator preconditionValidator;
+    private final BoxRepository boxRepository;
 
     /**
      * 로그인 전용 멤버 정보 반환
@@ -69,9 +74,8 @@ public class MemberServiceImpl implements MemberService {
     /** 내 정보 가져오기 (box 관련 내 정보랑은 별개) **/
     @Override
     public MemberDto getMyInfo(Long memberPk){
-        if (memberPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        // 기본 파라미터 검증
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
 
         Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
@@ -82,9 +86,9 @@ public class MemberServiceImpl implements MemberService {
     /** member 정보 수정 (default nickname, gender) **/
     @Override
     public MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender) {
-        if (memberPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+
+        // 기본 파라미터 검증
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
 
         Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
@@ -134,6 +138,10 @@ public class MemberServiceImpl implements MemberService {
     /** 멤버 탈퇴 **/
     @Override
     public MemberDto withdrawMember(Long memberPk) {
+
+        // 기본 파라미터 검증
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
+
         Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
@@ -155,8 +163,30 @@ public class MemberServiceImpl implements MemberService {
 
     /** 가장 마지막으로 방문한 Box PK 정보 멤버에 업데이트 **/
     @Override
-    public void updateLastVisitedBox(Long memberPk, Long boxPk) {
-        memberRepository.updateLastVisitedBoxPk(memberPk, boxPk);
+    public Long updateLastVisitedBox(Long memberPk, Long boxPk) {
+
+        // 기본 파라미터 검증
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
+        boxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        // member DB 존재 여부 검증
+        Member targetMember = memberRepository.findActiveById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        // box DB 존재 여부 검증
+        boxRepository.findActiveById(boxPk)
+                        .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        // memberList 에서 member 가 해당 box 에 속해 있는지 검증
+        memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
+
+        targetMember.updateLastVisitedBoxPk(boxPk);
+
+        memberRepository.save(targetMember);
+
+        return boxPk;
+
     }
 
 }

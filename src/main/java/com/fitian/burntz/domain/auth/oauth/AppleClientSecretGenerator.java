@@ -44,10 +44,8 @@ public class AppleClientSecretGenerator {
         log.debug("Generating client_secret for teamId='{}' clientId='{}' keyId='{}' using p8Path='{}'",
                 teamId, clientId, keyId, p8Path.toAbsolutePath());
 
-        String jwt = generateClientSecret(teamId, clientId, keyId, pemContent);
+//        String jwt = generateClientSecret(teamId, clientId, keyId, pemContent);
 
-        // 개발용: stdout으로만 출력 (로그에 원문을 남기지 않음)
-        System.out.println(jwt);
     }
 
     /**
