@@ -29,6 +29,45 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      # ------------------------------
+      #  JAR 빌드 및 검사 단계 추가
+      #  - bootJar 실행해서 JAR 생성
+      #  - JAR 내부에 mustache 템플릿 포함 여부 검사
+      #  - 포함 시 artifact 업로드, 미포함 시 실패 (배포 차단)
+      # ------------------------------
+      - name: Build JAR (bootJar)
+        run: |
+          echo ">>> Running bootJar"
+          chmod +x gradlew || true
+          ./gradlew bootJar -x test
+          echo ">>> Build finished. JARs in build/libs:"
+          ls -lah build/libs
+
+      - name: Inspect built JAR for admin-login.mustache
+        run: |
+          JAR=$(ls build/libs/*.jar | head -n1)
+          if [ -z "$JAR" ]; then
+            echo "ERROR: No jar found under build/libs" >&2
+            ls -la build/libs || true
+            exit 1
+          fi
+          echo "Inspecting jar: $JAR"
+          "$JAVA_HOME/bin/jar" tf "$JAR" | grep -E "BOOT-INF/classes/templates/.*/admin-login.mustache" || true
+          # 실제 존재여부 체크
+          if "$JAVA_HOME/bin/jar" tf "$JAR" | grep -q "BOOT-INF/classes/templates/admin/admin-login.mustache"; then
+            echo "FOUND: admin-login.mustache inside $JAR"
+          else
+            echo "ERROR: admin-login.mustache NOT FOUND inside $JAR. Aborting deploy." >&2
+            echo "You can comment out exit 1 to allow deploy anyway (not recommended)."
+            # 배포 차단을 원치 않으면 다음 줄을 주석 처리하세요.
+            exit 1
+          fi
+
+      - name: Upload built JAR as artifact (for inspection)
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-jar
+          path: build/libs/*.jar
 
       - name: Print OIDC info (debug)
         run: |
