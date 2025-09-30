@@ -46,7 +46,7 @@ public class MembershipController {
     }
 
     @PutMapping("/{memberPk}")
-    public ApiResponse<Void> udpateMembership(
+    public ApiResponse<Void> updateMembership(
             @PathVariable Long boxPk,
             @PathVariable Long memberPk,
             @Valid @RequestBody MembershipUpdateRequest request,
