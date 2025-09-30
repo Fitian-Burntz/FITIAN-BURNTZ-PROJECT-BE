@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.member.controller;
 
+import com.fitian.burntz.domain.member.docs.MemberListDocs;
 import com.fitian.burntz.domain.member.dto.BoxWithMembershipDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.*;
 import com.fitian.burntz.domain.member.service.MemberListService;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/member-list")
-public class MemberListController {
+public class MemberListController implements MemberListDocs {
 
     private final MemberListService memberListService;
     private final PreconditionValidator preconditionValidator;
