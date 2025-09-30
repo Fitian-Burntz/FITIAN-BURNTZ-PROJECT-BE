@@ -76,6 +76,19 @@ public class PreconditionValidator {
         return trimBoxCode;
     }
 
+    /** String 값을 받을 경우 값 정제 후 null 체크
+     * boxCode 검증 로직과 동일하지만 boxCode 는 중요 값이므로
+     * 명시적 검증을 확인했다는 것을 알아챌 수 있게 함.**/
+    public String requiredStringValue(String value){
+        String trimValue = trimToNull(value);
+
+        if (trimValue == null) {
+            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        return trimValue;
+    }
+
     /**
      * Pageable의 pageSize가 클 경우 maxSize로 제한한 PageRequest를 반환.
      * 기존 정렬(sort) 정보는 유지됩니다.

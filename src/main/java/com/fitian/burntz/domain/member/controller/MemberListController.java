@@ -1,9 +1,7 @@
 package com.fitian.burntz.domain.member.controller;
 
-import com.fitian.burntz.domain.member.dto.memberList_dto.ChangeOwnerSuccessDto;
-import com.fitian.burntz.domain.member.dto.memberList_dto.MemberListWithMembershipDto;
-import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleDto;
-import com.fitian.burntz.domain.member.dto.memberList_dto.UpdateMemberRoleRequest;
+import com.fitian.burntz.domain.member.dto.BoxWithMembershipDto;
+import com.fitian.burntz.domain.member.dto.memberList_dto.*;
 import com.fitian.burntz.domain.member.service.MemberListService;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
@@ -45,6 +43,43 @@ public class MemberListController {
         return ResponseEntity.ok(ApiResponse.success(updateResponse, "The member's role has been successfully changed."));
     }
 
+    /** 내 box 정보 리스트 보기 **/
+    @GetMapping("/my-boxes")
+    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxes(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PageableDefault(page = 0, size = 20) Pageable pageable
+    ) {
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        // 안전: 클라이언트가 큰 size를 요청하면 제한
+        Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
+
+        Page<BoxWithMembershipDto> myBoxListResponsePage =
+                memberListService.getMyBoxesWithMembership(loginMemberPk, safePageable);
+
+
+        return ResponseEntity.ok(ApiResponse.success(myBoxListResponsePage,
+                "내 Box 목록 조회 성공 (" + myBoxListResponsePage.getTotalElements() + "건)"));
+    }
+
+    /** 내 box nickname 바꾸기 **/
+    @PutMapping
+    public ResponseEntity<ApiResponse<ChangeMyBoxNicknameDto>> changeMyBoxNickname(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "boxPk", required = false) Long boxPk,
+            @RequestParam(value = "newBoxNickname", required = false) String newBoxNickname
+    ){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
+        String targetNewBoxNickname = preconditionValidator.requiredStringValue(newBoxNickname);
+
+        ChangeMyBoxNicknameDto changeBoxNicknameResponse =
+                memberListService.changeMyBoxNickname(loginMemberPk, targetBoxPk, targetNewBoxNickname);
+
+        return ResponseEntity.ok(ApiResponse.success(changeBoxNicknameResponse,
+                "Box nickname has been successfully changed."));
+    }
+
 
     /** 회원 정보 단건 조회 (OWNER, MANAGER 전용) **/
     @GetMapping
@@ -80,11 +115,11 @@ public class MemberListController {
         // 안전: 클라이언트가 큰 size를 요청하면 제한
         Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
 
-        Page<MemberListWithMembershipDto> AllMemberListResponsePage =
+        Page<MemberListWithMembershipDto> allMemberListResponsePage =
                 memberListService.getMemberListsWithMembership(targetBoxCode, loginMemberPk, safePageable);
 
         return ResponseEntity.ok(ApiResponse.success(
-                AllMemberListResponsePage, "멤버 목록 조회 성공 (" + AllMemberListResponsePage.getTotalElements() + "건)"
+                allMemberListResponsePage, "멤버 목록 조회 성공 (" + allMemberListResponsePage.getTotalElements() + "건)"
         ));
     }
 
