@@ -35,7 +35,7 @@ public interface MemberListDocs {
     );
 
     @Operation(summary = "내 박스 정보 리스트 보기", description = "사용자가 속해 있는 box 정보를 membership 정보와 함께 리스트로 보여줍니다.")
-    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxesWithMembership(
+    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxListWithMembership(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PageableDefault(page = 0, size = 20) Pageable pageable
     );

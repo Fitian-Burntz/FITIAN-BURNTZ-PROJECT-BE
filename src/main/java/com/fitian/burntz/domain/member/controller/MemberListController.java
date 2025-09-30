@@ -44,10 +44,24 @@ public class MemberListController implements MemberListDocs {
         return ResponseEntity.ok(ApiResponse.success(updateResponse, "The member's role has been successfully changed."));
     }
 
+
+    @GetMapping("/my-box")
+    public ResponseEntity<ApiResponse<BoxWithMembershipDto>> getMyBoxWithMembership(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "boxPk", required = false) Long boxPk
+    ){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        BoxWithMembershipDto boxWithMembershipResponse = memberListService.getMyBoxWithMembership(loginMemberPk, targetBoxPk);
+
+        return ResponseEntity.ok(ApiResponse.success(boxWithMembershipResponse));
+    }
+
     /** 내 box 정보 리스트 보기 **/
     @Override
     @GetMapping("/my-boxes")
-    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxesWithMembership(
+    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxListWithMembership(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PageableDefault(page = 0, size = 20) Pageable pageable
     ) {
@@ -57,7 +71,7 @@ public class MemberListController implements MemberListDocs {
         Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
 
         Page<BoxWithMembershipDto> myBoxListResponsePage =
-                memberListService.getMyBoxesWithMembership(loginMemberPk, safePageable);
+                memberListService.getMyBoxListWithMembership(loginMemberPk, safePageable);
 
 
         return ResponseEntity.ok(ApiResponse.success(myBoxListResponsePage,
