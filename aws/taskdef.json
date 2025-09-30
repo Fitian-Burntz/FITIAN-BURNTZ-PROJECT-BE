@@ -1,0 +1,69 @@
+{
+  "family": "burntz-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "burntz",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/burntz:latest",
+      "portMappings": [
+        { "containerPort": 8080, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "SPRING_PROFILES_ACTIVE", "value": "prod" },
+        { "name": "REDIS_PORT", "value": "6379" },
+        { "name": "SPRING_DATA_REDIS_SSL_ENABLED", "value": "true" },
+        { "name": "SPRING_DATA_REDIS_USERNAME", "value": "default" },
+        { "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED", "value": "true" },
+        { "name": "BURNTZ_APPLE_PRIVATE_KEY_FILE", "value": "/tmp/apple_private_key.p8" }
+      ],
+      "secrets": [
+        { "name": "DB_URL",      "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:DB_URL::" },
+        { "name": "DB_USERNAME", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:DB_USERNAME::" },
+        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:DB_PASSWORD::" },
+
+        { "name": "BURNTZ_DEV_GOOGLE_CLIENT_ID",     "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_DEV_GOOGLE_CLIENT_ID::" },
+        { "name": "BURNTZ_DEV_GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_DEV_GOOGLE_CLIENT_SECRET::" },
+
+        { "name": "BURNTZ_APPLE_CLIENT_ID_WEB", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_CLIENT_ID_WEB::" },
+        { "name": "BURNTZ_APPLE_JWKS_URL",      "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_JWKS_URL::" },
+        { "name": "BURNTZ_APPLE_TEAM_ID",       "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_TEAM_ID::" },
+        { "name": "BURNTZ_APPLE_KEY_ID",        "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_KEY_ID::" },
+        { "name": "BURNTZ_APPLE_TOKEN_ISSUER",  "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_TOKEN_ISSUER::" },
+        { "name": "APPLE_ENFORCE_NONCE",        "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:APPLE_ENFORCE_NONCE::" },
+        { "name": "BURNTZ_APPLE_CLOCK_SKEW",    "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_CLOCK_SKEW::" },
+        { "name": "BURNTZ_APPLE_JWKS_TTL",      "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_JWKS_TTL::" },
+        { "name": "BURNTZ_APPLE_PRIVATE_KEY_PEM", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:BURNTZ_APPLE_PRIVATE_KEY_PEM::" },
+
+        { "name": "REDIS_HOST",       "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:REDIS_HOST::" },
+        { "name": "REDIS_AUTH_TOKEN", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:REDIS_AUTH_TOKEN::" },
+
+        { "name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:JWT_SECRET::" },
+
+        { "name" :  "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/firebase/service-account-key-EqPajh" }
+      ],
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/burntz-dev",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+
+      "healthCheck": {
+        "retries": 3,
+        "command": ["CMD-SHELL","curl -fsS http://localhost:8080/actuator/health || exit 1"],
+        "timeout": 5,
+        "interval": 30,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
