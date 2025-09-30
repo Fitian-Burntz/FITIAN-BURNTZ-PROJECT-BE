@@ -34,8 +34,16 @@ public interface MemberListDocs {
             @Valid @RequestBody UpdateMemberRoleRequest updateMemberRoleRequest
     );
 
+    @Operation(summary = "내 박스 정보 단건 조회",
+            description = "사용자가 속한 특정 box 의 정보를 membership 정보와 함께 단건으로 보여줍니다." +
+                    "내 box 단건 조회 시 member 의 lastVisitedBoxPk 정보가 자동으로 업데이트 됩니다.")
+    public ResponseEntity<ApiResponse<BoxWithMembershipDto>> getMyBoxWithMembership(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "boxPk", required = false) Long boxPk
+    );
+
     @Operation(summary = "내 박스 정보 리스트 보기", description = "사용자가 속해 있는 box 정보를 membership 정보와 함께 리스트로 보여줍니다.")
-    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxesWithMembership(
+    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxListWithMembership(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PageableDefault(page = 0, size = 20) Pageable pageable
     );
@@ -71,6 +79,14 @@ public interface MemberListDocs {
     public ResponseEntity<ApiResponse<ChangeOwnerSuccessDto>> changeOwner(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(value = "memberPk",  required = false) Long memberPk,
+            @RequestParam(value = "boxPk", required = false) Long boxPk
+    );
+
+    @Operation(summary = "box 의 memberList 에서 회원 삭제",
+            description = "OWNER 가 box 의 memberList 에서 memberPk 해당하는 회원을 삭제 처리 합니다.")
+    public ResponseEntity<ApiResponse<RemoveMemberListDto>>  removeMemberList(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "memberListPk", required = false) Long memberListPk,
             @RequestParam(value = "boxPk", required = false) Long boxPk
     );
 }

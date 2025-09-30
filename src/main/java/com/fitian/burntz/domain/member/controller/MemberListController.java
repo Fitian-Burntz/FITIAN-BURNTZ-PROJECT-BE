@@ -44,10 +44,24 @@ public class MemberListController implements MemberListDocs {
         return ResponseEntity.ok(ApiResponse.success(updateResponse, "The member's role has been successfully changed."));
     }
 
+
+    @GetMapping("/my-box")
+    public ResponseEntity<ApiResponse<BoxWithMembershipDto>> getMyBoxWithMembership(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "boxPk", required = false) Long boxPk
+    ){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        BoxWithMembershipDto boxWithMembershipResponse = memberListService.getMyBoxWithMembership(loginMemberPk, targetBoxPk);
+
+        return ResponseEntity.ok(ApiResponse.success(boxWithMembershipResponse));
+    }
+
     /** 내 box 정보 리스트 보기 **/
     @Override
     @GetMapping("/my-boxes")
-    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxesWithMembership(
+    public ResponseEntity<ApiResponse<Page<BoxWithMembershipDto>>> getMyBoxListWithMembership(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PageableDefault(page = 0, size = 20) Pageable pageable
     ) {
@@ -57,7 +71,7 @@ public class MemberListController implements MemberListDocs {
         Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
 
         Page<BoxWithMembershipDto> myBoxListResponsePage =
-                memberListService.getMyBoxesWithMembership(loginMemberPk, safePageable);
+                memberListService.getMyBoxListWithMembership(loginMemberPk, safePageable);
 
 
         return ResponseEntity.ok(ApiResponse.success(myBoxListResponsePage,
@@ -150,6 +164,26 @@ public class MemberListController implements MemberListDocs {
         return ResponseEntity.ok(ApiResponse.success(
                 changeOwnerResponse, "The transfer of owner rights has been successfully completed.")
         );
+    }
+
+    /** memberList soft-delete
+     * box OWNER 가 해당 memberList 에서 특정 회원 삭제 시 호출
+     * 연쇄 작용 설계는 따로 없습니다. 필요 시 추가 **/
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<RemoveMemberListDto>>  removeMemberList(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(value = "memberListPk", required = false) Long memberListPk,
+            @RequestParam(value = "boxPk", required = false) Long boxPk
+    ){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+        Long targetMemberListPk = preconditionValidator.requireLongValue(memberListPk);
+        Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        RemoveMemberListDto removeMemberListResponse =
+                memberListService.removeMemberList(targetMemberListPk, loginMemberPk, targetBoxPk);
+
+        return ResponseEntity.ok(ApiResponse.success(removeMemberListResponse,
+                "memberList was successfully deleted."));
     }
 
 }

@@ -47,10 +47,21 @@ public class PreconditionValidator {
     /** 인증과 관계 없이 memberPk 값이 잘 넘어왔는지 검증 **/
     public Long requireMemberPk(Long memberPk) {
         if (memberPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
         }
 
         return memberPk;
+    }
+
+    /** Long 타입의 값이 잘 넘어왔는지 검증
+     * memberPk 검증과 로직은 같지만 memberPk 값은 중요 값이므로 명시적 검증을 두고
+     * Long 타입 값 검증 메서드를 따로 둠. **/
+    public Long requireLongValue(Long longValue) {
+        if (longValue == null) {
+            throw new ValidationException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return longValue;
     }
 
     /** boxPk 값이 잘 넘어왔는지 검증 **/

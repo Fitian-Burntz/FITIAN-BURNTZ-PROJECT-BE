@@ -14,6 +14,6 @@ public interface MemberService {
     MemberDto withdrawMember(Long memberPk);
 
     /** 최근에 접속한 Box 업데이트 **/
-    void updateLastVisitedBox(Long memberPk, Long boxPk);
+    Long updateLastVisitedBox(Long memberPk, Long boxPk);
 
 }

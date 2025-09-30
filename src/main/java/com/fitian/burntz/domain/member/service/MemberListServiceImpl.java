@@ -44,6 +44,7 @@ public class MemberListServiceImpl implements MemberListService{
     private final RetryTransactionalHandler retryTransactionalHandler;
     private final EntityManager em;
     private final PreconditionValidator preconditionValidator;
+    private final MemberService memberService;
 
     /** box 와 연관된 memberList 생성. box 생성 및 member 추가 시 종속적으로 생성 **/
     @Override
@@ -86,10 +87,8 @@ public class MemberListServiceImpl implements MemberListService{
     @Transactional
     public UpdateMemberRoleDto updateMemberRole(Long operatorPk, UpdateMemberRoleDto updateMemberRoleDto) {
         //서비스에서 한 번 더 필요 데이터 체크 (방어적 코딩)
-        // 인증 실패
-        if (operatorPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        // 기본 파라미터 검증
+        operatorPk = preconditionValidator.requireMemberPk(operatorPk);
 
         // 필요 데이터 불충분
         if (updateMemberRoleDto == null ||
@@ -140,10 +139,49 @@ public class MemberListServiceImpl implements MemberListService{
 
     }
 
+    /** 내 box 정보와 멤버십 통합 정보 단건 조회
+     * 조회용 메서드지만 연쇄 작용으로 마지막 방문 boxPk 를 업데이트하므로
+     * Transactional 이 필요합니다. **/
+    @Override
+    @Transactional
+    public BoxWithMembershipDto getMyBoxWithMembership(Long memberPk, Long boxPk) {
+        // 기본 파라미터 검증
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
+        boxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        // member DB 존재 여부 확인
+        memberRepository.findActiveById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.UNAUTHORIZED));
+
+        // box DB 존재 여부 확인
+        Box targetBox = boxRepository.findActiveById(boxPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        // memberList (회원이 해당 box에 속해있는지 검사 및 box fetch)
+        MemberList loginMemberList = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND)); // 또는 BOX_NOT_FOUND
+
+        // 최신 멤버십 조회 (없을 수 있음 -> optional)
+        MembershipDto targetMembershipDto = membershipRepository
+                .findLatestByBoxPkAndMemberPk(boxPk, memberPk)
+                .map(MembershipDto::from)
+                .orElse(null);
+
+
+        // 마지막 방문 boxPk 기록 업데이트
+        memberService.updateLastVisitedBox(memberPk, boxPk);
+
+
+        // DTO 조립 (memberList 포함)
+        return BoxWithMembershipDto.from(loginMemberList, targetBox, targetMembershipDto);
+    }
+
+    /** 내 box 정보 및 멤버십 정보 전체 조회 **/
     @Override
     @Transactional(readOnly = true)
-    public Page<BoxWithMembershipDto> getMyBoxesWithMembership(Long memberPk, Pageable pageable) {
+    public Page<BoxWithMembershipDto> getMyBoxListWithMembership(Long memberPk, Pageable pageable) {
 
+        // 기본 파라미터 검증
         preconditionValidator.requireMemberPk(memberPk);
 
         memberRepository.findActiveById(memberPk)
@@ -169,14 +207,14 @@ public class MemberListServiceImpl implements MemberListService{
                         membership -> membership));
 
         // DTO 매핑 (memberList 정보 포함)
-        List<BoxWithMembershipDto> dtos = memberListPage.stream().map(memberList -> {
+        List<BoxWithMembershipDto> boxWithMembershipDtoList = memberListPage.stream().map(memberList -> {
             Box targetBox = memberList.getBox();
             Membership targetMembership = membershipByBoxPk.get(targetBox.getBoxPk());
             MembershipDto targetMembershipDto = targetMembership == null ? null : MembershipDto.from(targetMembership);
             return BoxWithMembershipDto.from(memberList, targetBox, targetMembershipDto);
         }).collect(Collectors.toList());
 
-        return new PageImpl<>(dtos, pageable, memberListPage.getTotalElements());
+        return new PageImpl<>(boxWithMembershipDtoList, pageable, memberListPage.getTotalElements());
     }
 
     /** 내 box nickname 바꾸기 **/
@@ -184,6 +222,7 @@ public class MemberListServiceImpl implements MemberListService{
     @Transactional
     public ChangeMyBoxNicknameDto changeMyBoxNickname(Long memberPk, Long boxPk, String boxNickname) {
 
+        // 기본 검증
         Long loginMemberPk = preconditionValidator.requireMemberPk(memberPk);
         Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
         String newBoxNickname = preconditionValidator.requiredStringValue(boxNickname);
@@ -211,17 +250,10 @@ public class MemberListServiceImpl implements MemberListService{
     @Override
     @Transactional(readOnly = true)
     public MemberListWithMembershipDto getMemberWithMembership(Long boxPk, Long operatorPk, Long targetMemberPk) {
-        // 기본 검증
-        if (operatorPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
-        if (targetMemberPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-
-        if (boxPk == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
+        // 기본 파라미터 검증
+        operatorPk = preconditionValidator.requireMemberPk(operatorPk);
+        targetMemberPk = preconditionValidator.requireMemberPk(targetMemberPk);
+        boxPk = preconditionValidator.requireBoxPk(boxPk);
 
 
         // 활성화 member DB 존재 여부 확인
@@ -272,13 +304,9 @@ public class MemberListServiceImpl implements MemberListService{
             String boxCode, Long operatorPk, Pageable pageable
     ) {
 
-        // 기본 검증
-        if (boxCode == null) {
-            throw new ValidationException(ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-        if (operatorPk == null) {
-            throw new ValidationException(ErrorCode.UNAUTHORIZED);
-        }
+        // 기본 파라미터 검증
+        boxCode = preconditionValidator.requireBoxCode(boxCode);
+        operatorPk = preconditionValidator.requireMemberPk(operatorPk);
 
         // Box 조회
         Box box = boxRepository.findByBoxCode(boxCode.trim())
@@ -451,6 +479,59 @@ public class MemberListServiceImpl implements MemberListService{
 
             return ChangeOwnerSuccessDto.from(newOwnerMember, boxPk, targetMemberPk);
         });
+    }
+
+    /** memberList soft-delete 처리 **/
+    @Override
+    @Transactional
+    public RemoveMemberListDto removeMemberList(Long memberListPk, Long operatorPk, Long boxPk) {
+        // 기본 파라미터 검증
+        memberListPk = preconditionValidator.requireLongValue(memberListPk);
+        operatorPk = preconditionValidator.requireMemberPk(operatorPk);
+        boxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        // 요청자 DB 존재 여부 검증
+        memberRepository.findActiveById(operatorPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        // 해당 box DB 존재 여부 검증
+        Box targetBox = boxRepository.findActiveById(boxPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        // memberList 삭제 요청자가 해당 box 의 OWNER 인지 검증
+        if(!Objects.equals(targetBox.getOwnerPk(), operatorPk)) {
+            throw new ValidationException(ErrorCode.FORBIDDEN);
+        }
+
+        // 요청자가 해당 box 에 속해 있는지 검증 및 해당 memberList 활성화 여부 검증
+        memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, operatorPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
+
+        // memberListPk의 간단한 DB 존재 여부 체크
+        Optional<MemberList> optionalMemberList = memberListRepository.findActiveById(memberListPk);
+        if (optionalMemberList.isEmpty()) {
+            // 멱등 처리: 이미 삭제되었거나 없음 -> 그냥 리턴(또는 로그)
+            log.info("memberList already deleted or not found. memberListPk={}", memberListPk);
+
+            return RemoveMemberListDto.alreadyDeleted(memberListPk, boxPk);
+        }
+
+        // memberList DB 존재 시 optional 에서 엔티티 가져오기
+        MemberList targetMemberList = optionalMemberList.get();
+
+        // 삭제 하려는 memberList 의 boxPk 가 OWNER 의 소속 boxPk 와 일치하는지 검증
+        Long targetMemberList_boxPk = targetMemberList.getBox().getBoxPk();
+        if (!Objects.equals(boxPk, targetMemberList_boxPk)) {
+            throw new ValidationException(ErrorCode.BOX_MISMATCH);
+        }
+
+        // 삭제 상태로 변경
+        targetMemberList.markDeleted();
+
+        // 변경 사항 명시적으로 저장
+        memberListRepository.save(targetMemberList);
+
+        return RemoveMemberListDto.entityToDto(targetMemberList);
     }
 
 

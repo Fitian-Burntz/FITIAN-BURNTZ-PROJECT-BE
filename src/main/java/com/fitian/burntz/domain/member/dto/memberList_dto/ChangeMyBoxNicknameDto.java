@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * @author : 김남이
@@ -27,6 +28,9 @@ public class ChangeMyBoxNicknameDto {
     private LocalDateTime updatedAt;
 
     public static ChangeMyBoxNicknameDto from(MemberList memberList, Long boxPk){
+        Objects.requireNonNull(memberList, "memberList required.");
+        Objects.requireNonNull(boxPk, "boxPk required.");
+
         return ChangeMyBoxNicknameDto.builder()
                 .memberListPk(memberList.getMemberListPk())
                 .boxPk(boxPk)
