@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "박스 관련 api 입니다.", description = "박스를 생성하거나 수정, 삭제할 수 있습니다.")
+@Tag(name = "박스 관련 api 입니다.", description = "box 생성, 조회, 가입, 삭제를 수행합니다.")
 public interface BoxDocs {
 
     @Operation(summary = "box 생성", description = "box를 생성하고 box를 생성한 사용자는 자동으로 해당 box 의 OWNER 가 됩니다.")
