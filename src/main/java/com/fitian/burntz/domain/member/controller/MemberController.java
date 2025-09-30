@@ -21,6 +21,7 @@ public class MemberController implements MemberDocs {
     private final PreconditionValidator preconditionValidator;
 
     /** 내 정보 가져오기 (box 관련 내 정보랑은 별개) **/
+    @Override
     @GetMapping
     public ResponseEntity<ApiResponse<MemberDto>> getMyInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails){
         Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
@@ -30,6 +31,8 @@ public class MemberController implements MemberDocs {
         return ResponseEntity.ok(ApiResponse.success(getMemberResponse));
     }
 
+    /** 내 정보 수정하기 (box nickname 수정과는 별개) **/
+    @Override
     @PutMapping
     public ResponseEntity<ApiResponse<MemberInfoResponse>> updateMemberInfo(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -44,7 +47,11 @@ public class MemberController implements MemberDocs {
     }
 
 
-    /** 멤버 자진 탈퇴 **/
+    /** 멤버 자진 탈퇴
+     * 서비스 재로그인 시 계정이 다시 활성화됩니다.
+     * 탈퇴회원 재가입 가능
+     * 휴면계정과 비슷한 개념으로 동작 **/
+    @Override
     @DeleteMapping
     public ResponseEntity<ApiResponse<MemberInfoResponse>> withdrawMember(
             @AuthenticationPrincipal CustomUserDetails customUserDetails){

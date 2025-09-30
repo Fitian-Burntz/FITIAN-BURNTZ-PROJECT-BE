@@ -1,5 +1,8 @@
 package com.fitian.burntz.domain.member.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "")
 public record MemberInfoResponse (
         Long memberPk,
         String memberId,
