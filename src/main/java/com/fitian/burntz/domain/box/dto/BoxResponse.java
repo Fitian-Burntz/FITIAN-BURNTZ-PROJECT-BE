@@ -3,6 +3,8 @@ package com.fitian.burntz.domain.box.dto;
 import com.fitian.burntz.domain.box.enums.SubscribeYN;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Objects;
+
 @Schema(description = "box 조회 후 box 정보 컨트롤러 반환용 response DTO")
 public record BoxResponse(
         Long boxPk,
@@ -19,6 +21,8 @@ public record BoxResponse(
 ) {
 
     public static BoxResponse from(BoxDto boxDto) {
+        Objects.requireNonNull(boxDto, "boxDto required.");
+
         return new BoxResponse(
                 boxDto.getBoxPk(),
                 boxDto.getBoxName(),

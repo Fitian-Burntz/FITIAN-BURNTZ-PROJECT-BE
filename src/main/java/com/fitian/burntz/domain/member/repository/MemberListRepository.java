@@ -26,6 +26,11 @@ import java.util.Optional;
  * @description : 박스 내 멤버 리스트 리포지토리입니다.
  */
 public interface MemberListRepository extends JpaRepository<MemberList, Long> {
+
+    /** 활성화 MemberList 중 해당 memberListPk 조회 **/
+    @Query("SELECT m FROM MemberList m WHERE m.memberListPk = :memberListPk AND m.deletedYN = 'N'")
+    Optional<MemberList> findActiveById(@Param("memberListPk") Long memberListPk);
+
     Optional<MemberRole> findRoleByMemberAndBoxAndDeletedYN(Member member, Box box, BaseTime.Yn deletedYN);
 
     //해당 box에 해당 멤버가 속해있는지 확인하고 MemberList값을 반환
@@ -52,8 +57,6 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
             nativeQuery = true)
     boolean existsActiveByBoxPkAndMemberPk(@Param("boxPk") Long boxPk, @Param("memberPk") Long memberPk);
 
-    // 해당 box의 memberList 에서 role 에 해당하는 행 수 반환
-    long countByBox_BoxPkAndRole(Long boxPk, MemberRole role);
 
     Optional<MemberList> findByMemberListPkAndBoxBoxPkAndDeletedYN(Long memberListPk, Long boxPk, BaseTime.Yn yn);
 

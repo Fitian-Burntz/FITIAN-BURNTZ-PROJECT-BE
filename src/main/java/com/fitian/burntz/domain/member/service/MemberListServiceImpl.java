@@ -481,6 +481,59 @@ public class MemberListServiceImpl implements MemberListService{
         });
     }
 
+    /** memberList soft-delete 처리 **/
+    @Override
+    @Transactional
+    public RemoveMemberListDto removeMemberList(Long memberListPk, Long operatorPk, Long boxPk) {
+        // 기본 파라미터 검증
+        memberListPk = preconditionValidator.requireLongValue(memberListPk);
+        operatorPk = preconditionValidator.requireMemberPk(operatorPk);
+        boxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        // 요청자 DB 존재 여부 검증
+        memberRepository.findActiveById(operatorPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        // 해당 box DB 존재 여부 검증
+        Box targetBox = boxRepository.findActiveById(boxPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        // memberList 삭제 요청자가 해당 box 의 OWNER 인지 검증
+        if(!Objects.equals(targetBox.getOwnerPk(), operatorPk)) {
+            throw new ValidationException(ErrorCode.FORBIDDEN);
+        }
+
+        // 요청자가 해당 box 에 속해 있는지 검증 및 해당 memberList 활성화 여부 검증
+        memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, operatorPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
+
+        // memberListPk의 간단한 DB 존재 여부 체크
+        Optional<MemberList> optionalMemberList = memberListRepository.findActiveById(memberListPk);
+        if (optionalMemberList.isEmpty()) {
+            // 멱등 처리: 이미 삭제되었거나 없음 -> 그냥 리턴(또는 로그)
+            log.info("memberList already deleted or not found. memberListPk={}", memberListPk);
+
+            return RemoveMemberListDto.alreadyDeleted(memberListPk, boxPk);
+        }
+
+        // memberList DB 존재 시 optional 에서 엔티티 가져오기
+        MemberList targetMemberList = optionalMemberList.get();
+
+        // 삭제 하려는 memberList 의 boxPk 가 OWNER 의 소속 boxPk 와 일치하는지 검증
+        Long targetMemberList_boxPk = targetMemberList.getBox().getBoxPk();
+        if (!Objects.equals(boxPk, targetMemberList_boxPk)) {
+            throw new ValidationException(ErrorCode.BOX_MISMATCH);
+        }
+
+        // 삭제 상태로 변경
+        targetMemberList.markDeleted();
+
+        // 변경 사항 명시적으로 저장
+        memberListRepository.save(targetMemberList);
+
+        return RemoveMemberListDto.entityToDto(targetMemberList);
+    }
+
 
     /** 헬퍼 메서드 **/
 

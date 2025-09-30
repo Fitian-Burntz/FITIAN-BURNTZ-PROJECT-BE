@@ -4,6 +4,8 @@ import com.fitian.burntz.domain.box.enums.MemberRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,6 +20,9 @@ public class JoinBoxDto {
 
 
     public static JoinBoxDto from(Long joinMemberPk, String belongBoxPk) {
+        Objects.requireNonNull(joinMemberPk, "joinMemberPk required.");
+        Objects.requireNonNull(belongBoxPk, "belongBoxPk required.");
+
         return JoinBoxDto.builder()
                 .memberPk(joinMemberPk)
                 .boxCode(belongBoxPk)

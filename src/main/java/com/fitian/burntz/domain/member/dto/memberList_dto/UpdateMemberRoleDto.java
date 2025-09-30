@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -24,6 +25,9 @@ public class UpdateMemberRoleDto {
     private LocalDateTime updatedAt;
 
     public static UpdateMemberRoleDto fromRequest(UpdateMemberRoleRequest updateMemberRoleRequest){
+
+        Objects.requireNonNull(updateMemberRoleRequest, "updateMemberRoleRequest required.");
+
         return UpdateMemberRoleDto.builder()
                 .boxPk(updateMemberRoleRequest.getBoxPk())
                 .memberPk(updateMemberRoleRequest.getMemberPk())
@@ -34,6 +38,11 @@ public class UpdateMemberRoleDto {
     public static UpdateMemberRoleDto UpdateMemberRoleSuccessDto(
             Long boxPk, Long targetMemberPk, MemberRole updatedNewRole, LocalDateTime updatedAt
     ){
+        Objects.requireNonNull(boxPk, "boxPK required.");
+        Objects.requireNonNull(targetMemberPk, "targetMemberPk required.");
+        Objects.requireNonNull(updatedNewRole, "updatedNewRole required.");
+        Objects.requireNonNull(updatedAt, "updatedAt required.");
+
         return UpdateMemberRoleDto.builder()
                 .boxPk(boxPk)
                 .memberPk(targetMemberPk)

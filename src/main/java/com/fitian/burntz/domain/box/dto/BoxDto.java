@@ -5,6 +5,8 @@ import com.fitian.burntz.domain.box.enums.SubscribeYN;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -26,6 +28,8 @@ public class BoxDto {
     private SubscribeYN subscribe; // Y/N
 
     public static BoxDto from(Box box) {
+        Objects.requireNonNull(box, "box required.");
+
         return BoxDto.builder()
                 .boxPk(box.getBoxPk())
                 .boxName(box.getBoxName())
