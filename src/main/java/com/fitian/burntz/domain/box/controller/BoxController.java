@@ -26,13 +26,8 @@ public class BoxController implements BoxDocs {
     private final PreconditionValidator preconditionValidator;
     private static final int MAX_PAGE_SIZE = 100;
 
-  @GetMapping("/test")
-  @Override
-  public String test(@RequestParam String testValue) {
-    return "Test API";
-  }
-
     /** box 생성하기 **/
+    @Override
     @PostMapping
     public ResponseEntity<ApiResponse<BoxResponse>> createBox(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -52,8 +47,9 @@ public class BoxController implements BoxDocs {
     }
 
     /** 활성화된 box boxPk로 단건 조회 **/
+    @Override
     @GetMapping
-    public ResponseEntity<?> getBoxForPk(@RequestParam(value = "boxPk", required = false) Long boxPk){
+    public ResponseEntity<ApiResponse<BoxDto>> getBoxForPk(@RequestParam(value = "boxPk", required = false) Long boxPk){
 
         Long targetBoxPk = preconditionValidator.requireBoxPk(boxPk);
 
@@ -63,8 +59,9 @@ public class BoxController implements BoxDocs {
     }
 
     /** 활성화된 box boxCode로 단건 조회 **/
+    @Override
     @GetMapping("/code")
-    public ResponseEntity<?> getBoxForCode(@RequestParam(value = "boxCode", required = false) String boxCode){
+    public ResponseEntity<ApiResponse<BoxDto>> getBoxForCode(@RequestParam(value = "boxCode", required = false) String boxCode){
 
         // 빈 문자열일 경우 null 처리
         String targetBoxCode = preconditionValidator.requireBoxCode(boxCode);
@@ -76,9 +73,10 @@ public class BoxController implements BoxDocs {
 
 
     /** 활성화된 box 리스트 전체 조회 **/
+    @Override
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<Page<BoxResponse>>> getAllActiveBoxes(
-            @PageableDefault(size = 20, sort = "boxPk", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "boxPk", direction = Sort.Direction.ASC) Pageable pageable) {
 
         // 클라이언트가 과도한 size 요청을 못하도록 방어
         Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
@@ -92,8 +90,9 @@ public class BoxController implements BoxDocs {
     }
 
     /** box 에 회원 가입 **/
+    @Override
     @PostMapping("/join")
-    public ResponseEntity<?> joinMemberToBox(
+    public ResponseEntity<ApiResponse<JoinBoxDto>> joinMemberToBox(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(value = "boxCode", required = false) String boxCode
     ){
@@ -108,22 +107,29 @@ public class BoxController implements BoxDocs {
 
     }
 
+    /** OWNER 가 박스 정보 수정 **/
+    @Override
     @PutMapping
-    public ResponseEntity<?> updateInfoBox(
+    public ResponseEntity<ApiResponse<UpdateBoxInfoDto>> updateInfoBox(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UpdateBoxInfoRequest updateBoxInfoRequest
     ){
 
         Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
-        UpdateBoxInfoDto updateBoxInfoResponse = boxService.updateBoxInfo(loginMemberPk, UpdateBoxInfoDto.from(updateBoxInfoRequest));
+        UpdateBoxInfoDto updateBoxInfoResponse =
+                boxService.updateBoxInfo(loginMemberPk, UpdateBoxInfoDto.from(updateBoxInfoRequest));
 
         return ResponseEntity.ok(ApiResponse.success(updateBoxInfoResponse));
     }
 
 
+    /** box soft-delete
+     * box 는 복구되지 않습니다.
+     * 현재는 box soft-delete 만 되고 다른 연쇄 삭제처리는 하지 않습니다. **/
+    @Override
     @DeleteMapping
-    public ResponseEntity<?> deleteBox(
+    public ResponseEntity<ApiResponse<String>> deleteBox(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(value = "boxPk", required = false) Long boxPk
     ){
