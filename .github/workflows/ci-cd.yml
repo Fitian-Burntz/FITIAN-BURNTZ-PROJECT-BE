@@ -124,3 +124,44 @@ jobs:
           task-definition: rendered-taskdef.json
           service: ${{ env.SERVICE_NAME }}
           cluster: ${{ env.CLUSTER_NAME }}
+
+      - name:  Configure ECS AutoScaling (min=2, max=4, CPU=60%)
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          CLUSTER_NAME: ${{ env.CLUSTER_NAME }}
+          SERVICE_NAME: ${{ env.SERVICE_NAME }}
+        run: |
+          set -euo pipefail
+          RESOURCE_ID="service/${CLUSTER_NAME}/${SERVICE_NAME}"
+            
+          echo "▶ Register scalable target (min=2, max=4)"
+          aws application-autoscaling register-scalable-target \
+            --service-namespace ecs \
+            --resource-id "${RESOURCE_ID}" \
+            --scalable-dimension ecs:service:DesiredCount \
+            --min-capacity 2 \
+            --max-capacity 4 \
+            --region "${AWS_REGION}"
+            
+          echo "▶ Put TargetTracking policy: CPU 60%"
+          aws application-autoscaling put-scaling-policy \
+            --service-namespace ecs \
+            --resource-id "${RESOURCE_ID}" \
+            --scalable-dimension ecs:service:DesiredCount \
+            --policy-name "cpu60-target-tracking" \
+            --policy-type TargetTrackingScaling \
+            --target-tracking-scaling-policy-configuration '{
+              "TargetValue": 60.0,
+              "PredefinedMetricSpecification": { "PredefinedMetricType": "ECSServiceAverageCPUUtilization" },
+              "ScaleOutCooldown": 60,
+              "ScaleInCooldown": 120
+            }' \
+            --region "${AWS_REGION}"
+            
+          echo "▶ Current scaling policies"
+          aws application-autoscaling describe-scaling-policies \
+            --service-namespace ecs \
+            --resource-id "${RESOURCE_ID}" \
+            --region "${AWS_REGION}" \
+            --query "ScalingPolicies[].{Name:PolicyName,Type:PolicyType,Target:TargetTrackingScalingPolicyConfiguration.TargetValue}" \
+            --output table
