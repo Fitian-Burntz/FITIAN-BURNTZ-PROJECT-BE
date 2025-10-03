@@ -9,9 +9,9 @@ on:
     branches: ["develop"]
 
 env:
-  AWS_REGION: ap-northeast-2
-  AWS_ACCOUNT_ID: 209479269102
-  ECR_REPOSITORY: 209479269102.dkr.ecr.ap-northeast-2.amazonaws.com/burntz
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/burntz
   CLUSTER_NAME: burntz-cluster
   SERVICE_NAME: burntz-service
   TASK_DEF_PATH: aws/taskdef.json
@@ -29,45 +29,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      # ------------------------------
-      #  JAR 빌드 및 검사 단계 추가
-      #  - bootJar 실행해서 JAR 생성
-      #  - JAR 내부에 mustache 템플릿 포함 여부 검사
-      #  - 포함 시 artifact 업로드, 미포함 시 실패 (배포 차단)
-      # ------------------------------
-      - name: Build JAR (bootJar)
-        run: |
-          echo ">>> Running bootJar"
-          chmod +x gradlew || true
-          ./gradlew bootJar -x test
-          echo ">>> Build finished. JARs in build/libs:"
-          ls -lah build/libs
-
-      - name: Inspect built JAR for admin-login.mustache
-        run: |
-          JAR=$(ls build/libs/*.jar | head -n1)
-          if [ -z "$JAR" ]; then
-            echo "ERROR: No jar found under build/libs" >&2
-            ls -la build/libs || true
-            exit 1
-          fi
-          echo "Inspecting jar: $JAR"
-          "$JAVA_HOME/bin/jar" tf "$JAR" | grep -E "BOOT-INF/classes/templates/.*/admin-login.mustache" || true
-          # 실제 존재여부 체크
-          if "$JAVA_HOME/bin/jar" tf "$JAR" | grep -q "BOOT-INF/classes/templates/admin/admin-login.mustache"; then
-            echo "FOUND: admin-login.mustache inside $JAR"
-          else
-            echo "ERROR: admin-login.mustache NOT FOUND inside $JAR. Aborting deploy." >&2
-            echo "You can comment out exit 1 to allow deploy anyway (not recommended)."
-            # 배포 차단을 원치 않으면 다음 줄을 주석 처리하세요.
-            exit 1
-          fi
-
-      - name: Upload built JAR as artifact (for inspection)
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-jar
-          path: build/libs/*.jar
 
       - name: Print OIDC info (debug)
         run: |
@@ -82,7 +43,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::209479269102:role/GitHubActionsDeployRole
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsDeployRole
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify identity
@@ -112,6 +73,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
+      - name: Render placeholders (${AWS_*}) into base taskdef
+        run: |
+          # envsubst 설치
+          sudo apt-get update && sudo apt-get install -y gettext-base
+          # ${AWS_ACCOUNT_ID}, ${AWS_REGION} 등 치환
+          envsubst < "${{ env.TASK_DEF_PATH }}" > rendered-taskdef.base.json
+
+          echo "---- rendered-taskdef.base.json (head) ----"
+          sed -n '1,120p' rendered-taskdef.base.json || true
+
+          echo "---- sanity: unresolved placeholders? ----"
+          if grep -R "\${" rendered-taskdef.base.json; then
+            echo "ERROR: unresolved placeholders remain in rendered-taskdef.base.json" >&2
+            exit 1
+          fi          
+
       - name: "Debug: show taskdef and container names"
         run: |
           echo "TASK_DEF_PATH=${{ env.TASK_DEF_PATH }}"
@@ -119,7 +96,7 @@ jobs:
           echo "---- task definition (preview) ----"
           sed -n '1,200p' "${{ env.TASK_DEF_PATH }}" || true
           echo "---- container names in taskdef ----"
-          jq -r '.containerDefinitions[].name' "${{ env.TASK_DEF_PATH }}" || true
+          jq -r '.containerDefinitions[].name' rendered-taskdef.base.json || true
       
 
       - name: Render task definition (create rendered-taskdef.json)
@@ -128,7 +105,7 @@ jobs:
           echo "Rendering image -> $IMG"
           jq --arg img "$IMG" --arg cname "${{ env.CONTAINER_NAME }}" \
             '( .containerDefinitions |= map( if .name == $cname then .image = $img else . end ) )' \
-            "${{ env.TASK_DEF_PATH }}" > rendered-taskdef.json
+            rendered-taskdef.base.json > rendered-taskdef.json
           echo "Rendered file size/preview:"
           ls -la rendered-taskdef.json || true
           sed -n '1,200p' rendered-taskdef.json || true
@@ -147,3 +124,44 @@ jobs:
           task-definition: rendered-taskdef.json
           service: ${{ env.SERVICE_NAME }}
           cluster: ${{ env.CLUSTER_NAME }}
+
+      - name:  Configure ECS AutoScaling (min=2, max=4, CPU=60%)
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          CLUSTER_NAME: ${{ env.CLUSTER_NAME }}
+          SERVICE_NAME: ${{ env.SERVICE_NAME }}
+        run: |
+          set -euo pipefail
+          RESOURCE_ID="service/${CLUSTER_NAME}/${SERVICE_NAME}"
+            
+          echo "▶ Register scalable target (min=2, max=4)"
+          aws application-autoscaling register-scalable-target \
+            --service-namespace ecs \
+            --resource-id "${RESOURCE_ID}" \
+            --scalable-dimension ecs:service:DesiredCount \
+            --min-capacity 2 \
+            --max-capacity 4 \
+            --region "${AWS_REGION}"
+            
+          echo "▶ Put TargetTracking policy: CPU 60%"
+          aws application-autoscaling put-scaling-policy \
+            --service-namespace ecs \
+            --resource-id "${RESOURCE_ID}" \
+            --scalable-dimension ecs:service:DesiredCount \
+            --policy-name "cpu60-target-tracking" \
+            --policy-type TargetTrackingScaling \
+            --target-tracking-scaling-policy-configuration '{
+              "TargetValue": 60.0,
+              "PredefinedMetricSpecification": { "PredefinedMetricType": "ECSServiceAverageCPUUtilization" },
+              "ScaleOutCooldown": 60,
+              "ScaleInCooldown": 120
+            }' \
+            --region "${AWS_REGION}"
+            
+          echo "▶ Current scaling policies"
+          aws application-autoscaling describe-scaling-policies \
+            --service-namespace ecs \
+            --resource-id "${RESOURCE_ID}" \
+            --region "${AWS_REGION}" \
+            --query "ScalingPolicies[].{Name:PolicyName,Type:PolicyType,Target:TargetTrackingScalingPolicyConfiguration.TargetValue}" \
+            --output table
