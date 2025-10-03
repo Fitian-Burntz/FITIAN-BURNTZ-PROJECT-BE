@@ -44,7 +44,7 @@ public class MemberListController implements MemberListDocs {
         return ResponseEntity.ok(ApiResponse.success(updateResponse, "The member's role has been successfully changed."));
     }
 
-
+    @Override
     @GetMapping("/my-box")
     public ResponseEntity<ApiResponse<BoxWithMembershipDto>> getMyBoxWithMembership(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -169,6 +169,7 @@ public class MemberListController implements MemberListDocs {
     /** memberList soft-delete
      * box OWNER 가 해당 memberList 에서 특정 회원 삭제 시 호출
      * 연쇄 작용 설계는 따로 없습니다. 필요 시 추가 **/
+    @Override
     @DeleteMapping
     public ResponseEntity<ApiResponse<RemoveMemberListDto>>  removeMemberList(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
