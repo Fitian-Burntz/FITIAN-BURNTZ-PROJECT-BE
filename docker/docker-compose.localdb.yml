@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15
+    container_name: pg_local_db
+
+    env_file:
+      - ../.env
+
+    environment:
+      POSTGRES_DB: ${LOCA_POSTGRES_DB}
+      POSTGRES_USER: ${LOCAL_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LOCAL_POSTGRES_USER} -d ${LOCAL_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:7
+    container_name: pgadmin_local
+
+    env_file:
+      - ../.env
+
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${LOCAL_PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${LOCAL_PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  pgadmin_data:
