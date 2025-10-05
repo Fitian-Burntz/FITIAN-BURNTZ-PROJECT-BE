@@ -1,0 +1,8 @@
+services:
+  k6:
+    image: loadimpact/k6:latest
+    container_name: k6_runner
+    volumes:
+      - ../k6:/scripts
+    environment:
+      - BASE_URL=http://host.docker.internal:8080

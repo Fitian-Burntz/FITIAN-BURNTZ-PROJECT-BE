@@ -47,3 +47,6 @@ serviceAccountKey.json
 
 ## p8 ##
 AuthKey_2BFQ5GRNKH.p8
+
+## k6 ##
+/k6/results.json
