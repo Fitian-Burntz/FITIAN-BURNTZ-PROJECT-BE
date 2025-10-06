@@ -9,6 +9,8 @@ import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Objects;
+
 /**
  * @author : 선순주
  * @packageName : com.fitian.burntz.domain.record.entity
@@ -23,7 +25,8 @@ import lombok.*;
 @Entity
 @Table(name = "record")
 public class Record extends BaseTime {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "record_pk")
     private Long recordPk;
 
@@ -66,7 +69,7 @@ public class Record extends BaseTime {
 
     /**
      * 관리자용 업데이트 (부분수정 지원)
-     *
+     * <p>
      * targetMember != null : member 연관을 해당 member로 설정, nickname은 member.getNickname()으로 덮어씀
      * targetMember == null && nicknameParam != null : member 연관 제거(비회원) & nicknameParam 설정
      * nicknameParam == null : nickname 변경 없음
@@ -101,5 +104,16 @@ public class Record extends BaseTime {
         if (result != null) this.result = result;
         if (team != null) this.team = team;
         if (memo != null) this.memo = memo;
+    }
+    
+    //boxNickname 업데이트 메서드
+    public void updateNickname(String newNickname) {
+        Objects.requireNonNull(newNickname, "newNickname required");
+
+        // memberList가 있는 경우에만 업데이트 (비회원 기록 제외)
+        if (this.memberList != null) {
+            this.nickname = newNickname;
+            this.setUpdatedAtToNow();
+        }
     }
 }

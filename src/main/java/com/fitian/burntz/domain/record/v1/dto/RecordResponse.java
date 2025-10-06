@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.record.v1.dto;
 
 import com.fitian.burntz.domain.record.entity.Record;
+import com.fitian.burntz.domain.record.enums.RecordResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,8 +28,8 @@ public class RecordResponse {
     @Schema(description = "순위", example = "1")
     private int rank;
 
-    @Schema(description = "member Pk", example = "34")
-    private Long memberPk;
+    @Schema(description = "memberListPk", example = "34")
+    private Long memberListPk;
     
     @Schema(description = "record Pk", example = "100")
     private Long recordPk;
@@ -54,20 +55,25 @@ public class RecordResponse {
     @Schema(description = "기록 시간", example = "185.33")
     private Float time;
 
+    @Schema(description = "성공 여부", example = "S")
+    private RecordResult result;
+
     @Schema(description = "팀", example = "3efd34tgd")
     private String team;
 
     @Schema(description = "메모", example = "자세 좋음")
     private String memo;
 
+
+
     public static RecordResponse from(Record r) {
         if (r == null) return null;
 
-        Long memberPk = (r.getMemberList() != null) ? r.getMemberList().getMemberListPk() : null;
+        Long memberListPk = (r.getMemberList() != null) ? r.getMemberList().getMemberListPk() : null;
 
         return RecordResponse.builder()
                 .rank(0)
-                .memberPk(memberPk)
+                .memberListPk(memberListPk)
                 .recordPk(r.getRecordPk())
                 .wodPk(r.getWod() != null ? r.getWod().getWodPk() : null)
                 .classesPk(r.getClasses() != null ? r.getClasses().getClassesPk() : null)
@@ -76,6 +82,7 @@ public class RecordResponse {
                 .round(r.getRound())
                 .reps(r.getReps())
                 .time(r.getTime())
+                .result(r.getResult())
                 .team(r.getTeam())
                 .memo(r.getMemo())
                 .build();

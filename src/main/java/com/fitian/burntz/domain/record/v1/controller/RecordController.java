@@ -40,10 +40,12 @@ public class RecordController implements RecordDocs {
     public ApiResponse<Void> createRecord(
             @Valid @RequestBody RecordCreateRequest request,
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
             ){
-        recordService.createRecord(request, date, boxPk, userDetails.getMemberPk());
+        Long memberPk = 2L;
+        //recordService.createRecord(request, date, boxPk, userDetails.getMemberPk());
+        recordService.createRecord(request, date, boxPk, memberPk);
         return ApiResponse.success(null,"record 생성 완료");
     }
 
@@ -54,10 +56,12 @@ public class RecordController implements RecordDocs {
     @GetMapping()
     public ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
             ){
-        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, userDetails.getMemberPk(), date),"해당 날짜의 records 조회 완료")));
+        Long memberPk = 2L;
+        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, memberPk, date),"해당 날짜의 records 조회 완료")));
+//        return ResponseEntity.ok((ApiResponse.success(recordService.getRecord(boxPk, userDetails.getMemberPk(), date),"해당 날짜의 records 조회 완료")));
     }
 
     /*
@@ -68,10 +72,12 @@ public class RecordController implements RecordDocs {
             @Valid @RequestBody RecordUpdateRequest request,
             @PathVariable Long boxPk,
             @PathVariable Long recordPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        recordService.updateRecord(boxPk,userDetails.getMemberPk(),recordPk,date,request);
+        Long memberPk = 2L;
+        //recordService.updateRecord(boxPk,userDetails.getMemberPk(),recordPk,date,request);
+        recordService.updateRecord(boxPk,memberPk,recordPk,date,request);
         return ApiResponse.success(null,"record 수정 완료");
     }
 
@@ -82,10 +88,12 @@ public class RecordController implements RecordDocs {
     public ApiResponse<Void> deleteRecord(
             @PathVariable Long boxPk,
             @PathVariable Long recordPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            //@AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        recordService.deleteRecord(boxPk, userDetails.getMemberPk(), recordPk, date);
+        Long memberPk = 2L;
+        recordService.deleteRecord(boxPk, memberPk, recordPk, date);
+        //recordService.deleteRecord(boxPk, userDetails.getMemberPk(), recordPk, date);
         return ApiResponse.success(null,"record 삭제 완료");
     }
 

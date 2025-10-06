@@ -46,7 +46,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     * 랭킹 관련 쿼리
     * */
 
-    // ForTime: level ASC → time ASC → nickname ASC
+    // ForTime: 레벨 → 시간 빠른순 → 닉네임 오름차순
     @Query("""
       select r from Record r
       join r.wod w
@@ -61,7 +61,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     """)
     List<Record> findForTimeOrder(Long boxPk, LocalDate date);
 
-    // AMRAP: level ASC → rounds DESC → reps DESC → nickname ASC
+    // AMRAP:  레벨 -> 성공(0) -> 실패(1) → 닉네임
     @Query("""
       select r from Record r
       join r.wod w
@@ -77,7 +77,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     """)
     List<Record> findAmrapOrder(Long boxPk, LocalDate date);
 
-    // EMOM / SuccessFail: S 상위(F 하위)
+    // EMOM / 레벨 -> 성공(0) -> 실패(1) → 닉네임
     @Query("""
       select r from Record r
       join r.wod w
@@ -92,7 +92,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     """)
     List<Record> findEmomOrSfOrder(Long boxPk, LocalDate date);
 
-    // MAXREPS / EMOMMAX: reps DESC → nickname ASC
+    // MAXREPS / EMOMMAX: 레벨 → 라운드 많은순 → 렙스 많은순 → 닉네임
     @Query("""
       select r from Record r
       join r.wod w
@@ -119,4 +119,19 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
         where r.recordPk in (:ids)
     """)
     List<Record> findAllByRecordPkInWithJoins(List<Long> ids);
+
+    /**
+     * 특정 MemberListPk의 모든 활성 Record 조회
+     */
+    @Query("""
+    select r from Record r
+    join fetch r.wod w
+    join fetch w.box b
+    where r.memberList.memberListPk = :memberListPk
+      and r.deletedYN = :deletedYN
+""")
+    List<Record> findAllByMemberListPkAndDeletedYN(
+            @Param("memberListPk") Long memberListPk,
+            @Param("deletedYN") BaseTime.Yn deletedYN
+    );
 }
