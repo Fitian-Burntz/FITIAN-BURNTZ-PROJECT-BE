@@ -12,6 +12,9 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.domain.membership.repository.MembershipRepository;
 import com.fitian.burntz.domain.membership.v1.dto.MembershipDto;
+import com.fitian.burntz.domain.record.entity.Record;
+import com.fitian.burntz.domain.record.repository.RecordRepository;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.common.util.RetryTransactionalHandler;
 import com.fitian.burntz.global.exception.ErrorCode;
@@ -19,6 +22,7 @@ import com.fitian.burntz.global.exception.ValidationException;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -45,6 +49,8 @@ public class MemberListServiceImpl implements MemberListService{
     private final EntityManager em;
     private final PreconditionValidator preconditionValidator;
     private final MemberService memberService;
+    private final RecordRepository recordRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /** box 와 연관된 memberList 생성. box 생성 및 member 추가 시 종속적으로 생성 **/
     @Override
@@ -239,9 +245,35 @@ public class MemberListServiceImpl implements MemberListService{
         MemberList loginMember = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, loginMemberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
 
+        // 기존 닉네임 저장
+        String oldBoxNickname = loginMember.getBoxNickname();
 
         loginMember.changeMyBoxNickname(newBoxNickname);
         memberListRepository.save(loginMember);
+
+        // 연관된 모든 Record의 nickname 업데이트
+        List<Record> records = recordRepository.findAllByMemberListPkAndDeletedYN(
+                loginMember.getMemberListPk(),
+                BaseTime.Yn.N
+        );
+
+        List<Long> recordPks = new ArrayList<>();
+        for (Record record : records) {
+            record.updateNickname(newBoxNickname);
+            recordPks.add(record.getRecordPk());
+        }
+
+        // 트랜잭션 커밋 후 Redis 업데이트를 위한 이벤트 발행
+        if (!recordPks.isEmpty()) {
+            applicationEventPublisher.publishEvent(
+                    new BoxNicknameChangedEvent(
+                            loginMember.getMemberListPk(),
+                            oldBoxNickname,
+                            newBoxNickname,
+                            recordPks
+                    )
+            );
+        }
 
         return ChangeMyBoxNicknameDto.from(loginMember, targetBoxPk);
     }

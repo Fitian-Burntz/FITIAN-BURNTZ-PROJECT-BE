@@ -168,6 +168,66 @@ public class RankingService {
     }
 
     /**
+     * 닉네임 변경 시 여러 Record를 한 번에 업데이트 (배치 처리)
+     * 같은 Redis 키에 대해 파이프라인으로 한 번에 처리하여 성능 최적화
+     */
+    public void updateNicknamesBatch(List<Record> records, String oldNickname, Long memberListPk) {
+        if (records.isEmpty()) return;
+
+        try {
+            // 같은 키를 사용하므로 첫 번째 레코드에서 추출
+            Record first = records.get(0);
+            String k = key(first.getWod().getBox().getBoxPk(), first.getWod().getWodDate());
+            Instant expAt = expireAt(first.getWod().getWodDate());
+
+            // 파이프라인으로 한 번에 처리 (remove + add)
+            redis.executePipelined((RedisCallback<Object>) con -> {
+                byte[] kb = k.getBytes();
+
+                for (Record r : records) {
+                    // 1. 기존 항목 삭제 (old nickname)
+                    String oldMember = encoder.memberString(
+                            r.getLevel(),
+                            oldNickname,
+                            r.getRecordPk(),
+                            memberListPk
+                    );
+                    con.zSetCommands().zRem(kb, oldMember.getBytes());
+
+                    // 2. 새 항목 추가 (new nickname)
+                    double score = encoder.scoreFor(
+                            r.getWod().getWodType(),
+                            r.getLevel(),
+                            r.getRound(),
+                            r.getReps(),
+                            r.getTime(),
+                            r.getResult()
+                    );
+
+                    String newMember = encoder.memberString(
+                            r.getLevel(),
+                            getNickname(r),
+                            r.getRecordPk(),
+                            getMemberListPk(r)
+                    );
+
+                    con.zSetCommands().zAdd(kb, score, newMember.getBytes());
+                }
+
+                // 만료 시간 갱신
+                con.keyCommands().expireAt(kb, expAt);
+                return null;
+            });
+
+            log.info("Batch updated {} records for key: {}", records.size(), k);
+
+        } catch (Exception e) {
+            log.warn("Redis batch update failed: {}", e.toString());
+        }
+    }
+
+
+    /**
      * 닉네임 추출 헬퍼
      */
     private String getNickname(Record r) {

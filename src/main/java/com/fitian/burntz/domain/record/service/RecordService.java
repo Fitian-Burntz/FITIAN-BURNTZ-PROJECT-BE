@@ -294,7 +294,6 @@ public class RecordService {
         return records.stream().map(Record::getRecordPk).toList();
     }
 
-
     /*
      * 유효성 검증 헬퍼 메서드
      * */
