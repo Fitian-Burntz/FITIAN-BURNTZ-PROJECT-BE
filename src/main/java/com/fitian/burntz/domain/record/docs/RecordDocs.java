@@ -32,16 +32,16 @@ public interface RecordDocs {
     ApiResponse<Void> createRecord(
             @Valid @RequestBody RecordCreateRequest request,
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(summary = "Record 조회", description = "지정한 박스(boxPk)와 날짜를 기준으로 해당 일자의 모든 Record 목록을 조회합니다. " +
                                                         "회원/비회원 기록을 모두 포합합니다.")
     ResponseEntity<ApiResponse<List<RecordResponse>>> getRecord(
             @PathVariable Long boxPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(summary = "Record 수정", description = "지정한 박스(boxPk)와 날짜에 속한 특정 Record(recordPk)를 수정합니다.")
@@ -49,15 +49,15 @@ public interface RecordDocs {
             @Valid @RequestBody RecordUpdateRequest request,
             @PathVariable Long boxPk,
             @PathVariable Long recordPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(summary = "Record 삭제", description = "지정한 박스(boxPk)와 날짜에 속한 특정 Record(recordPk)를 삭제합니다.")
     ApiResponse<Void> deleteRecord(
             @PathVariable Long boxPk,
             @PathVariable Long recordPk,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-            //@AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }
