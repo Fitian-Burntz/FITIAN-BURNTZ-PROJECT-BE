@@ -44,7 +44,6 @@ public class RecordController implements RecordDocs {
             @AuthenticationPrincipal CustomUserDetails userDetails
             ){
         recordService.createRecord(request, date, boxPk, userDetails.getMemberPk());
-        recordService.createRecord(request, date, boxPk, memberPk);
         return ApiResponse.success(null,"record 생성 완료");
     }
 
