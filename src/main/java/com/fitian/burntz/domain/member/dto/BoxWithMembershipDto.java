@@ -38,7 +38,6 @@ public class BoxWithMembershipDto {
     public static BoxWithMembershipDto from(MemberList memberList, Box targetBox, MembershipDto membershipDto) {
         Objects.requireNonNull(memberList, "memberList required.");
         Objects.requireNonNull(targetBox, "targetBox required.");
-        Objects.requireNonNull(membershipDto, "membershipDto required.");
 
         return BoxWithMembershipDto.builder()
                 .memberListPk(memberList.getMemberListPk())
