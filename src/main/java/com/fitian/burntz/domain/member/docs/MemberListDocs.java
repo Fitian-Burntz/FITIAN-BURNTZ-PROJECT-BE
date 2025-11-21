@@ -67,7 +67,7 @@ public interface MemberListDocs {
             description = "OWNER 나 MANAGER 가 box 회원의 전체의 통합 정보(boxNickName, role, membership)를 오름차순 리스트 페이징으로 조회합니다.")
     public ResponseEntity<ApiResponse<Page<MemberListWithMembershipDto>>> getAllBoxMemberList(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestParam(value = "boxCode", required = false) String boxCode,
+            @RequestParam(value = "boxPk", required = false) Long boxPk,
             @PageableDefault(page = 0, size = 20)
             @SortDefault(sort = "boxNickname", direction = Sort.Direction.ASC)
             Pageable pageable

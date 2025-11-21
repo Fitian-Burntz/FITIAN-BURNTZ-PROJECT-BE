@@ -1,11 +1,16 @@
 package com.fitian.burntz.domain.member.controller;
 
+import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.docs.MemberListDocs;
 import com.fitian.burntz.domain.member.dto.BoxWithMembershipDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.*;
 import com.fitian.burntz.domain.member.service.MemberListService;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +30,7 @@ public class MemberListController implements MemberListDocs {
 
     private final MemberListService memberListService;
     private final PreconditionValidator preconditionValidator;
+    private final BoxRepository boxRepository;
     private static final int MAX_PAGE_SIZE = 100;
 
 
@@ -117,17 +123,23 @@ public class MemberListController implements MemberListDocs {
     }
 
 
-    /** boxCode 로 해당 box 의 모든 memberList 를 membership 과 함께 조회 **/
+    /** boxPk 로 해당 box 의 모든 memberList 를 membership 과 함께 조회 **/
     @Override
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<Page<MemberListWithMembershipDto>>> getAllBoxMemberList(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestParam(value = "boxCode", required = false) String boxCode,
+            @RequestParam(value = "boxPk", required = false) Long boxPk,
             @PageableDefault(page = 0, size = 20)
             @SortDefault(sort = "boxNickname", direction = Sort.Direction.ASC)
             Pageable pageable
     ){
         Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        //기존 boxCode를 파라미터로 받는 로직이었으나, 통일성을 위해 boxPk로 변경. boxCode 들어내고 수정해야함.
+        Box box = boxRepository.findByBoxPkAndDeletedYN(boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        String boxCode = box.getBoxCode();
 
         String targetBoxCode = preconditionValidator.requireBoxCode(boxCode);
 
