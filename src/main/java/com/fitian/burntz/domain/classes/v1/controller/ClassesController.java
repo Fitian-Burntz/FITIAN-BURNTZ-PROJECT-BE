@@ -31,8 +31,8 @@ public class ClassesController implements ClassesDocs {
     @Override
     public ResponseEntity<ApiResponse<List<ClassesResponse>>> getClasses(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody ClassesSearchRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(classesService.getClasses(request, userDetails)));
+            @Valid @ModelAttribute ClassesSearchRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(classesService.getClassesWithCount(request, userDetails)));
     }
 
     @PostMapping()

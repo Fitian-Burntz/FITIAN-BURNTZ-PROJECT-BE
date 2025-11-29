@@ -38,6 +38,7 @@ public class ClassesService {
     private final ClassesRepository classesRepository;
     private final ClassParticipantRepository participantRepository;
 
+    //참여인원 카운트없이 가져오는 getClasses 현재 안씀.
     public List<ClassesResponse> getClasses(ClassesSearchRequest request, CustomUserDetails userDetails) {
 
         //존재하는 회원인지 검증
@@ -59,6 +60,31 @@ public class ClassesService {
                     .build();
             responseList.add(response);
         }
+        return responseList;
+    }
+
+    public List<ClassesResponse> getClassesWithCount(ClassesSearchRequest request, CustomUserDetails userDetails) {
+        //존재하는 회원인지 검증
+        boolean exist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
+        if(!exist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
+        List<ClassesWithCountResponse> list = classesRepository.findWithParticipantCountByBoxAndDate(request.getBoxPk(), request.getStartDate(), request.getEndDate(), BaseTime.Yn.N, BaseTime.Yn.N);
+        List<ClassesResponse> responseList;
+        responseList = list.stream()
+                .map(r -> {
+                    Classes c = r.getClasses();
+                    return new ClassesResponse(
+                            c.getClassesPk(),
+                            c.getClassDate(),
+                            c.getStartTime(),
+                            c.getEndTime(),
+                            c.getClassMemberCapacity(),
+                            r.getParticipantCount(),
+                            c.getClassTitle(),
+                            c.getClassMemo()
+                    );
+                }).toList();
+
         return responseList;
     }
 

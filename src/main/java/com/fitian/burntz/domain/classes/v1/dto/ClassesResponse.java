@@ -38,9 +38,14 @@ public class ClassesResponse {
     @Schema(description = "정원", example = "12")
     private Integer classMemberCapacity;
 
+    @Schema(description = "참여인원", example = "12")
+    private Long participantsCount;
+
     @Schema(description = "수업 제목", example = "CrossFit Fundamentals")
     private String classTitle;
 
     @Schema(description = "메모", example = "초보자 환영")
     private String classMemo;
+
+
 }
