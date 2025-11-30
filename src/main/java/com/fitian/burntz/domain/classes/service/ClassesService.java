@@ -195,4 +195,30 @@ public class ClassesService {
             cp.markDeleted();
         }
     }
+
+    public void deleteClassesByDate(ClassesDeleteRequest request, CustomUserDetails userDetails) {
+        //회원 등급 검증
+        MemberList list = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        if (list.getRole() == MemberRole.GUEST || list.getRole() == MemberRole.MEMBER)
+            throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
+        List<Classes> classesList = classesRepository.findByBoxBoxPkAndClassDateAndDeletedYN(request.getBoxPk(), request.getClassDate(), BaseTime.Yn.N);
+
+        if (classesList.isEmpty()) {
+            throw new ValidationException(ErrorCode.CLASS_NOT_FOUND);
+        }
+
+        classesList.forEach(Classes::markDeleted);
+
+        List<Long> classesPks = classesList.stream()
+                .map(Classes::getClassesPk).toList();
+
+        List<ClassParticipant> participants = participantRepository.findByClassesClassesPkInAndDeletedYN(classesPks, BaseTime.Yn.N);
+
+        participants.forEach(ClassParticipant::markDeleted);
+
+        classesRepository.saveAll(classesList);
+        participantRepository.saveAll(participants);
+    }
 }

@@ -88,4 +88,13 @@ public class ClassesController implements ClassesDocs {
         classesService.deleteClass(request, userDetails);
         return ApiResponse.success(null, "수업 삭제 완료.");
     }
+
+    @PostMapping("/deleteByDate")
+    @Override
+    public ApiResponse<Void> deleteClassByDate(
+            @Valid @RequestBody ClassesDeleteRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classesService.deleteClassesByDate(request, userDetails);
+        return ApiResponse.success(null, request.getClassDate()+" 수업 삭제 완료.");
+    }
 }

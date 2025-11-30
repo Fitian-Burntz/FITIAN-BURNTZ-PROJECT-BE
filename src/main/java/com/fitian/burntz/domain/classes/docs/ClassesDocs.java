@@ -63,4 +63,10 @@ public interface ClassesDocs {
             @Valid @RequestBody ClassesIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     );
+
+    @Operation(summary = "수업 일자별 삭제", description = "특정일자의 수업을 잔체 삭제(soft-delete)합니다.")
+    ApiResponse<Void> deleteClassByDate(
+            @Valid @RequestBody ClassesDeleteRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    );
 }

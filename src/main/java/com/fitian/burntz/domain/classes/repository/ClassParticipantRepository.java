@@ -27,4 +27,6 @@ public interface ClassParticipantRepository extends JpaRepository<ClassParticipa
 //            @Param("deletedYN") BaseTime.Yn deletedYN);
 
     List<ClassParticipant> findByClassesClassesPkAndDeletedYN(Long classesPk, BaseTime.Yn deletedYN);
+
+    List<ClassParticipant> findByClassesClassesPkInAndDeletedYN(List<Long> classesPks, BaseTime.Yn deletedYN);
 }

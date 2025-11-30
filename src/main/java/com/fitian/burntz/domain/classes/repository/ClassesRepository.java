@@ -46,4 +46,7 @@ public interface ClassesRepository extends JpaRepository<Classes, Long> {
              @Param("deletedYN") BaseTime.Yn deletedYN,
              @Param("participantDeletedYN") BaseTime.Yn participantDeletedYN
      );
+
+     List<Classes> findByBoxBoxPkAndClassDateAndDeletedYN(
+             Long boxPk, LocalDate classDate, Yn deletedYN);
 }
