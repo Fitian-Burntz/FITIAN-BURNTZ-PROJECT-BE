@@ -80,6 +80,9 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
             countQuery = "SELECT COUNT(ml) FROM MemberList ml WHERE ml.member.memberPk = :memberPk AND ml.deletedYN = 'N'")
     Page<MemberList> findActiveByMemberPkWithBox(@Param("memberPk") Long memberPk, Pageable pageable);
 
-    List<Long> findBoxBoxPkByMemberMemberPkAndDeletedYN(Long memberPk, BaseTime.Yn deletedYN);
+    @Query("SELECT ml.box.boxPk FROM MemberList ml " +
+            "WHERE ml.member.memberPk = :memberPk AND ml.deletedYN = :yn")
+    List<Long> findBoxPksByMemberMemberPkAndDeletedYN(@Param("memberPk") Long memberPk,
+                                                      @Param("yn") BaseTime.Yn yn);
 
 }

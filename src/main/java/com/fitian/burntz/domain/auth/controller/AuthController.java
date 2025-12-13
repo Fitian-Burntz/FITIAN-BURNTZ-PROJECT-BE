@@ -48,7 +48,7 @@ public class AuthController implements AuthDocs {
 
         //firebaseCustomToken 발급
         try {
-            List<Long> boxPks = memberListRepository.findBoxBoxPkByMemberMemberPkAndDeletedYN(loginResponse.getMember().getMemberPk(), BaseTime.Yn.N);
+            List<Long> boxPks = memberListRepository.findBoxPksByMemberMemberPkAndDeletedYN(loginResponse.getMember().getMemberPk(), BaseTime.Yn.N);
 
             Map<String, Object> claims = new HashMap<>();
             claims.put("boxPks",boxPks);
