@@ -2,7 +2,6 @@ package com.fitian.burntz.domain.auth.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fitian.burntz.domain.member.dto.MemberDto;
-import com.fitian.burntz.domain.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -22,4 +21,6 @@ public class LoginResponse {
     private boolean newMember;
 
     private String deviceId;
+
+    private String FirebaseCustomToken;
 }

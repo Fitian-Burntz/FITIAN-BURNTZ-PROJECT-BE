@@ -5,13 +5,22 @@ import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import com.fitian.burntz.domain.auth.dto.LogoutResponse;
 import com.fitian.burntz.domain.auth.service.AuthService;
+import com.fitian.burntz.domain.member.repository.MemberListRepository;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -20,6 +29,7 @@ public class AuthController implements AuthDocs {
 
     private final AuthService authService;
     private final PreconditionValidator preconditionValidator;
+    private final MemberListRepository memberListRepository;
 
     @Override
     @PostMapping("/login")
@@ -36,7 +46,19 @@ public class AuthController implements AuthDocs {
 
         LoginResponse loginResponse = authService.loginWithSocial(token, provider, targetDeviceId);
 
-        return ResponseEntity.ok(ApiResponse.success(loginResponse));
+        //firebaseCustomToken 발급
+        try {
+            List<Long> boxPks = memberListRepository.findBoxBoxPkByMemberMemberPkAndDeletedYN(loginResponse.getMember().getMemberPk(), BaseTime.Yn.N);
+
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("boxPks",boxPks);
+            String firebaseCustomToken = FirebaseAuth.getInstance().createCustomToken(loginResponse.getMember().getMemberId(), claims);
+            loginResponse.setFirebaseCustomToken(firebaseCustomToken);
+
+            return ResponseEntity.ok(ApiResponse.success(loginResponse));
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Firebase 연동 실패: " + e.getMessage()));
+        }
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
-import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -14,7 +13,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,5 +79,7 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
             "WHERE ml.member.memberPk = :memberPk AND ml.deletedYN = 'N'",
             countQuery = "SELECT COUNT(ml) FROM MemberList ml WHERE ml.member.memberPk = :memberPk AND ml.deletedYN = 'N'")
     Page<MemberList> findActiveByMemberPkWithBox(@Param("memberPk") Long memberPk, Pageable pageable);
+
+    List<Long> findBoxBoxPkByMemberMemberPkAndDeletedYN(Long memberPk, BaseTime.Yn deletedYN);
 
 }
