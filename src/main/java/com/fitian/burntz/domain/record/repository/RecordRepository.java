@@ -1,6 +1,5 @@
 package com.fitian.burntz.domain.record.repository;
 
-import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -10,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +41,9 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     //자기 자신(헌재의 recordPk)를 제외하고 중복 운동기록이 존재하는지 확인(운동기록 수정 시 방어선)
     boolean existsByClassesClassesPkAndMemberListMemberListPkAndDeletedYNAndRecordPkNot(
             Long classesPk, Long memberListPk, BaseTime.Yn deletedYN, Long recordPk);
+
+    List<Record> findAllByClassesClassesPkInAndMemberListMemberListPkInAndDeletedYN(
+            Collection<Long> classesPks, Collection<Long> memberListPks, BaseTime.Yn deletedYN);
 
     /*
     * 랭킹 관련 쿼리

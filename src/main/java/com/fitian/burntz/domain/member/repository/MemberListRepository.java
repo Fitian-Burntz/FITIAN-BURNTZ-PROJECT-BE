@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -84,5 +85,7 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
             "WHERE ml.member.memberPk = :memberPk AND ml.deletedYN = :yn")
     List<Long> findBoxPksByMemberMemberPkAndDeletedYN(@Param("memberPk") Long memberPk,
                                                       @Param("yn") BaseTime.Yn yn);
+
+    List<MemberList> findAllByMemberListPkInAndBoxBoxPkAndDeletedYN(Collection<Long> memberListPks, Long boxPk, BaseTime.Yn deletedYN);
 
 }

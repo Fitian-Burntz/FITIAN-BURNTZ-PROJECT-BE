@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +31,8 @@ public interface ClassesRepository extends JpaRepository<Classes, Long> {
 
     //Class 존재 여부 확인 및 소속 검증(해당 box에 소속되어있는지)
      Optional<Classes> findByClassesPkAndBoxBoxPkAndDeletedYN(Long classesPk, Long boxPk, BaseTime.Yn deletedYN) ;
+
+    List<Classes> findAllByClassesPkInAndBoxBoxPkAndDeletedYN(Collection<Long> classesPks, Long boxPk, BaseTime.Yn deletedYN);
 
      @Query("SELECT new com.fitian.burntz.domain.classes.v1.dto.ClassesWithCountResponse(c, COUNT(cp)) " +
      "FROM Classes c " +

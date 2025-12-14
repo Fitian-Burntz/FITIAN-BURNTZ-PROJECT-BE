@@ -1,6 +1,5 @@
 package com.fitian.burntz.domain.record.v1.controller;
 
-import com.fitian.burntz.domain.channel.docs.ChannelDocs;
 import com.fitian.burntz.domain.record.docs.RecordDocs;
 import com.fitian.burntz.domain.record.service.RecordService;
 import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
@@ -34,9 +33,9 @@ public class RecordController implements RecordDocs {
     private final RecordService recordService;
 
     /*
-    * Record 생성
+    * Record 단건 생성
     * */
-    @PostMapping()
+    @PostMapping("/single")
     public ApiResponse<Void> createRecord(
             @Valid @RequestBody RecordCreateRequest request,
             @PathVariable Long boxPk,
@@ -45,6 +44,20 @@ public class RecordController implements RecordDocs {
             ){
         recordService.createRecord(request, date, boxPk, userDetails.getMemberPk());
         return ApiResponse.success(null,"record 생성 완료");
+    }
+
+    /*
+     * Record 다건 생성
+     * */
+    @PostMapping("/multi")
+    public ApiResponse<Void> createRecords(
+            @Valid @RequestBody List<@Valid RecordCreateRequest> request,
+            @PathVariable Long boxPk,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        recordService.createRecords(request, date, boxPk, userDetails.getMemberPk());
+        return ApiResponse.success(null,"records 생성 완료");
     }
 
     /*

@@ -27,10 +27,18 @@ import java.util.List;
 @Tag(name = "Record 관련 api 입니다.", description = "Record를 생성하거나 수정, 삭제할 수 있습니다.")
 public interface RecordDocs {
 
-    @Operation(summary = "Record 생성", description = "지정한 박스(boxPk)와 날짜(WOD)에 대해 회원(MemberList 소속) 또는 비회원(일일체험) 참가자의 Record를 생성합니다. " +
+    @Operation(summary = "Record 단건 생성", description = "지정한 박스(boxPk)와 날짜(WOD)에 대해 회원(MemberList 소속) 또는 비회원(일일체험) 참가자의 Record를 생성합니다. " +
                                                         "동일 클래스/참가자 중복 기록은 제한됩니다.")
     ApiResponse<Void> createRecord(
             @Valid @RequestBody RecordCreateRequest request,
+            @PathVariable Long boxPk,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(summary = "Record 다건 생성", description = "createRecord의 여러건 생성 버전입니다.")
+    ApiResponse<Void> createRecords(
+            @Valid @RequestBody List<@Valid RecordCreateRequest> request,
             @PathVariable Long boxPk,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal CustomUserDetails userDetails

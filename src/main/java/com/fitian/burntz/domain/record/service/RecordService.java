@@ -7,7 +7,6 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.record.entity.Record;
-import com.fitian.burntz.domain.record.ranking.RankingScoreEncoder;
 import com.fitian.burntz.domain.record.repository.RecordRepository;
 import com.fitian.burntz.domain.record.v1.dto.RecordCreateRequest;
 import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
@@ -27,10 +26,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -51,7 +47,6 @@ public class RecordService {
     private final RecordRepository recordRepository;
 
     private final RankingService rankingService;
-    private final RankingScoreEncoder encoder;
     /*
      * record 생성
      * */
@@ -121,6 +116,114 @@ public class RecordService {
         });
     }
 
+    /*
+     * record 다건 생성
+     * */
+    @Transactional
+    public void createRecords(List<RecordCreateRequest> requests, LocalDate date, Long boxPk, Long memberPk) {
+
+        if (requests == null || requests.isEmpty()) {
+            return;
+        }
+
+        //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
+        requireManagerOrOwner(memberPk, boxPk);
+
+        //2. wod 유효성 검증 : box+date로 조회
+        Wod wod = requireActiveWod(boxPk, date);
+
+        Set<Long> classesPkSet = requests.stream()
+                .map(RecordCreateRequest::getClassesPk)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Set<Long> memberListPkSet = requests.stream()
+                .map(RecordCreateRequest::getMemberListPk)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, Classes> classesMap = new HashMap<>();
+        if(!classesPkSet.isEmpty()){
+            List<Classes> classesList = classesRepository.findAllByClassesPkInAndBoxBoxPkAndDeletedYN(classesPkSet, boxPk, BaseTime.Yn.N);
+            for(Classes c : classesList) {
+                classesMap.put(c.getClassesPk(), c);
+            }
+        }
+
+        Map<Long, MemberList> memberListMap = new HashMap<>();
+        if(!memberListPkSet.isEmpty()) {
+            List<MemberList> memberLists = memberListRepository.findAllByMemberListPkInAndBoxBoxPkAndDeletedYN(memberListPkSet, boxPk, BaseTime.Yn.N);
+            for(MemberList ml : memberLists) {
+                memberListMap.put(ml.getMemberListPk(), ml);
+            }
+        }
+
+        if (!classesPkSet.isEmpty() && !memberListPkSet.isEmpty()) {
+            List<Record> existing = recordRepository.findAllByClassesClassesPkInAndMemberListMemberListPkInAndDeletedYN(
+                    classesPkSet, memberListPkSet, BaseTime.Yn.N);
+
+            // existing에서 (classesPk#memberListPk) 키를 만들어 집합으로 보관
+            Set<String> existingKeys = existing.stream()
+                    .filter(r -> r.getClasses() != null && r.getMemberList() != null)
+                    .map(r -> r.getClasses().getClassesPk() + "#" + r.getMemberList().getMemberListPk())
+                    .collect(Collectors.toSet());
+
+            // 요청 목록을 순회하면서 memberListPk가 있는 경우에는 기존 존재 키와 비교
+            for (RecordCreateRequest req : requests) {
+                if (req.getMemberListPk() != null) {
+                    Long cPk = req.getClassesPk();
+                    Long mPk = req.getMemberListPk();
+                    // classes 또는 memberList가 null이면 이후 본 로직에서 검증하므로 여기서는 key 비교만
+                    String key = cPk + "#" + mPk;
+                    if (existingKeys.contains(key)) {
+                        throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
+                    }
+                }
+            }
+        }
+
+        List<Record> toSave = new ArrayList<>(requests.size());
+        for (RecordCreateRequest req : requests) {
+            Classes classes = classesMap.get(req.getClassesPk());
+            if(classes == null) {
+                throw new ValidationException(ErrorCode.CLASS_NOT_FOUND);
+            }
+
+            MemberList memberList = null;
+            String nicknameFromMember = null;
+            if (req.getMemberListPk() != null) {
+                memberList = memberListMap.get(req.getMemberListPk());
+                if (memberList == null) {
+                    throw new ValidationException(ErrorCode.USER_NOT_FOUND);
+                }
+                nicknameFromMember = memberList.getBoxNickname();
+            }
+
+            // 닉네임 필수 규칙: memberList가 없으면 nickname 필수
+            if (memberList == null && (req.getNickname() == null || req.getNickname().isBlank())) {
+                throw new ValidationException(ErrorCode.EMPTY_NICKNAME_MEMBERPK);
+            }
+
+            Record record = req.toEntity(wod, classes, memberList, nicknameFromMember);
+
+            toSave.add(record);
+        }
+
+        List<Record> saved = recordRepository.saveAll(toSave);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                for (Record r : saved) {
+                    try {
+                        rankingService.upsert(r);
+                    } catch (Exception ex) {
+                        log.error("ranking upsert failed for recordPk=" + r.getRecordPk(), ex);
+                    }
+                }
+            }
+        });
+    }
 
     /*
      * record 목록 조회(Redis 우선 -> db 폴백)
