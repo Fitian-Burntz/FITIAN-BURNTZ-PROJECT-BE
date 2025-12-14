@@ -32,6 +32,9 @@ public class ClassParticipantResponse {
     @Schema(description = "멤버 PK", example = "456")
     private Long memberPk;
 
+    @Schema(description = "멤버 리스트 PK", example = "42")
+    private Long memberListPk;
+
     @Schema(description = "박스 닉네임", example = "문정동 이경영")
     private String boxNickname;
 

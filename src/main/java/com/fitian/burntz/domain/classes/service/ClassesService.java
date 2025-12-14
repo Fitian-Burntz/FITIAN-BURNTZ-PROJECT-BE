@@ -158,6 +158,7 @@ public class ClassesService {
                     .classParticipantPk(cp.getClassParticipantPk())
                     .classesPk(cp.getClasses().getClassesPk())
                     .memberPk(cp.getMemberList().getMember().getMemberPk())
+                    .memberListPk(cp.getMemberList().getMemberListPk())
                     .boxNickname(cp.getMemberList().getBoxNickname())
                     .createdAt(cp.getCreatedAt())
                     .build();

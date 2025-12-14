@@ -64,7 +64,7 @@ public class ChannelService {
                 .createdBy(creator)
                 .build();
 
-        channelRepository.save(channel);
+        Channel saved = channelRepository.save(channel);
 
         //Firebase에 채널 생성
         try {
@@ -84,7 +84,15 @@ public class ChannelService {
             throw new RuntimeException("Firestore 채널 문서 생성 실패", e);
         }
 
+        List<Member> memberList = memberRepository.findAllById(request.getMemberPks());
 
+        List<ChannelParticipant> CPList = memberList.stream()
+                .map(m -> ChannelParticipant.builder()
+                    .channel(saved)
+                    .member(m).build())
+                .toList();
+
+        participantRepository.saveAll(CPList);
     }
 
     public List<ChannelListResponse> getChannels(CustomUserDetails userDetails, Long boxPk) {
