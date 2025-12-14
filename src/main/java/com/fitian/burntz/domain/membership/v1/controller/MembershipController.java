@@ -69,10 +69,9 @@ public class MembershipController {
     public ResponseEntity<ApiResponse<List<MembershipHistoryResponse>>> getMembershipHistory(
             @PathVariable Long boxPk,
             @PathVariable Long memberPk,
-            @Valid @RequestBody MembershipIdentifierRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.success(
-                membershipService.getMembershipHistory(boxPk, memberPk, request, userDetails),"조회 성공"
+                membershipService.getMembershipHistory(boxPk, memberPk, userDetails),"조회 성공"
         ));
     }
 }

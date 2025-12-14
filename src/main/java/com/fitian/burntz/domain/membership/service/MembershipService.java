@@ -190,7 +190,7 @@ public class MembershipService {
         }
     }
 
-    public List<MembershipHistoryResponse> getMembershipHistory(Long boxPk, Long memberPk, MembershipIdentifierRequest request, CustomUserDetails userDetails) {
+    public List<MembershipHistoryResponse> getMembershipHistory(Long boxPk, Long memberPk, CustomUserDetails userDetails) {
 
         //존재하는 회원인지 검증
         boolean exist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, userDetails.getMemberPk(), BaseTime.Yn.N);
@@ -199,7 +199,10 @@ public class MembershipService {
         boolean exist2 = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N);
         if(!exist2) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
-        List<MembershipHistory> historyList = historyRepository.findAllByMembershipMembershipPk(request.getMembershipPk());
+        Membership membership = membershipRepository.findLatestByBoxPkAndMemberPk(boxPk, memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+
+        List<MembershipHistory> historyList = historyRepository.findAllByMembershipMembershipPk(membership.getMembershipPk());
 
         List<MembershipHistoryResponse> responseList = new ArrayList<>();
 
