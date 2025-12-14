@@ -68,11 +68,22 @@ public class ClassesService {
         boolean exist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(!exist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
+        MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
         List<ClassesWithCountResponse> list = classesRepository.findWithParticipantCountByBoxAndDate(request.getBoxPk(), request.getStartDate(), request.getEndDate(), BaseTime.Yn.N, BaseTime.Yn.N);
+
+        List<Long> classesPks = list.stream()
+                .map(r -> r.getClasses().getClassesPk())
+                .toList();
+
+        List<Long> ClassInPks = participantRepository.findClassesPkByClassesPkInAndMemberListMemberListPkAndDeletedYN(classesPks, memberList.getMemberListPk(), BaseTime.Yn.N);
+
         List<ClassesResponse> responseList;
         responseList = list.stream()
                 .map(r -> {
                     Classes c = r.getClasses();
+                    boolean participated = c.getClassesPk() != null && ClassInPks.contains(c.getClassesPk());
                     return new ClassesResponse(
                             c.getClassesPk(),
                             c.getClassDate(),
@@ -81,7 +92,8 @@ public class ClassesService {
                             c.getClassMemberCapacity(),
                             r.getParticipantCount(),
                             c.getClassTitle(),
-                            c.getClassMemo()
+                            c.getClassMemo(),
+                            participated ? BaseTime.Yn.Y : BaseTime.Yn.N
                     );
                 }).toList();
 

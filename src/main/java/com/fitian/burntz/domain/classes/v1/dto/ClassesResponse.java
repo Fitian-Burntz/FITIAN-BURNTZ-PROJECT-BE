@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.classes.v1.dto;
 
+import com.fitian.burntz.global.common.entity.BaseTime;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,5 +48,6 @@ public class ClassesResponse {
     @Schema(description = "메모", example = "초보자 환영")
     private String classMemo;
 
-
+    @Schema(description = "참여 여부", example = "Y")
+    private BaseTime.Yn classInYn;
 }

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public interface ClassesDocs {
     @Operation(summary = "수업 목록 조회", description = "기간 조건으로 박스의 수업을 조회합니다.")
     ResponseEntity<ApiResponse<List<ClassesResponse>>> getClasses(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody ClassesSearchRequest request
+            @Valid @ModelAttribute ClassesSearchRequest request
     );
 
     @Operation(summary = "수업 다건 생성", description = "요청 리스트를 받아 여러 수업을 한 번에 생성합니다.")
