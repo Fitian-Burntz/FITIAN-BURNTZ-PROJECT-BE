@@ -22,6 +22,14 @@ import java.util.List;
 public interface ChannelParticipantRepository extends JpaRepository<ChannelParticipant, Long> {
     List<ChannelParticipant> findByChannel(Channel channel);
 
+    @Query("select case when (count(cp) > 0) then true else false end " +
+            "from ChannelParticipant cp where cp.member.memberPk = :memberPk and cp.channel.channelPk = :channelPk and cp.deletedYN = :YN")
+    boolean existByChannelPkAndMemberPkAndDeletedYN(
+            @Param("memberPk") Long memberPk,
+            @Param("channelPk") Long channelPk,
+            @Param("YN") BaseTime.Yn yn
+    );
+
     @Query("select cp.channel from ChannelParticipant cp where cp.member = :member and cp.channel.box = :box")
     List<Channel> findChannelsByMemberAndBox(@Param("member") Member member, @Param("box") Box box);
 

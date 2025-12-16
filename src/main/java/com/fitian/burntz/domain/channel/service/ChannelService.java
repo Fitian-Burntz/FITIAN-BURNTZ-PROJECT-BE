@@ -163,6 +163,10 @@ public class ChannelService {
         }
     }
 
+    public boolean canEnterChannel(Long channelPk, CustomUserDetails userDetails) {
+        return participantRepository.existByChannelPkAndMemberPkAndDeletedYN(userDetails.getMemberPk(), channelPk, BaseTime.Yn.N);
+    }
+
     public boolean deleteParticipant(ChannelLeaveRequest request, CustomUserDetails userDetails) {
 
         Channel channel = participantRepository.findById(request.getParticipantPk())

@@ -49,6 +49,19 @@ public class ChannelController implements ChannelDocs {
         return ResponseEntity.ok(ApiResponse.success(channelService.getChannels(userDetails, boxPk),"채널 목록 반환 완료."));
     }
 
+    @GetMapping("/{channelPk}/enter")
+    @Override
+    public ResponseEntity<ApiResponse<Void>> getChannelEnter(
+            @PathVariable Long channelPk,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        boolean canEnter = channelService.canEnterChannel(channelPk, userDetails);
+
+        if(canEnter) {
+            return ResponseEntity.ok(ApiResponse.success(null,"입장 가능합니다."));
+        }
+        return ResponseEntity.status(403).body(ApiResponse.failure("참여중인 채널이 아닙니다."));
+    }
 
     @GetMapping("/{channelPk}/participants")
     @Override

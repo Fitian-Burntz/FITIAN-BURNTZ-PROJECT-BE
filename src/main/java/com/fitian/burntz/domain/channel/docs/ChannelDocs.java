@@ -40,6 +40,12 @@ public interface ChannelDocs {
             @RequestParam Long boxPk
     );
 
+    @Operation(summary = "채널 입장 유효성 확인", description = "ChannelPk와 현재 사용자 정보로 입장하려는 채널이 유효한지 확인합니다.")
+    ResponseEntity<ApiResponse<Void>> getChannelEnter(
+            @PathVariable Long channelPk,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
     @Operation(summary = "채널 참여자 조회", description = "채널 Pk로 채널 참여자를 반환합니다.")
     ResponseEntity<ApiResponse<List<ChannelParticipant>>> getParticipants(
             @PathVariable Long channelPk,
