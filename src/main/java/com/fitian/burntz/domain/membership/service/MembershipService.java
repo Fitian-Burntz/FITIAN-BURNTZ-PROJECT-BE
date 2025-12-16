@@ -208,13 +208,13 @@ public class MembershipService {
 
         for(MembershipHistory mh : historyList) {
             MembershipHistoryResponse response = MembershipHistoryResponse.builder()
-                   .membershipPk(mh.getMembershipHistoryPk())
+                   .membershipPk(mh.getMembership().getMembershipPk())
                    .actionType(mh.getActionType())
                    .preValue(mh.getPreValue())
                    .newValue(mh.getNewValue())
                    .memo(mh.getMemo())
                    .period(mh.getPeriod())
-                   .createdBy(mh.getCreatedBy())
+                   .createdBy(mh.getCreatedBy().getMemberPk())
                    .createdAt(mh.getCreatedAt())
                    .build();
            responseList.add(response);
