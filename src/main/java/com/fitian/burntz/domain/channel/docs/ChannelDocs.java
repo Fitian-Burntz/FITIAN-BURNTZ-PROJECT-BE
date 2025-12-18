@@ -1,10 +1,7 @@
 package com.fitian.burntz.domain.channel.docs;
 
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelInviteRequest;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelLeaveRequest;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelListResponse;
+import com.fitian.burntz.domain.channel.v1.dto.*;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,7 +38,7 @@ public interface ChannelDocs {
     );
 
     @Operation(summary = "채널 입장 유효성 확인", description = "ChannelPk와 현재 사용자 정보로 입장하려는 채널이 유효한지 확인합니다.")
-    ResponseEntity<ApiResponse<Void>> getChannelEnter(
+    ResponseEntity<ApiResponse<List<ParticipantListResponse>>> getChannelEnter(
             @PathVariable Long channelPk,
             @AuthenticationPrincipal CustomUserDetails userDetails
     );

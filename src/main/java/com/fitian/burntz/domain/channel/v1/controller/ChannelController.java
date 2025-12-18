@@ -2,11 +2,8 @@ package com.fitian.burntz.domain.channel.v1.controller;
 
 import com.fitian.burntz.domain.channel.docs.ChannelDocs;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
+import com.fitian.burntz.domain.channel.v1.dto.*;
 import com.fitian.burntz.domain.channel.service.ChannelService;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelInviteRequest;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelLeaveRequest;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelListResponse;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -51,14 +48,15 @@ public class ChannelController implements ChannelDocs {
 
     @GetMapping("/{channelPk}/enter")
     @Override
-    public ResponseEntity<ApiResponse<Void>> getChannelEnter(
+    public ResponseEntity<ApiResponse<List<ParticipantListResponse>>> getChannelEnter(
             @PathVariable Long channelPk,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         boolean canEnter = channelService.canEnterChannel(channelPk, userDetails);
 
         if(canEnter) {
-            return ResponseEntity.ok(ApiResponse.success(null,"입장 가능합니다."));
+            List<ParticipantListResponse> pList = channelService.getParticipantsInfo(channelPk, userDetails);
+            return ResponseEntity.ok(ApiResponse.success(pList,"입장 가능합니다."));
         }
         return ResponseEntity.status(403).body(ApiResponse.failure("참여중인 채널이 아닙니다."));
     }

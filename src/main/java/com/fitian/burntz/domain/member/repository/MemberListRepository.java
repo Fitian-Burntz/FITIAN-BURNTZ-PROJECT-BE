@@ -88,4 +88,8 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
 
     List<MemberList> findAllByMemberListPkInAndBoxBoxPkAndDeletedYN(Collection<Long> memberListPks, Long boxPk, BaseTime.Yn deletedYN);
 
+    List<MemberList> findAllByMemberMemberPkInAndBoxBoxPkAndDeletedYN(
+            Collection<Long> memberPks,
+            Long boxPk,
+            BaseTime.Yn deletedYN);
 }

@@ -5,13 +5,11 @@ import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
 import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
+import com.fitian.burntz.domain.channel.v1.dto.*;
 import com.fitian.burntz.domain.channel.entity.Channel;
 import com.fitian.burntz.domain.channel.repository.ChannelRepository;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelInviteRequest;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelLeaveRequest;
-import com.fitian.burntz.domain.channel.v1.dto.ChannelListResponse;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -71,7 +69,7 @@ public class ChannelService {
             Map<String, Object> data = new HashMap<>();
             data.put("channelName", request.getChannelName());
             data.put("type", request.getType());
-            data.put("memberUids", request.getMemberPks());
+            data.put("memberPks", request.getMemberPks());
             data.put("createdBy",userDetails.getMemberPk());
             data.put("createdAt", com.google.cloud.Timestamp.now());
 
@@ -157,7 +155,7 @@ public class ChannelService {
                     .document(channel.getBox().getBoxCode())
                     .collection("channels")
                     .document(channel.getChannelId())
-                    .update("memberUids",com.google.cloud.firestore.FieldValue.arrayUnion(toInsert.toArray()));
+                    .update("memberPks",com.google.cloud.firestore.FieldValue.arrayUnion(toInsert.toArray()));
         } catch ( Exception e) {
             throw new RuntimeException("Firestore 참여자 추가 실패", e);
         }
@@ -165,6 +163,27 @@ public class ChannelService {
 
     public boolean canEnterChannel(Long channelPk, CustomUserDetails userDetails) {
         return participantRepository.existByChannelPkAndMemberPkAndDeletedYN(userDetails.getMemberPk(), channelPk, BaseTime.Yn.N);
+    }
+
+    public List<ParticipantListResponse> getParticipantsInfo(Long channelPk, CustomUserDetails userDetails){
+
+        Channel channel = channelRepository.findById(channelPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
+
+        List<Long> memberPkList = participantRepository.findMemberPksByChannel(channel);
+        List<MemberList> memberLists = memberListRepository.findAllByMemberMemberPkInAndBoxBoxPkAndDeletedYN(memberPkList, channel.getBox().getBoxPk(), BaseTime.Yn.N);
+
+        List<ParticipantListResponse> pList = new ArrayList<>();
+        for(MemberList ml : memberLists) {
+            ParticipantListResponse p = ParticipantListResponse.builder()
+                    .memberPk(ml.getMember().getMemberPk())
+                    .memberListPk(ml.getMemberListPk())
+                    .role(ml.getRole())
+                    .boxNickname(ml.getBoxNickname()).build();
+            pList.add(p);
+        }
+
+        return pList;
     }
 
     public boolean deleteParticipant(ChannelLeaveRequest request, CustomUserDetails userDetails) {
@@ -190,7 +209,7 @@ public class ChannelService {
                     .document(channel.getBox().getBoxCode())
                     .collection("channels")
                     .document(channel.getChannelId())
-                    .update("memberUids",com.google.cloud.firestore.FieldValue.arrayUnion(request.getParticipantPk()));
+                    .update("memberPks",com.google.cloud.firestore.FieldValue.arrayUnion(request.getParticipantPk()));
         } catch ( Exception e) {
             throw new RuntimeException("Firestore 참여자 제거 실패", e);
         }

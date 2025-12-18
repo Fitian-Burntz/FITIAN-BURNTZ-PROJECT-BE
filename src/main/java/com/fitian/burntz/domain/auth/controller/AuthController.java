@@ -52,6 +52,7 @@ public class AuthController implements AuthDocs {
 
             Map<String, Object> claims = new HashMap<>();
             claims.put("boxPks",boxPks);
+            claims.put("memberPk",loginResponse.getMember().getMemberPk());
             String firebaseCustomToken = FirebaseAuth.getInstance().createCustomToken(loginResponse.getMember().getMemberId(), claims);
             loginResponse.setFirebaseCustomToken(firebaseCustomToken);
 
