@@ -188,7 +188,7 @@ public class ChannelService {
 
     public boolean deleteParticipant(ChannelLeaveRequest request, CustomUserDetails userDetails) {
 
-        Channel channel = participantRepository.findById(request.getParticipantPk())
+        Channel channel = participantRepository.findById(request.getChannelPk())
                         .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND)).getChannel();
 
         Box box = channel.getBox();
@@ -202,14 +202,14 @@ public class ChannelService {
             throw new ValidationException(ErrorCode.FORBIDDEN);
         }
 
-        int updated = participantRepository.markDeletedByPk(request.getParticipantPk(), BaseTime.Yn.Y);
+        int updated = participantRepository.markDeletedByPk(request.getChannelPk(), request.getMemberPk(), BaseTime.Yn.Y);
 
         try {
             firestore.collection("boxes")
                     .document(channel.getBox().getBoxCode())
                     .collection("channels")
                     .document(channel.getChannelId())
-                    .update("memberPks",com.google.cloud.firestore.FieldValue.arrayUnion(request.getParticipantPk()));
+                    .update("memberPks",com.google.cloud.firestore.FieldValue.arrayUnion(request.getMemberPk()));
         } catch ( Exception e) {
             throw new RuntimeException("Firestore 참여자 제거 실패", e);
         }

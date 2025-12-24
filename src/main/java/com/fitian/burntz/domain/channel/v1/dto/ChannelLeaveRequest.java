@@ -22,8 +22,12 @@ import lombok.NoArgsConstructor;
 @Schema(name = "ChannelLeaveRequest", description = "채널(채팅방) 참여 나가기 요청")
 public class ChannelLeaveRequest {
 
-    @NotNull(message = "ParticipantPk must not be blank")
-    @Schema(description = "참여(Participant) PK", example = "987")
-    private Long ParticipantPk;
+    @NotNull(message = "memberPk must not be blank")
+    @Schema(description = "member PK", example = "8")
+    private Long memberPk;
+
+    @NotNull(message = "channelPk must not be blank")
+    @Schema(description = "channel PK", example = "15")
+    private Long channelPk;
 
 }
