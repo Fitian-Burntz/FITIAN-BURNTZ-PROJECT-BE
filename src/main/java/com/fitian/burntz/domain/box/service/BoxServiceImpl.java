@@ -3,16 +3,19 @@ package com.fitian.burntz.domain.box.service;
 import com.fitian.burntz.domain.box.dto.*;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.channel.enums.ChannelType;
+import com.fitian.burntz.domain.channel.service.ChannelService;
+import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.member.service.MemberListService;
-import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
+import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,9 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-
-import static org.apache.commons.lang3.StringUtils.abbreviate;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +35,7 @@ import static org.apache.commons.lang3.StringUtils.abbreviate;
 public class BoxServiceImpl implements BoxService {
 
     private final BoxRepository boxRepository;
+    private final ChannelService channelService;
     private final MemberRepository memberRepository;
     private final MemberListService memberListService;
     private final MemberListRepository memberListRepository;
@@ -68,7 +69,8 @@ public class BoxServiceImpl implements BoxService {
     }
 
     @Override
-    public BoxDto createBox(Long ownerPk, CreateBoxRequest createBoxRequest) {
+    public BoxDto createBox(CreateBoxRequest createBoxRequest, CustomUserDetails userDetails) {
+        Long ownerPk = userDetails.getMemberPk();
         // owner 존재 확인
         Member owner = memberRepository.findActiveById(ownerPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
@@ -94,6 +96,25 @@ public class BoxServiceImpl implements BoxService {
                 log.warn("Failed to create MemberList via service for boxPk={} ownerPk={}: {}", savedBox.getBoxPk(), ownerPk, e.getErrorCode());
                 throw e;
             }
+
+            //박스 생성과 함께 채널도 생성
+            record ChannelSpec(String name, ChannelType type){}
+            String boxCode = createdBox.getBoxCode();
+            List<Long> defaultMember = List.of(1L);
+            List<ChannelSpec> specs = List.of(
+                    new ChannelSpec("NOTICE", ChannelType.NOTICE),
+                    new ChannelSpec("GENERAL", ChannelType.GENERAL)
+            );
+
+            specs.stream()
+                    .map(s -> ChannelCreateRequest.builder()
+                            .boxCode(boxCode)
+                            .channelId(boxCode+"_"+s.name())
+                            .channelName(s.name())
+                            .type(s.type())
+                            .memberPks(defaultMember)
+                            .build())
+                    .forEach(req -> channelService.createChannel(req, userDetails));
 
             // box 엔티티 dto 로 변환하여 반환
             return BoxDto.from(savedBox);

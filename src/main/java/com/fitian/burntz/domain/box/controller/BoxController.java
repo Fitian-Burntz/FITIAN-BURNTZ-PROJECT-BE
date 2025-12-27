@@ -33,10 +33,10 @@ public class BoxController implements BoxDocs {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody CreateBoxRequest createBoxRequest
     ){
-        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+        preconditionValidator.requireLogin(customUserDetails);
 
         // 실제 생성 로직 실행 (예외는 글로벌 핸들러로 처리)
-        BoxDto boxDtoResponse = boxService.createBox(loginMemberPk, createBoxRequest);
+        BoxDto boxDtoResponse = boxService.createBox(createBoxRequest, customUserDetails);
 
         // 바디에는 간단한 메시지(원하면 null로 해도 됨)
         return ResponseEntity.status(HttpStatus.CREATED)
