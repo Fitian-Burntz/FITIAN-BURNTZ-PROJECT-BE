@@ -18,6 +18,7 @@ import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import com.google.cloud.firestore.Firestore;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
  * @description : 채널(채팅) 서비스 입니다.
  */
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -188,17 +190,18 @@ public class ChannelService {
 
     public boolean deleteParticipant(ChannelLeaveRequest request, CustomUserDetails userDetails) {
 
-        Channel channel = participantRepository.findById(request.getChannelPk())
-                        .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND)).getChannel();
+        Channel channel = channelRepository.findById(request.getChannelPk())
+                        .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        Box box = channel.getBox();
-        Member member = memberRepository.findById(userDetails.getMemberPk())
-                        .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        Long boxPk = channel.getBox().getBoxPk();
+        String boxCode = channel.getBox().getBoxCode();
+        String channelId = channel.getChannelId();
 
-        MemberRole role = memberListRepository.findRoleByMemberAndBoxAndDeletedYN(member, box, BaseTime.Yn.N)
+        MemberList ml = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), boxPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-        if(!(role == MemberRole.OWNER || role == MemberRole.MANAGER)) {
+        //내보내기는 OWNER, MANAGER 만 가능
+        if(!(ml.getRole() == MemberRole.OWNER || ml.getRole() == MemberRole.MANAGER)) {
             throw new ValidationException(ErrorCode.FORBIDDEN);
         }
 
@@ -206,10 +209,10 @@ public class ChannelService {
 
         try {
             firestore.collection("boxes")
-                    .document(channel.getBox().getBoxCode())
+                    .document(boxCode)
                     .collection("channels")
-                    .document(channel.getChannelId())
-                    .update("memberPks",com.google.cloud.firestore.FieldValue.arrayUnion(request.getMemberPk()));
+                    .document(channelId)
+                    .update("memberPks",com.google.cloud.firestore.FieldValue.arrayRemove(request.getMemberPk()));
         } catch ( Exception e) {
             throw new RuntimeException("Firestore 참여자 제거 실패", e);
         }
