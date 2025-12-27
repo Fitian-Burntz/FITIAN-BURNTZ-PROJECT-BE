@@ -24,8 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author : 김관중
@@ -199,10 +199,20 @@ public class MembershipService {
         boolean exist2 = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N);
         if(!exist2) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
-        Membership membership = membershipRepository.findLatestByBoxPkAndMemberPk(boxPk, memberPk)
-                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+        //가장 최근 멤버십의 로그만 확인
+//        Membership membership = membershipRepository.findLatestByBoxPkAndMemberPk(boxPk, memberPk)
+//                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+//
+//        List<MembershipHistory> historyList2 = historyRepository.findAllByMembershipMembershipPk(membership.getMembershipPk());
 
-        List<MembershipHistory> historyList = historyRepository.findAllByMembershipMembershipPk(membership.getMembershipPk());
+        //이전 멤버십까지 전체 로그 확인
+        List<Membership> membershipList = membershipRepository.findByBoxBoxPkAndMemberMemberPk(boxPk, memberPk);
+        Set<Long> membershipPkSet = membershipList.stream()
+                .map(Membership::getMembershipPk)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        List<MembershipHistory> historyList = historyRepository.findAllByMembershipMembershipPkIn(membershipPkSet);
 
         List<MembershipHistoryResponse> responseList = new ArrayList<>();
 

@@ -1,6 +1,5 @@
 package com.fitian.burntz.domain.membership.repository;
 
-import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.global.common.entity.BaseTime.Yn;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +18,8 @@ import java.util.Optional;
  */
 public interface MembershipRepository extends JpaRepository<Membership, Long> {
     Optional<Membership> findByBoxBoxPkAndMemberMemberPkAndDeletedYN(Long boxPk, Long memberPk, Yn deletedYN);
+
+    List<Membership> findByBoxBoxPkAndMemberMemberPk(Long boxPk, Long memberPk);
 
     /** 해당 box 에 member 의 활성화 membershipPk 중 가장 큰 값 조회 **/
     @Query(value =
