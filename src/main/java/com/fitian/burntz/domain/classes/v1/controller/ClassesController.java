@@ -35,6 +35,14 @@ public class ClassesController implements ClassesDocs {
         return ResponseEntity.ok(ApiResponse.success(classesService.getClassesWithCount(request, userDetails)));
     }
 
+    @GetMapping("/getClassWithRecord")
+    @Override
+    public ResponseEntity<ApiResponse<List<ClassesWithParticipant>>> getClassesWithRecords(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @ModelAttribute ClassesWithRecordsSearchRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(classesService.getClassesWithRecords(request, userDetails)));
+    }
+
     @PostMapping()
     @Override
     public ApiResponse<Void> createClasses(

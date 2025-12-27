@@ -10,6 +10,8 @@ import com.fitian.burntz.domain.classes.repository.ClassParticipantRepository;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
+import com.fitian.burntz.domain.record.entity.Record;
+import com.fitian.burntz.domain.record.repository.RecordRepository;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
@@ -18,8 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author : 김관중
@@ -37,6 +39,7 @@ public class ClassesService {
     private final MemberListRepository memberListRepository;
     private final ClassesRepository classesRepository;
     private final ClassParticipantRepository participantRepository;
+    private final RecordRepository recordRepository;
 
     //참여인원 카운트없이 가져오는 getClasses 현재 안씀.
     public List<ClassesResponse> getClasses(ClassesSearchRequest request, CustomUserDetails userDetails) {
@@ -98,6 +101,62 @@ public class ClassesService {
                 }).toList();
 
         return responseList;
+    }
+
+    public List<ClassesWithParticipant> getClassesWithRecords(ClassesWithRecordsSearchRequest request, CustomUserDetails userDetails) {
+
+        List<Classes> classesList = classesRepository.findByBoxBoxPkAndClassDateAndDeletedYN(request.getBoxPk(), request.getDate(), BaseTime.Yn.N);
+
+        List<ClassesWithParticipant> result = new ArrayList<>();
+
+        for(Classes c : classesList) {
+
+            List<ClassParticipant> pList = participantRepository.findByClassesClassesPkAndDeletedYN(c.getClassesPk(), BaseTime.Yn.N);
+
+            List<Record> rList = recordRepository.findByClassesClassesPkAndDeletedYN(c.getClassesPk(), BaseTime.Yn.N);
+
+            // rList -> memberListPkSet (null 제거)
+            Set<Long> memberListPkSet = Optional.ofNullable(rList).orElseGet(Collections::emptyList).stream()
+                    .map(rec -> Optional.ofNullable(rec)
+                            .map(Record::getMemberList)
+                            .map(MemberList::getMemberListPk)
+                            .orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            // pList -> prList (null-safe)
+            List<ParticipantWithRecord> prList = Optional.ofNullable(pList).orElseGet(Collections::emptyList).stream()
+                    .filter(Objects::nonNull) // p가 null이면 제거
+                    .map(p -> {
+                        // memberList 관련 안전 추출 (한 번만 접근)
+                        MemberList ml = p.getMemberList(); // ml may be null
+                        Long memberListPk = ml != null ? ml.getMemberListPk() : null;
+                        boolean recordExists = memberListPk != null && memberListPkSet.contains(memberListPk);
+
+                        // classes 안전 추출
+                        Long classesPk = Optional.ofNullable(p.getClasses()).map(Classes::getClassesPk).orElse(null);
+                        String boxNickname = ml != null ? ml.getBoxNickname() : null;
+
+                        return ParticipantWithRecord.builder()
+                                .classParticipantPk(p.getClassParticipantPk()) // p is non-null here
+                                .classesPk(classesPk)
+                                .memberListPk(memberListPk)
+                                .boxNickname(boxNickname)
+                                .recordExists(recordExists)
+                                .build();
+                    }).toList();
+
+            ClassesWithParticipant cp = ClassesWithParticipant.builder()
+                    .classesPk(c.getClassesPk())
+                    .classDate(c.getClassDate())
+                    .startTime(c.getStartTime())
+                    .participantWithRecordList(prList)
+                    .build();
+
+            result.add(cp);
+        }
+
+        return result;
     }
 
     public void createClasses(List<ClassesCreateRequest> requestList, CustomUserDetails userDetails) {

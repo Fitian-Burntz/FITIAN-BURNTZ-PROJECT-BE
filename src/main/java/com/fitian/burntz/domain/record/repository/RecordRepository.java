@@ -137,4 +137,6 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
             @Param("memberListPk") Long memberListPk,
             @Param("deletedYN") BaseTime.Yn deletedYN
     );
+
+    List<Record> findByClassesClassesPkAndDeletedYN(Long classesPk, BaseTime.Yn deletedYN);
 }

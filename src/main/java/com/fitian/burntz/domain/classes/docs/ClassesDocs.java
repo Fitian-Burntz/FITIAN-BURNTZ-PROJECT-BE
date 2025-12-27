@@ -29,6 +29,12 @@ public interface ClassesDocs {
             @Valid @ModelAttribute ClassesSearchRequest request
     );
 
+    @Operation(summary = "수업 목록 조회", description = "날짜로 기록유무를 포함한 박스의 수업 및 참여자를 조회합니다.")
+    ResponseEntity<ApiResponse<List<ClassesWithParticipant>>> getClassesWithRecords(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @ModelAttribute ClassesWithRecordsSearchRequest request
+    );
+
     @Operation(summary = "수업 다건 생성", description = "요청 리스트를 받아 여러 수업을 한 번에 생성합니다.")
     ApiResponse<Void> createClasses(
             @Valid @RequestBody List<ClassesCreateRequest> requestList,
