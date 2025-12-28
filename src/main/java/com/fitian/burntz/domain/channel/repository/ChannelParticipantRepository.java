@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -47,6 +48,13 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
             "SET c.deletedYN = :yn, c.updatedAt = CURRENT_TIMESTAMP " +
             "WHERE c.channel.channelPk = :channelPk")
     int markDeletedByChannelPk(@Param("channelPk") Long channelPk, @Param("yn") BaseTime.Yn yn);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ChannelParticipant c " +
+            "SET c.deletedYN = :yn, c.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE c.channel.channelPk IN :channelPkList " +
+            "  AND c.member.memberPk = :memberPk")
+    int markDeletedByMemberPkAndChannelPkIn(@Param("memberPk") Long memberPk, @Param("channelPkList") Collection<Long> channelPkList, @Param("yn") BaseTime.Yn yn);
 
     boolean existsByMemberAndChannel_ChannelPkAndDeletedYN(Member member, Long channelPk, BaseTime.Yn deletedYN);
 }

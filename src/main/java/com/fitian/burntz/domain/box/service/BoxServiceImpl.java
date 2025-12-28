@@ -100,7 +100,6 @@ public class BoxServiceImpl implements BoxService {
             //박스 생성과 함께 채널도 생성
             record ChannelSpec(String name, ChannelType type){}
             String boxCode = createdBox.getBoxCode();
-            List<Long> defaultMember = List.of(1L);
             List<ChannelSpec> specs = List.of(
                     new ChannelSpec("NOTICE", ChannelType.NOTICE),
                     new ChannelSpec("GENERAL", ChannelType.GENERAL)
@@ -112,9 +111,11 @@ public class BoxServiceImpl implements BoxService {
                             .channelId(boxCode+"_"+s.name())
                             .channelName(s.name())
                             .type(s.type())
-                            .memberPks(defaultMember)
                             .build())
                     .forEach(req -> channelService.createChannel(req, userDetails));
+
+            //만들어진 채널에 참여자로 추가
+            channelService.inviteMemberToAllPublicChannels(ownerPk, savedBox.getBoxPk());
 
             //owner의 last visited boxPk 변경
             owner.updateLastVisitedBoxPk(savedBox.getBoxPk());

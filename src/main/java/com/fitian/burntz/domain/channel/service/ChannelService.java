@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
+import com.fitian.burntz.domain.channel.enums.ChannelType;
 import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
 import com.fitian.burntz.domain.channel.v1.dto.*;
 import com.fitian.burntz.domain.channel.entity.Channel;
@@ -16,11 +17,17 @@ import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.WriteBatch;
+import com.google.cloud.firestore.WriteResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -237,5 +244,61 @@ public class ChannelService {
         int updatedChannel = channelRepository.markDeletedByChannelPk(request.getChannelPk(), BaseTime.Yn.Y);
 
         return updatedChannel > 0 && updatedParticipant > 0;
+    }
+
+    public void inviteMemberToAllPublicChannels(Long memberPk, Long boxPk){
+
+        Member member = memberRepository.findById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        List<ChannelType> types = List.of(ChannelType.PUBLIC, ChannelType.NOTICE, ChannelType.GENERAL);
+
+        List<Channel> channelList = channelRepository.findByBoxBoxPkAndDeletedYNAndChannelTypeIn(boxPk, BaseTime.Yn.N, types);
+
+        List<ChannelParticipant> insertList = new ArrayList<>();
+
+        for(Channel ch : channelList) {
+            ChannelParticipant p = ChannelParticipant.builder()
+                    .channel(ch)
+                    .member(member)
+                    .build();
+            insertList.add(p);
+        }
+
+        participantRepository.saveAll(insertList);
+
+        //DB 커밋 후 firestore 업데이트
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                WriteBatch batch = firestore.batch();
+                for(Channel ch : channelList) {
+                    DocumentReference docRef = firestore.collection("boxes")
+                            .document(ch.getBox().getBoxCode())
+                            .collection("channels")
+                            .document(ch.getChannelId());
+                    batch.update(docRef,"memberPks",com.google.cloud.firestore.FieldValue.arrayUnion(memberPk));
+                }
+                try {
+                    ApiFuture<List<WriteResult>> commitFuture = batch.commit();
+                    commitFuture.get();
+                    log.info("Firestore updated for member {} in {} channels", memberPk, channelList.size());
+                } catch (Exception e) {
+                    log.error("Failed to update Firestore memberPks for member {}: {}", memberPk, e.toString(), e);
+                }
+            }
+        });
+    }
+
+    public void removeMemberFromAllPublicChannels(Long memberPk, Long boxPk){
+
+        Member member = memberRepository.findById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        List<ChannelType> types = List.of(ChannelType.PUBLIC, ChannelType.NOTICE, ChannelType.GENERAL);
+
+        List<Channel> channelList = channelRepository.findByBoxBoxPkAndDeletedYNAndChannelTypeIn(boxPk, BaseTime.Yn.N, types);
+
+
     }
 }
