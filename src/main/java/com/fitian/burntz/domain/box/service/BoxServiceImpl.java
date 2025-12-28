@@ -116,6 +116,10 @@ public class BoxServiceImpl implements BoxService {
                             .build())
                     .forEach(req -> channelService.createChannel(req, userDetails));
 
+            //owner의 last visited boxPk 변경
+            owner.updateLastVisitedBoxPk(savedBox.getBoxPk());
+            memberRepository.save(owner);
+
             // box 엔티티 dto 로 변환하여 반환
             return BoxDto.from(savedBox);
         }
