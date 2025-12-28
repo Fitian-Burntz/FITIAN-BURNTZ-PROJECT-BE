@@ -91,9 +91,10 @@ public class ChannelController implements ChannelDocs {
     @DeleteMapping("/deleteChannel")
     @Override
     public ApiResponse<Void> deleteChanel(
-            @Valid @RequestBody ChannelLeaveRequest request,
+            @Valid @RequestBody ChannelDeleteRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
-
+        boolean ok = channelService.deleteChannel(request, userDetails);
+        if(!ok) return ApiResponse.failure("삭제에 실패했습니다.");
         return ApiResponse.success(null, "채널 삭제 완료.");
     }
 }

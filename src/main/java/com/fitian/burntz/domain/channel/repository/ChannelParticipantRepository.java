@@ -42,5 +42,11 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
             "WHERE c.channel.channelPk = :channelPk and c.member.memberPk = :memberPk")
     int markDeletedByPk(@Param("channelPk") Long channelPk, @Param("memberPk") Long memberPk, @Param("yn") BaseTime.Yn yn);
 
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ChannelParticipant c " +
+            "SET c.deletedYN = :yn, c.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE c.channel.channelPk = :channelPk")
+    int markDeletedByChannelPk(@Param("channelPk") Long channelPk, @Param("yn") BaseTime.Yn yn);
+
     boolean existsByMemberAndChannel_ChannelPkAndDeletedYN(Member member, Long channelPk, BaseTime.Yn deletedYN);
 }

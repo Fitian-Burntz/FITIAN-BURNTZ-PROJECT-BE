@@ -219,4 +219,23 @@ public class ChannelService {
 
         return updated > 0;
     }
+
+    public boolean deleteChannel(ChannelDeleteRequest request, CustomUserDetails userDetails) {
+
+        Channel channel = channelRepository.findById(request.getChannelPk())
+                .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
+
+        //MANAGER, OWNER 검증
+        MemberList list = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), channel.getBox().getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        if(list.getRole() == MemberRole.GUEST || list.getRole() == MemberRole.MEMBER) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
+        //해당 채널 참여자 삭제
+        int updatedParticipant = participantRepository.markDeletedByChannelPk(request.getChannelPk(), BaseTime.Yn.Y);
+
+        //해당 채널 삭제
+        int updatedChannel = channelRepository.markDeletedByChannelPk(request.getChannelPk(), BaseTime.Yn.Y);
+
+        return updatedChannel > 0 && updatedParticipant > 0;
+    }
 }

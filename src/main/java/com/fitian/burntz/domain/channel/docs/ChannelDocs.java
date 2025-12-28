@@ -63,7 +63,7 @@ public interface ChannelDocs {
 
     @Operation(summary = "채널 삭제", description = "해당 채널을 삭제합니다.")
     ApiResponse<Void> deleteChanel(
-            @Valid @RequestBody ChannelLeaveRequest request,
+            @Valid @RequestBody ChannelDeleteRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }
