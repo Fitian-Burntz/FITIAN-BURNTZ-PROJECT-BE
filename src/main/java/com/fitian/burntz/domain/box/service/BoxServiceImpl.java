@@ -149,6 +149,8 @@ public class BoxServiceImpl implements BoxService {
             log.info("MemberList created: boxPk={} joinMemberPk={} joinMemberRole:{}",
                     savedJoinNewMember.getBox().getBoxPk(), joinMemberPk, savedJoinNewMember.getRole());
 
+            joinMember.updateLastVisitedBoxPk(belongBox.getBoxPk());
+
             return JoinBoxDto.from(joinMemberPk, belongBoxCode);
         }
         catch (DataIntegrityViolationException e) {
