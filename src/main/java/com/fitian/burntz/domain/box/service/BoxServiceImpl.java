@@ -150,6 +150,7 @@ public class BoxServiceImpl implements BoxService {
                     savedJoinNewMember.getBox().getBoxPk(), joinMemberPk, savedJoinNewMember.getRole());
 
             joinMember.updateLastVisitedBoxPk(belongBox.getBoxPk());
+            memberRepository.save(joinMember);
 
             return JoinBoxDto.from(joinMemberPk, belongBoxCode);
         }
