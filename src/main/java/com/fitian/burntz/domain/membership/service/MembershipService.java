@@ -107,7 +107,7 @@ public class MembershipService {
                     .actionType(HistoryActionType.CREATE)
                     .preValue(null)
                     .newValue(newValue)
-                    .memo(request.getMemo())
+                    .memo("CREATOR : "+list.getBoxNickname()+"( "+list.getRole()+" )"+request.getMemo())
                     .period(request.getPeriod())
                     .createdBy(createdBy)
                     .build();
@@ -143,7 +143,7 @@ public class MembershipService {
                     .actionType(HistoryActionType.UPDATE)
                     .preValue(preValue)
                     .newValue(newValue)
-                    .memo(request.getMemo())
+                    .memo("CREATOR : "+list.getBoxNickname()+"( "+list.getRole()+" )"+request.getMemo())
                     .period(request.getPeriod())
                     .createdBy(createdBy)
                     .build();
@@ -178,7 +178,7 @@ public class MembershipService {
                     .actionType(HistoryActionType.DELETE)
                     .preValue(preValue)
                     .newValue(null)
-                    .memo(null)
+                    .memo("CREATOR : "+list.getBoxNickname()+"( "+list.getRole()+" )")
                     .period(0)
                     .createdBy(createdBy)
                     .build();
