@@ -30,7 +30,7 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
             @Param("YN") BaseTime.Yn yn
     );
 
-    @Query("select cp.channel from ChannelParticipant cp where cp.member = :member and cp.channel.box = :box and p.deletedYN = 'N'")
+    @Query("select cp.channel from ChannelParticipant cp where cp.member = :member and cp.channel.box = :box and cp.deletedYN = 'N'")
     List<Channel> findChannelsByMemberAndBox(@Param("member") Member member, @Param("box") Box box);
 
     @Query("select p.member.memberPk from ChannelParticipant p where p.channel = :channel and p.deletedYN = 'N'")
