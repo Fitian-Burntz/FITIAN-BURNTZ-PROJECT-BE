@@ -263,12 +263,17 @@ public class ChannelService {
 
         List<ChannelParticipant> insertList = new ArrayList<>();
 
+        List<ChannelSnapshot> snapshots = new ArrayList<>();
+
         for(Channel ch : channelList) {
             ChannelParticipant p = ChannelParticipant.builder()
                     .channel(ch)
                     .member(member)
                     .build();
             insertList.add(p);
+
+            String boxCode = ch.getBox().getBoxCode(); // 안전: 같은 트랜잭션 내
+            snapshots.add(new ChannelSnapshot(boxCode, ch.getChannelId(), ch.getChannelPk()));
         }
 
         participantRepository.saveAll(insertList);
@@ -278,17 +283,17 @@ public class ChannelService {
             @Override
             public void afterCommit() {
                 WriteBatch batch = firestore.batch();
-                for(Channel ch : channelList) {
+                for(ChannelSnapshot ch : snapshots) {
                     DocumentReference docRef = firestore.collection("boxes")
-                            .document(ch.getBox().getBoxCode())
+                            .document(ch.boxCode)
                             .collection("channels")
-                            .document(ch.getChannelId());
+                            .document(ch.channelId);
                     batch.update(docRef,"memberPks",com.google.cloud.firestore.FieldValue.arrayUnion(memberPk));
                 }
                 try {
                     ApiFuture<List<WriteResult>> commitFuture = batch.commit();
                     commitFuture.get();
-                    log.info("Firestore updated for member {} in {} channels", memberPk, channelList.size());
+                    log.info("Firestore updated for member {} in {} channels", memberPk, snapshots.size());
                 } catch (Exception e) {
                     log.error("Failed to update Firestore memberPks for member {}: {}", memberPk, e, e);
                 }
@@ -305,6 +310,10 @@ public class ChannelService {
 
         List<Channel> channelList = channelRepository.findByBoxBoxPkAndDeletedYNAndChannelTypeIn(boxPk, BaseTime.Yn.N, types);
 
+        List<ChannelSnapshot> snapshots = channelList.stream()
+                .map(ch -> new ChannelSnapshot(ch.getBox().getBoxCode(), ch.getChannelId(), ch.getChannelPk()))
+                .toList();
+
         participantRepository.markDeletedByMemberPkAndChannelIn(memberPk, channelList, BaseTime.Yn.Y);
 
         //DB 커밋 후 firestore 업데이트
@@ -312,21 +321,32 @@ public class ChannelService {
             @Override
             public void afterCommit() {
                 WriteBatch batch = firestore.batch();
-                for(Channel ch : channelList) {
+                for(ChannelSnapshot ch : snapshots) {
                     DocumentReference docRef = firestore.collection("boxes")
-                            .document(ch.getBox().getBoxCode())
+                            .document(ch.boxCode)
                             .collection("channels")
-                            .document(ch.getChannelId());
+                            .document(ch.channelId);
                     batch.update(docRef,"memberPks",com.google.cloud.firestore.FieldValue.arrayRemove(memberPk));
                 }
                 try {
                     ApiFuture<List<WriteResult>> commitFuture = batch.commit();
                     commitFuture.get();
-                    log.info("Firestore removed for member {} in {} channels", memberPk, channelList.size());
+                    log.info("Firestore removed for member {} in {} channels", memberPk, snapshots.size());
                 } catch (Exception e) {
                     log.error("Failed to remove Firestore memberPks for member {}: {}", memberPk, e, e);
                 }
             }
         });
+    }
+
+    private static class ChannelSnapshot {
+        final String boxCode;
+        final String channelId;
+        final Long channelPk;
+        ChannelSnapshot(String boxCode, String channelId, Long channelPk) {
+            this.boxCode = boxCode;
+            this.channelId = channelId;
+            this.channelPk = channelPk;
+        }
     }
 }

@@ -141,7 +141,7 @@ public class MemberListServiceImpl implements MemberListService{
         log.info("Changed member role: boxPk={} operatorPk={} from={} to={} byOperator={}",
                 boxPk, targetMemberPk, oldRole, newRole, operatorPk);
 
-        if(updateMemberRoleDto.getRole() == MemberRole.GUEST) {
+        if(newRole == MemberRole.GUEST) {
             channelService.removeMemberFromAllPublicChannels(targetMemberPk, boxPk);
         } else if (oldRole == MemberRole.GUEST) {
             channelService.inviteMemberToAllPublicChannels(targetMemberPk, boxPk);
