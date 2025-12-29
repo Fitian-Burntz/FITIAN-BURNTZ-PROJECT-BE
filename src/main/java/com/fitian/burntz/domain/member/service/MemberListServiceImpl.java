@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.member.service;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.channel.service.ChannelService;
 import com.fitian.burntz.domain.member.dto.BoxWithMembershipDto;
 import com.fitian.burntz.domain.member.dto.memberList_dto.*;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -51,6 +52,7 @@ public class MemberListServiceImpl implements MemberListService{
     private final MemberService memberService;
     private final RecordRepository recordRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ChannelService channelService;
 
     /** box 와 연관된 memberList 생성. box 생성 및 member 추가 시 종속적으로 생성 **/
     @Override
@@ -138,6 +140,12 @@ public class MemberListServiceImpl implements MemberListService{
 
         log.info("Changed member role: boxPk={} operatorPk={} from={} to={} byOperator={}",
                 boxPk, targetMemberPk, oldRole, newRole, operatorPk);
+
+        if(updateMemberRoleDto.getRole() == MemberRole.GUEST) {
+            channelService.removeMemberFromAllPublicChannels(targetMemberPk, boxPk);
+        } else if (oldRole == MemberRole.GUEST) {
+            channelService.inviteMemberToAllPublicChannels(targetMemberPk, boxPk);
+        }
 
         return UpdateMemberRoleDto.UpdateMemberRoleSuccessDto(
                 boxPk, targetMemberPk, newRole, targetMember.getUpdatedAt()

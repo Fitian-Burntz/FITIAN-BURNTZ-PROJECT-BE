@@ -135,6 +135,9 @@ public class ChannelService {
 
     public void inviteParticipants(ChannelInviteRequest request, CustomUserDetails userDetails) {
 
+        boolean exist = participantRepository.existByChannelPkAndMemberPkAndDeletedYN(userDetails.getMemberPk(), request.getChannelPk(), BaseTime.Yn.N);
+        if(!exist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
         Channel channel = channelRepository.findById(request.getChannelPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
 
@@ -175,6 +178,9 @@ public class ChannelService {
     }
 
     public List<ParticipantListResponse> getParticipantsInfo(Long channelPk, CustomUserDetails userDetails){
+
+        boolean exist = participantRepository.existByChannelPkAndMemberPkAndDeletedYN(userDetails.getMemberPk(), channelPk, BaseTime.Yn.N);
+        if(!exist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
 
         Channel channel = channelRepository.findById(channelPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
@@ -284,7 +290,7 @@ public class ChannelService {
                     commitFuture.get();
                     log.info("Firestore updated for member {} in {} channels", memberPk, channelList.size());
                 } catch (Exception e) {
-                    log.error("Failed to update Firestore memberPks for member {}: {}", memberPk, e.toString(), e);
+                    log.error("Failed to update Firestore memberPks for member {}: {}", memberPk, e, e);
                 }
             }
         });
@@ -292,13 +298,35 @@ public class ChannelService {
 
     public void removeMemberFromAllPublicChannels(Long memberPk, Long boxPk){
 
-        Member member = memberRepository.findById(memberPk)
+        memberRepository.findById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         List<ChannelType> types = List.of(ChannelType.PUBLIC, ChannelType.NOTICE, ChannelType.GENERAL);
 
         List<Channel> channelList = channelRepository.findByBoxBoxPkAndDeletedYNAndChannelTypeIn(boxPk, BaseTime.Yn.N, types);
 
+        participantRepository.markDeletedByMemberPkAndChannelIn(memberPk, channelList, BaseTime.Yn.Y);
 
+        //DB 커밋 후 firestore 업데이트
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                WriteBatch batch = firestore.batch();
+                for(Channel ch : channelList) {
+                    DocumentReference docRef = firestore.collection("boxes")
+                            .document(ch.getBox().getBoxCode())
+                            .collection("channels")
+                            .document(ch.getChannelId());
+                    batch.update(docRef,"memberPks",com.google.cloud.firestore.FieldValue.arrayRemove(memberPk));
+                }
+                try {
+                    ApiFuture<List<WriteResult>> commitFuture = batch.commit();
+                    commitFuture.get();
+                    log.info("Firestore removed for member {} in {} channels", memberPk, channelList.size());
+                } catch (Exception e) {
+                    log.error("Failed to remove Firestore memberPks for member {}: {}", memberPk, e, e);
+                }
+            }
+        });
     }
 }
