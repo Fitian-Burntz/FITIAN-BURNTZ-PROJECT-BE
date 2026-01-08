@@ -94,6 +94,7 @@ public class MemberListServiceImpl implements MemberListService{
     @Override
     @Transactional
     public UpdateMemberRoleDto updateMemberRole(Long operatorPk, UpdateMemberRoleDto updateMemberRoleDto) {
+
         //서비스에서 한 번 더 필요 데이터 체크 (방어적 코딩)
         // 기본 파라미터 검증
         operatorPk = preconditionValidator.requireMemberPk(operatorPk);
@@ -136,7 +137,8 @@ public class MemberListServiceImpl implements MemberListService{
 
         // 변경 수행 (도메인 메서드 사용)
         targetMember.changeRole(newRole);
-        memberListRepository.save(targetMember); // 명시적 저장 (JPA 변경 감지로도 가능)
+        memberListRepository.save(targetMember);
+        memberListRepository.flush();
 
         log.info("Changed member role: boxPk={} operatorPk={} from={} to={} byOperator={}",
                 boxPk, targetMemberPk, oldRole, newRole, operatorPk);
