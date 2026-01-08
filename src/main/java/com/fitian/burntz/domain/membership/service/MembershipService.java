@@ -177,11 +177,19 @@ public class MembershipService {
         Membership membership = membershipRepository.findById(request.getMembershipPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
 
+        MemberList ml = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
         if(!memberPk.equals(membership.getMember().getMemberPk())) throw new ValidationException(ErrorCode.USER_NOT_FOUND);
 
         try{
             String preValue = objectMapper.writeValueAsString(MembershipHistorySnapshot.from(membership));
+            membership.delete();
             membership.markDeleted();
+            ml.changeRole(MemberRole.GUEST);
+            membershipRepository.flush();
+            memberListRepository.flush();
+            channelService.removeMemberFromAllPublicChannels(memberPk, boxPk);
 
             Member createdBy = memberRepository.findById(userDetails.getMemberPk())
                     .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));

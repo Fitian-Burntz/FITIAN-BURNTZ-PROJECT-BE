@@ -83,4 +83,10 @@ public class Membership extends BaseTime {
             this.status = MembershipStatus.EXPIRED;
         }
     }
+
+    public void delete() {
+        if (this.status != MembershipStatus.DELETE) {
+            this.status = MembershipStatus.DELETE;
+        }
+    }
 }
