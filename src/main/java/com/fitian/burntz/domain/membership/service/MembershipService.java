@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.channel.service.ChannelService;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
@@ -21,9 +22,11 @@ import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +45,7 @@ import java.util.stream.Collectors;
 public class MembershipService {
 
     private final ObjectMapper objectMapper;
+    private final ChannelService channelService;
     private final MemberRepository memberRepository;
     private final BoxRepository boxRepository;
     private final MembershipRepository membershipRepository;
@@ -84,6 +88,8 @@ public class MembershipService {
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
         Box box = boxRepository.findById(boxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+        MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         Membership membership = Membership.builder()
                 .membershipName(request.getMembershipName())
@@ -94,6 +100,13 @@ public class MembershipService {
                 .member(member)
                 .box(box)
                 .build();
+
+        // 멤버 role 변경
+        memberList.changeRole(MemberRole.MEMBER);
+        memberListRepository.save(memberList);
+
+        // 퍼플릭 채널 초대
+        channelService.inviteMemberToAllPublicChannels(memberPk, boxPk);
 
         membershipRepository.save(membership);
 
@@ -230,5 +243,38 @@ public class MembershipService {
            responseList.add(response);
         }
         return responseList;
+    }
+
+    @Scheduled(cron = "0 5 0 * * *")
+    public void checkExpirationDate() {
+        LocalDate today = LocalDate.now();
+
+        List<Membership> expiredTargets =
+                membershipRepository.findAllByExpirationDateLessThanAndDeletedYN(today, BaseTime.Yn.N);
+
+        List<MemberList> mlList = new ArrayList<>();
+
+        for (Membership membership : expiredTargets) {
+            membership.expire();
+
+            try {
+                MemberList ml = memberListRepository
+                        .findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(
+                                membership.getMember().getMemberPk(),
+                                membership.getBox().getBoxPk(),
+                                BaseTime.Yn.N
+                        )
+                        .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+                ml.changeRole(MemberRole.GUEST);
+                mlList.add(ml);
+
+            } catch (Exception e) {
+                log.error("Failed to process expiration. membershipPk={}", membership.getMembershipPk(), e);
+            }
+        }
+
+        membershipRepository.saveAll(expiredTargets);
+        memberListRepository.saveAll(mlList);
     }
 }

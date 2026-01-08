@@ -77,4 +77,10 @@ public class Membership extends BaseTime {
             this.memo = req.getMemo();
         }
     }
+
+    public void expire() {
+        if (this.status != MembershipStatus.EXPIRED) {
+            this.status = MembershipStatus.EXPIRED;
+        }
+    }
 }
