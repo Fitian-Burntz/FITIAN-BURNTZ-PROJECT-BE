@@ -66,6 +66,7 @@ public class ChannelService {
         Channel channel = Channel.builder()
                 .channelId(request.getChannelId())
                 .channelName(request.getChannelName())
+                .channelEmoji(request.getChannelEmoji())
                 .channelType(request.getType())
                 .box(box)
                 .createdBy(creator)
@@ -77,6 +78,7 @@ public class ChannelService {
         try {
             Map<String, Object> data = new HashMap<>();
             data.put("channelName", request.getChannelName());
+            data.put("channelEmoji", request.getChannelEmoji());
             data.put("type", request.getType());
             data.put("memberPks", request.getMemberPks());
             data.put("createdBy",userDetails.getMemberPk());
@@ -113,6 +115,7 @@ public class ChannelService {
                 .map(c -> ChannelListResponse.builder()
                         .channelPk(c.getChannelPk())
                         .channelId(c.getChannelId())
+                        .channelEmoji(c.getChannelEmoji())
                         .channelName(c.getChannelName())
                         .type(c.getChannelType())
                         .build())

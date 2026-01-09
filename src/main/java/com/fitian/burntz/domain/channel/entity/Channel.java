@@ -32,6 +32,9 @@ public class Channel extends BaseTime {
     @Column(name = "channel_name", length = 100)
     private String channelName;
 
+    @Column(name = "channel_emoji", length = 100)
+    private String channelEmoji;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "channel_type", length = 100)
     private ChannelType channelType;

@@ -38,6 +38,10 @@ public class ChannelCreateRequest {
     @Schema(description = "채널 이름", example = "General")
     private String channelName;
 
+    @NotBlank(message = "channelEmoji must not be blank")
+    @Schema(description = "채널 이모지", example = "\uD83D\uDE06")
+    private String channelEmoji;
+
     @NotNull(message = "type is required")
     @Schema(description = "채널 유형", example = "GROUP", allowableValues = {"group","public","notice","general"})
     private ChannelType type;
