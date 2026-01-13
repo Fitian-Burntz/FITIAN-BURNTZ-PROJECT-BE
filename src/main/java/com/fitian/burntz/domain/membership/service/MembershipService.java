@@ -253,7 +253,7 @@ public class MembershipService {
         return responseList;
     }
 
-    @Scheduled(cron = "0 5 0 * * *")
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
     public void checkExpirationDate() {
         LocalDate today = LocalDate.now();
 
