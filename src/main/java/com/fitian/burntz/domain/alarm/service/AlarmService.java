@@ -27,8 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AlarmService {
 
-    private FcmTokenRepository fcmTokenRepository;
-    private MemberRepository memberRepository;
+    private final FcmTokenRepository fcmTokenRepository;
+    private final MemberRepository memberRepository;
 
     public FcmToken upsertToken(CustomUserDetails userDetails, FcmTokenCreateRequest request) {
         return fcmTokenRepository.findTokenByMemberMemberPkAndDeviceIdAndDeletedYN(userDetails.getMemberPk(), request.getDeviceId())
