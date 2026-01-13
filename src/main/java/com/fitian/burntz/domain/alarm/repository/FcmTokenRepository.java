@@ -26,6 +26,6 @@ public interface FcmTokenRepository extends JpaRepository<FcmToken, Long> {
     List<FcmToken> findTokenByMemberMemberPkAndDeletedYN(@Param("memberPk") Long memberPk);
 
     @Query("select ft from FcmToken ft " +
-            "where token = :token and ft.deletedYN = 'N'")
-    Optional<FcmToken> findTokenByTokenAndDeletedYN(@Param("token") String token);
+            "where ft.member.memberPk = :memberPk and token = :token and ft.deletedYN = 'N'")
+    Optional<FcmToken> findTokenByTokenAndDeletedYN(@Param("memberPk") Long memberPk, @Param("token") String token);
 }

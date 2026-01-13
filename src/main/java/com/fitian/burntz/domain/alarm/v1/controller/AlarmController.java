@@ -4,7 +4,6 @@ import com.fitian.burntz.domain.alarm.entity.FcmToken;
 import com.fitian.burntz.domain.alarm.service.AlarmService;
 import com.fitian.burntz.domain.alarm.service.PushService;
 import com.fitian.burntz.domain.alarm.v1.dto.FcmTokenCreateRequest;
-import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -36,8 +35,6 @@ public class AlarmController {
             @Valid @RequestBody FcmTokenCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
         FcmToken token = alarmService.upsertToken(userDetails, request);
-        PushDto dto = new PushDto("새 토큰 등록 완료.", "token : "+token.getToken());
-        pushService.notifyUser(userDetails.getMemberPk(), dto);
-        return ApiResponse.success(null, "토큰 등록.");
+        return ApiResponse.success(null, "TokenPk : "+token.getTokenPk()+" 토큰 등록.");
     }
 }

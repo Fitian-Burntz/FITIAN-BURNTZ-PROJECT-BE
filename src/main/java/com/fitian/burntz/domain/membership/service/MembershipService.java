@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.membership.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fitian.burntz.domain.alarm.service.PushService;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
@@ -51,6 +52,7 @@ public class MembershipService {
     private final MembershipRepository membershipRepository;
     private final MemberListRepository memberListRepository;
     private final MembershipHistoryRepository historyRepository;
+    private final PushService pushService;
 
     public MembershipResponse getMembership(Long boxPk, Long memberPk, CustomUserDetails userDetails) {
         //회원 등급 검증
@@ -276,7 +278,7 @@ public class MembershipService {
 
                 ml.changeRole(MemberRole.GUEST);
                 mlList.add(ml);
-
+                pushService.notifyUserString(membership.getMember().getMemberPk(), "멤버십 만료", membership.getBox().getBoxName()+"의 멤버십이 만료되었습니다.");
             } catch (Exception e) {
                 log.error("Failed to process expiration. membershipPk={}", membership.getMembershipPk(), e);
             }

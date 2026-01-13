@@ -56,7 +56,43 @@ public class PushService {
                 SendResponse resp = response.getResponses().get(i);
                 if(!resp.isSuccessful()) {
                     String token = tokens.get(i);
-                    deleteToken(token);
+                    deleteToken(memberPk, token);
+                    log.warn("Deleted FCM token {} due to error {}", token, resp.getException().getMessage());
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Failed to send multicast FCM message", ex);
+        }
+    }
+
+    public void notifyUserString(Long memberPk, String title, String body) {
+        List<String> tokens = getTokens(memberPk);
+
+        if(tokens.isEmpty()){
+            log.debug("No token for user {}", memberPk);
+            return;
+        }
+
+        MulticastMessage message = MulticastMessage.builder()
+                .addAllTokens(tokens)
+                .setNotification(Notification.builder()
+                        .setTitle(title)
+                        .setBody(body)
+                        .build())
+                .putData("click_action", "FLUTTER_NOTIFICATION_CLICK")
+                .build();
+
+        try {
+            BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+            log.debug("Sent multicast to {} tokens : success = {}, failure = {}",
+                    tokens.size(),response.getSuccessCount(),response.getFailureCount());
+
+            for(int i = 0; i < response.getResponses().size(); i++) {
+                SendResponse resp = response.getResponses().get(i);
+                if(!resp.isSuccessful()) {
+                    String token = tokens.get(i);
+                    deleteToken(memberPk, token);
                     log.warn("Deleted FCM token {} due to error {}", token, resp.getException().getMessage());
                 }
             }
@@ -80,8 +116,8 @@ public class PushService {
     }
 
     //토큰 삭제 메서드
-    void deleteToken(String token) {
-        FcmToken fcmToken = fcmTokenRepository.findTokenByTokenAndDeletedYN(token)
+    void deleteToken(Long memberPk, String token) {
+        FcmToken fcmToken = fcmTokenRepository.findTokenByTokenAndDeletedYN(memberPk, token)
                 .orElseThrow(() -> new ValidationException(ErrorCode.FCMTOKEN_NOT_FOUND));
 
         fcmToken.markDeleted();
