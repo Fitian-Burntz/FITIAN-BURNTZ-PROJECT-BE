@@ -35,7 +35,7 @@ public class MemberController implements MemberDocs {
     }
 
     @Override
-    @GetMapping
+    @GetMapping("/myBoxes")
     public ResponseEntity<ApiResponse<List<BoxAndMemberListDto>>> getMyBoxes(@AuthenticationPrincipal CustomUserDetails customUserDetails){
         Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
