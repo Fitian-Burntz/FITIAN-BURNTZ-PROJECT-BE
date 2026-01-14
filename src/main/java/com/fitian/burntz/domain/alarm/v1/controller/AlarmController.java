@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.alarm.v1.controller;
 
+import com.fitian.burntz.domain.alarm.docs.AlarmDocs;
 import com.fitian.burntz.domain.alarm.entity.FcmToken;
 import com.fitian.burntz.domain.alarm.service.AlarmService;
 import com.fitian.burntz.domain.alarm.service.PushService;
@@ -25,10 +26,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/alarm")
 @RequiredArgsConstructor
-public class AlarmController {
+public class AlarmController implements AlarmDocs {
 
     private final AlarmService alarmService;
-    private final PushService pushService;
 
     @PostMapping()
     public ApiResponse<Void> upsertToken(
