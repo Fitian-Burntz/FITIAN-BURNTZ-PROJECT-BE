@@ -1,6 +1,7 @@
 package com.fitian.burntz.domain.membership.repository;
 
 import com.fitian.burntz.domain.membership.entity.Membership;
+import com.fitian.burntz.domain.membership.enums.MembershipStatus;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.entity.BaseTime.Yn;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -59,8 +60,9 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
                                                            @Param("memberPk") Long memberPk);
 
     /** 만료 기일이 지난 membership을 한번에 가져옴 **/
-    List<Membership> findAllByExpirationDateLessThanAndDeletedYN(
+    List<Membership> findAllByExpirationDateLessThanAndStatusAndDeletedYN(
             LocalDate today,
+            MembershipStatus status,
             BaseTime.Yn deletedYN
     );
 }

@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.member.controller;
 import com.fitian.burntz.domain.member.docs.MemberDocs;
 import com.fitian.burntz.domain.member.dto.MemberDto;
 import com.fitian.burntz.domain.member.dto.MemberInfoResponse;
+import com.fitian.burntz.domain.member.dto.memberList_dto.BoxAndMemberListDto;
 import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/member")
@@ -29,6 +32,16 @@ public class MemberController implements MemberDocs {
         MemberDto getMemberResponse = memberService.getMyInfo(loginMemberPk);
 
         return ResponseEntity.ok(ApiResponse.success(getMemberResponse));
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<BoxAndMemberListDto>>> getMyBoxes(@AuthenticationPrincipal CustomUserDetails customUserDetails){
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        List<BoxAndMemberListDto> boxAndMemberListDtoList = memberService.getMyBoxes(loginMemberPk);
+
+        return ResponseEntity.ok(ApiResponse.success(boxAndMemberListDtoList));
     }
 
     /** 내 정보 수정하기 (box nickname 수정과는 별개) **/

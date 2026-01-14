@@ -2,12 +2,17 @@ package com.fitian.burntz.domain.member.service;
 
 import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
+import com.fitian.burntz.domain.member.dto.memberList_dto.BoxAndMemberListDto;
+
+import java.util.List;
 
 public interface MemberService {
     MemberCreateResult getOrCreateMember(String provider, String memberId, String name, String email);
 
     /** 내 정보 가져오기 (box 관련 내 정보랑은 별개) **/
     MemberDto getMyInfo(Long memberPk);
+
+    List<BoxAndMemberListDto> getMyBoxes(Long memberPk);
 
     MemberDto updateMemberInfo(Long memberPk, String newNickname, String newGender);
 

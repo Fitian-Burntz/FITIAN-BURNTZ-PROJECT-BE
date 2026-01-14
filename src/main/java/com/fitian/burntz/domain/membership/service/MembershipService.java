@@ -13,6 +13,7 @@ import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.membership.entity.MembershipHistory;
 import com.fitian.burntz.domain.membership.enums.HistoryActionType;
+import com.fitian.burntz.domain.membership.enums.MembershipStatus;
 import com.fitian.burntz.domain.membership.repository.MembershipHistoryRepository;
 import com.fitian.burntz.domain.membership.v1.dto.*;
 import com.fitian.burntz.domain.membership.entity.Membership;
@@ -260,7 +261,7 @@ public class MembershipService {
         LocalDate today = LocalDate.now();
 
         List<Membership> expiredTargets =
-                membershipRepository.findAllByExpirationDateLessThanAndDeletedYN(today, BaseTime.Yn.N);
+                membershipRepository.findAllByExpirationDateLessThanAndStatusAndDeletedYN(today, MembershipStatus.ACTIVE, BaseTime.Yn.N);
 
         List<MemberList> mlList = new ArrayList<>();
 
@@ -277,6 +278,7 @@ public class MembershipService {
                         .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
                 ml.changeRole(MemberRole.GUEST);
+                ml.markDeleted();
                 mlList.add(ml);
                 pushService.notifyUserString(membership.getMember().getMemberPk(), "멤버십 만료", membership.getBox().getBoxName()+"의 멤버십이 만료되었습니다.");
             } catch (Exception e) {

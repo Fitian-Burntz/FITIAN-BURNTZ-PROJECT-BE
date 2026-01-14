@@ -35,7 +35,6 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     //해당 box에 해당 멤버가 속해있는지 확인하고 MemberList값을 반환
     Optional<MemberList> findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(Long memberPk, Long boxPk, BaseTime.Yn deletedYN);
 
-
     boolean existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(Long boxPk, Long memberPk, BaseTime.Yn deletedYN);
 
 
@@ -91,5 +90,9 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     List<MemberList> findAllByMemberMemberPkInAndBoxBoxPkAndDeletedYN(
             Collection<Long> memberPks,
             Long boxPk,
+            BaseTime.Yn deletedYN);
+
+    List<MemberList> findAllByMemberMemberPkAndDeletedYN(
+            Long memberPk,
             BaseTime.Yn deletedYN);
 }

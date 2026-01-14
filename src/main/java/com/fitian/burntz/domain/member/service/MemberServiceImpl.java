@@ -4,10 +4,13 @@ import com.fitian.burntz.domain.auth.service.RefreshTokenService;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.dto.MemberCreateResult;
 import com.fitian.burntz.domain.member.dto.MemberDto;
+import com.fitian.burntz.domain.member.dto.memberList_dto.BoxAndMemberListDto;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.member_enum.Gender;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
@@ -17,6 +20,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -132,6 +137,32 @@ public class MemberServiceImpl implements MemberService {
         }
 
         return MemberDto.from(member);
+    }
+
+    /** 내가 가입한 박스들 정보 가져오기 **/
+    @Override
+    public List<BoxAndMemberListDto> getMyBoxes(Long memberPk){
+        // 기본 파라미터 검증
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
+
+        Member member = memberRepository.findActiveById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        List<MemberList> memberLists = memberListRepository.findAllByMemberMemberPkAndDeletedYN(memberPk, BaseTime.Yn.N);
+        List<BoxAndMemberListDto> boxAndMemberListDtoList = new ArrayList<>();
+
+        for(MemberList ml : memberLists) {
+            BoxAndMemberListDto dto = BoxAndMemberListDto.builder()
+                    .boxPk(ml.getBox().getBoxPk())
+                    .boxCode(ml.getBox().getBoxCode())
+                    .boxName(ml.getBox().getBoxName())
+                    .boxNickname(ml.getBoxNickname())
+                    .role(ml.getRole())
+                    .build();
+            boxAndMemberListDtoList.add(dto);
+        }
+
+        return boxAndMemberListDtoList;
     }
 
 

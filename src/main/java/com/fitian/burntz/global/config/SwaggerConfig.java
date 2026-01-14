@@ -42,16 +42,6 @@ public class SwaggerConfig {
                         .scheme("bearer"));
     }
 
-    // 소셜 로그인 API 그룹
-    @Bean
-    public GroupedOpenApi oauthApi() {
-        return GroupedOpenApi.builder()
-                .group("🌐 소셜 로그인 API")
-                .pathsToMatch("/oauth2/docs/**")
-                .addOpenApiCustomizer(jwtSecurityCustomizer())
-                .build();
-    }
-
     // 인증 API 그룹
     @Bean
     public GroupedOpenApi authApi() {
@@ -150,6 +140,16 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("🪪 멤버십 API")
                 .pathsToMatch("/api/v1/boxPk/{boxPk}/membership/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // 알람 API 그룹
+    @Bean
+    public GroupedOpenApi oauthApi() {
+        return GroupedOpenApi.builder()
+                .group("⏰ 알람 로그인 API")
+                .pathsToMatch("/api/v1/alarm/**")
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }
