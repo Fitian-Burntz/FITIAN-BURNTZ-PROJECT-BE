@@ -2,7 +2,6 @@ package com.fitian.burntz.global.security.jwt;
 
 import com.fitian.burntz.domain.auth.dto.JwtTokenPair;
 import com.fitian.burntz.domain.member.entity.Member;
-import com.fitian.burntz.global.security.config.SecurityConfig;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -153,6 +152,15 @@ public class JwtTokenProvider {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public Claims parseClaimsOrThrow(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .setAllowedClockSkewSeconds(60)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     // [ADDED] 이 토큰이 리프레시 토큰인지 (클레임 기반 검사)

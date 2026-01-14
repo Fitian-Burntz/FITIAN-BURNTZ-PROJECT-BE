@@ -1,6 +1,9 @@
 package com.fitian.burntz.global.security.jwt;
 
+import com.fitian.burntz.global.exception.ErrorCode;
+import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetailsService;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -8,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -42,16 +46,19 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain chain)
             throws ServletException, IOException {
 
         String token = resolveToken(request);
         log.debug("[JwtTokenFilter] resolved token present? {}", token != null);
 
         try {
-            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+            if (StringUtils.hasText(token)) {
+
+                jwtTokenProvider.parseClaimsOrThrow(token);
+
                 // 필터가 이미 인증을 세팅했으면 건너뜀
                 if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -76,6 +83,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     }
                 }
             }
+        } catch(ExpiredJwtException e) {
+            throw new ValidationException(ErrorCode.TOKEN_EXPIRED);
         } catch (Exception e) {
             // 토큰 검증 실패 등 모든 예외는 여기서 잡아서 무시(다음 필터로 넘어가게)하거나
             // 필요하면 response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
