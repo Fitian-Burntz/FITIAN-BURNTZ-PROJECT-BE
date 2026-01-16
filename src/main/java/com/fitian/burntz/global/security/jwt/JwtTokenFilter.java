@@ -1,7 +1,6 @@
 package com.fitian.burntz.global.security.jwt;
 
 import com.fitian.burntz.global.exception.ErrorCode;
-import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetailsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -20,6 +19,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+
+import static com.fitian.burntz.global.security.handler.RestAuthenticationEntryPoint.ATTR_ERROR_CODE;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -84,10 +85,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 }
             }
         } catch(ExpiredJwtException e) {
-            throw new ValidationException(ErrorCode.TOKEN_EXPIRED);
+            SecurityContextHolder.clearContext();
+            request.setAttribute(ATTR_ERROR_CODE, ErrorCode.TOKEN_EXPIRED);
         } catch (Exception e) {
             // 토큰 검증 실패 등 모든 예외는 여기서 잡아서 무시(다음 필터로 넘어가게)하거나
             // 필요하면 response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+            SecurityContextHolder.clearContext();
+            request.setAttribute(ATTR_ERROR_CODE, ErrorCode.TOKEN_INVALID);
             log.warn("JwtTokenFilter error: {}", e.getMessage());
         }
 

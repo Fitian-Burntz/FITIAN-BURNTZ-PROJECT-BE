@@ -1,6 +1,8 @@
 package com.fitian.burntz.global.security.config;
 
 import com.fitian.burntz.global.security.core.CustomUserDetailsService;
+import com.fitian.burntz.global.security.handler.RestAccessDeniedHandler;
+import com.fitian.burntz.global.security.handler.RestAuthenticationEntryPoint;
 import com.fitian.burntz.global.security.jwt.JwtTokenFilter;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,8 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,6 +38,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
