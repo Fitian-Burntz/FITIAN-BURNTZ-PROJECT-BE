@@ -37,6 +37,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         return path.equals("/") ||
 
                 path.startsWith("/api/auth/") ||
+                path.startsWith("/api/v1/auth/login") ||
                 path.startsWith("/oauth2/")||
                 path.startsWith("/css/") ||
                 path.startsWith("/js/") ||
