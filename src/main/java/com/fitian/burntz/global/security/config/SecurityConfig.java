@@ -62,10 +62,7 @@ public class SecurityConfig {
 
                                 // 어드민 페이지
                                 "/api/v1/admin/**",
-                                "/admin/**",
-
-                                //로그인
-                                "/api/v1/auth/login"
+                                "/admin/**"
                         ).permitAll()
 
 

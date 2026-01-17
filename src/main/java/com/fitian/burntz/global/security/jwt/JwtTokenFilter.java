@@ -33,11 +33,11 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException{
         String path = request.getRequestURI();
-
+        log.info("[JwtTokenFilter] shouldNotFilter check, path={}", path);
         return path.equals("/") ||
 
                 path.startsWith("/api/auth/") ||
-                path.startsWith("/api/v1/auth/login") ||
+                path.equals("/api/v1/auth/login") ||
                 path.startsWith("/oauth2/")||
                 path.startsWith("/css/") ||
                 path.startsWith("/js/") ||
