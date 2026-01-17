@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.auth.controller;
 
 import com.fitian.burntz.domain.auth.docs.AuthDocs;
 import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
+import com.fitian.burntz.domain.auth.dto.LoginRequest;
 import com.fitian.burntz.domain.auth.dto.LoginResponse;
 import com.fitian.burntz.domain.auth.dto.LogoutResponse;
 import com.fitian.burntz.domain.auth.service.AuthService;
@@ -13,6 +14,7 @@ import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,17 +36,15 @@ public class AuthController implements AuthDocs {
     @Override
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithSocial(
-            @RequestHeader(value = "Authorization", required = false) String authorization,
-            @RequestParam("provider") String provider,
-            @RequestParam(value = "deviceId", required = false) String deviceId) {
+            @Valid @RequestBody LoginRequest request) {
 
         //클라이언트로 부터 받은 토큰 검증 및 추출
-        String token = extractBearer(authorization);
+        String token = extractBearer(request.getToken());
 
         // deviceId 정제 및 null 검증
-        String targetDeviceId = preconditionValidator.requireDeviceId(deviceId);
+        String targetDeviceId = preconditionValidator.requireDeviceId(request.getDeviceId());
 
-        LoginResponse loginResponse = authService.loginWithSocial(token, provider, targetDeviceId);
+        LoginResponse loginResponse = authService.loginWithSocial(token, request.getProvider(), targetDeviceId);
 
         //firebaseCustomToken 발급
         try {
