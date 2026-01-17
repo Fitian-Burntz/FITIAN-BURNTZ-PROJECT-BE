@@ -39,7 +39,7 @@ public class AuthController implements AuthDocs {
             @Valid @RequestBody LoginRequest request) {
 
         //클라이언트로 부터 받은 토큰 검증 및 추출
-        String token = extractBearer(request.getToken());
+        String token = extractTokenOrBearer(request.getToken());
 
         // deviceId 정제 및 null 검증
         String targetDeviceId = preconditionValidator.requireDeviceId(request.getDeviceId());
@@ -129,6 +129,28 @@ public class AuthController implements AuthDocs {
         }
 
         return token;
+    }
+
+    private String extractTokenOrBearer(String value) {
+        if (value == null) {
+            throw new ValidationException(ErrorCode.TOKEN_MISSING);
+        }
+
+        String v = value.trim();
+        if (v.isEmpty()) {
+            throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
+        }
+
+        // Bearer로 오면 벗겨주고, 아니면 그대로 raw token으로 사용
+        if (v.startsWith("Bearer ")) {
+            String token = v.substring(7).trim();
+            if (token.isEmpty()) {
+                throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
+            }
+            return token;
+        }
+
+        return v;
     }
 
 }
