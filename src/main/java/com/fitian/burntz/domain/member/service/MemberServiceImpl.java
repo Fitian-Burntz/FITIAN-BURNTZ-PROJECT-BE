@@ -66,7 +66,7 @@ public class MemberServiceImpl implements MemberService {
         Member newMember = Member.create(memberId, safeNickname, safeEmail, provider);
 
         try {
-            Member savedMember = memberRepository.save(newMember);
+            Member savedMember = memberRepository.saveAndFlush(newMember);
             return new MemberCreateResult(savedMember, true);
         } catch (DataIntegrityViolationException dive) {
             // 동시성으로 다른 트랜잭션이 생성했을 가능성 -> 재조회
