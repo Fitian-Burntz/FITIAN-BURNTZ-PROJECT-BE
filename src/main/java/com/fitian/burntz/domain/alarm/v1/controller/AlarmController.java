@@ -10,6 +10,7 @@ import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
  * @description : FCM 알람을 담당하는 컨트롤러입니다.
  */
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/alarm")
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class AlarmController implements AlarmDocs {
     @PostMapping("/push-message")
     public ApiResponse<MessagePushResponse> pushMessage(
             @Valid @RequestBody MessagePushRequest request) {
+        log.info("push test :  senderPk - {} body -  {}",request.getSenderId(),request.getText());
         return ApiResponse.success(alarmService.dispatch(request));
     }
 }
