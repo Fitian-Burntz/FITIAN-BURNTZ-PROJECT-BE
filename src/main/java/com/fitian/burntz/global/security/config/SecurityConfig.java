@@ -1,6 +1,7 @@
 package com.fitian.burntz.global.security.config;
 
 import com.fitian.burntz.global.security.core.CustomUserDetailsService;
+import com.fitian.burntz.global.security.filter.InternalPushAuthFilter;
 import com.fitian.burntz.global.security.handler.RestAccessDeniedHandler;
 import com.fitian.burntz.global.security.handler.RestAuthenticationEntryPoint;
 import com.fitian.burntz.global.security.jwt.JwtTokenFilter;
@@ -8,6 +9,7 @@ import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -29,8 +31,24 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
     private final RestAccessDeniedHandler restAccessDeniedHandler;
+    private final InternalPushAuthFilter internalPushAuthFilter;
 
     @Bean
+    @Order(0)
+    public SecurityFilterChain internalPushChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/v1/alarm/push-message")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                // 기준은 "등록된 표준 필터"로 잡는다
+                .addFilterBefore(internalPushAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(1)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(jwtTokenProvider, customUserDetailsService);
 
@@ -75,6 +93,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                HttpMethod.GET, "/api/v1/boxes/all"
                         ).permitAll()
+
+                        //firebase push
+                        .requestMatchers(HttpMethod.POST, "/api/v1/alarm/push-message").permitAll()
                         .anyRequest().authenticated()
                 )
                 // OAuth2 웹로그인을 사용하지 않으므로 oauth2Login() 설정 제거
