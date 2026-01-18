@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author : 김관중
@@ -104,7 +105,16 @@ public class PushService {
 
     //여러 유저의 각 사용기기에 보내는 노티
     public void notifyUsers(List<Long> memberPkList, PushDto dto) {
+        if (memberPkList == null || memberPkList.isEmpty()) {
+            log.debug("memberPkList is empty. skip notifyUsers");
+            return;
+        }
 
+        // 중복 memberPk 제거 + null 방지
+        memberPkList.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .forEach(memberPk -> notifyUser(memberPk, dto));
     }
 
     //memberPk로 토큰 리스트를 가져옵니다.
