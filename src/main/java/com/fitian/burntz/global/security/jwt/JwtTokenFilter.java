@@ -43,6 +43,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.startsWith("/js/") ||
                 path.startsWith("/fonts/") ||
                 path.startsWith("/images/") ||
+                path.startsWith("/api/v1/alarm/push-message") ||
 
                 path.endsWith(".html");
     }

@@ -37,7 +37,7 @@ public class SecurityConfig {
     @Order(0)
     public SecurityFilterChain internalPushChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/alarm/push-message")
+                .securityMatcher("/api/v1/alarm/push-message", "/api/v1/alarm/push-message/**")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
