@@ -278,7 +278,6 @@ public class MembershipService {
                         .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
                 ml.changeRole(MemberRole.GUEST);
-                ml.markDeleted();
                 mlList.add(ml);
                 pushService.notifyUserString(membership.getMember().getMemberPk(), "멤버십 만료", membership.getBox().getBoxName()+"의 멤버십이 만료되었습니다.");
             } catch (Exception e) {
