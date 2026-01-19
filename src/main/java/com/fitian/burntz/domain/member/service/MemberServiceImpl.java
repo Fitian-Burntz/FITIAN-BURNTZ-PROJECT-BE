@@ -67,7 +67,6 @@ public class MemberServiceImpl implements MemberService {
 
         try {
             Member savedMember = memberRepository.saveAndFlush(newMember);
-            log.info("멤버 서비스 단 확인 용 로그 {}", savedMember.getMemberPk());
             return new MemberCreateResult(savedMember, true);
         } catch (DataIntegrityViolationException dive) {
             // 동시성으로 다른 트랜잭션이 생성했을 가능성 -> 재조회
