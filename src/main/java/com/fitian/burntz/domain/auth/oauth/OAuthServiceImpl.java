@@ -7,9 +7,10 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.member.service.MemberService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OAuthServiceImpl implements OAuthService {
@@ -48,6 +49,7 @@ public class OAuthServiceImpl implements OAuthService {
         );
 
         Member member = memberCreateResult.member();
+        log.info("oAuth 서비스 단 확인 용 로그 {}", member.getMemberPk());
         boolean isNew = memberCreateResult.isNewMember();
 
         // 기존 로직: 기존 사용자라면 프로필 갱신 처리

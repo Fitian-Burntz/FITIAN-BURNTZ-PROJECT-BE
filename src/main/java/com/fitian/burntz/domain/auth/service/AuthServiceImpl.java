@@ -64,6 +64,7 @@ public class AuthServiceImpl implements AuthService{
         }
 
         Member member = memberCreateResult.member();
+        log.info("Auth 서비스 단 확인 용 로그 {}", member.getMemberPk());
         boolean isNewMember = memberCreateResult.isNewMember();
 
         JwtTokenPair pair = jwtTokenProvider.createTokenPair(member);

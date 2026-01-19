@@ -16,6 +16,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -52,6 +54,7 @@ public class AuthController implements AuthDocs {
 
             Map<String, Object> claims = new HashMap<>();
             claims.put("boxPks",boxPks);
+            log.info("컨트롤러 단 확인 용 로그 {}", loginResponse.getMember().getMemberPk());
             claims.put("memberPk",loginResponse.getMember().getMemberPk());
             String firebaseCustomToken = FirebaseAuth.getInstance().createCustomToken(loginResponse.getMember().getMemberId(), claims);
             loginResponse.setFirebaseCustomToken(firebaseCustomToken);
