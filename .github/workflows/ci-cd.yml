@@ -134,12 +134,12 @@ jobs:
           set -euo pipefail
           RESOURCE_ID="service/${CLUSTER_NAME}/${SERVICE_NAME}"
             
-          echo "▶ Register scalable target (min=2, max=4)"
+          echo "▶ Register scalable target (min=1, max=4)"
           aws application-autoscaling register-scalable-target \
             --service-namespace ecs \
             --resource-id "${RESOURCE_ID}" \
             --scalable-dimension ecs:service:DesiredCount \
-            --min-capacity 2 \
+            --min-capacity 1 \
             --max-capacity 4 \
             --region "${AWS_REGION}"
             
