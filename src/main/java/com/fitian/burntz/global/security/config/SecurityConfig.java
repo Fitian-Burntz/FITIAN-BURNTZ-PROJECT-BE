@@ -96,6 +96,8 @@ public class SecurityConfig {
 
                         //firebase push
                         .requestMatchers(HttpMethod.POST, "/api/v1/alarm/push-message").permitAll()
+
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 // OAuth2 웹로그인을 사용하지 않으므로 oauth2Login() 설정 제거
