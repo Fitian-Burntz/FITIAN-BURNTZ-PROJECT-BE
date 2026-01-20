@@ -29,6 +29,8 @@ public class MessagePushRequest {
     @NotBlank
     private String channelId;
 
+    private String channelName;
+
     @NotBlank
     private String messageId; // Firestore message docId or unique messageId
 

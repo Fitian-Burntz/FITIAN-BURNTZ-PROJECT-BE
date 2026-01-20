@@ -258,7 +258,8 @@ public class MembershipService {
 
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
     public void checkExpirationDate() {
-        LocalDate today = LocalDate.now();
+        log.info("[SCHEDULE] checkExpirationDate START");
+        LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
 
         List<Membership> expiredTargets =
                 membershipRepository.findAllByExpirationDateLessThanAndStatusAndDeletedYN(today, MembershipStatus.ACTIVE, BaseTime.Yn.N);
@@ -280,6 +281,7 @@ public class MembershipService {
                 ml.changeRole(MemberRole.GUEST);
                 mlList.add(ml);
                 pushService.notifyUserString(membership.getMember().getMemberPk(), "멤버십 만료", membership.getBox().getBoxName()+"의 멤버십이 만료되었습니다.");
+                log.info("memberPk = {}, boxPk = {}, membershipPk = {}   -> EXPIRED", ml.getMember().getMemberPk(), ml.getBox().getBoxPk(), membership.getMembershipPk());
             } catch (Exception e) {
                 log.error("Failed to process expiration. membershipPk={}", membership.getMembershipPk(), e);
             }
@@ -287,5 +289,6 @@ public class MembershipService {
 
         membershipRepository.saveAll(expiredTargets);
         memberListRepository.saveAll(mlList);
+        log.info("[SCHEDULE] checkExpirationDate END");
     }
 }

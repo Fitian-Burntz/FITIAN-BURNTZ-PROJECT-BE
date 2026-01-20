@@ -112,7 +112,7 @@ public class AlarmService {
             }
 
             PushDto dto = PushDto.builder()
-                    .title("New Message!")
+                    .title(request.getChannelName())
                     .body(request.getBoxNickname() + " : " + request.getText())
                     .build();
 
