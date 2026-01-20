@@ -9,6 +9,7 @@ import com.fitian.burntz.domain.alarm.v1.dto.MessagePushResponse;
 import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
@@ -46,6 +47,12 @@ public class AlarmService {
                 .orElseGet(() -> {
                     Member member = memberRepository.findById(userDetails.getMemberPk())
                             .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+                    List<FcmToken> fcmTokenList = fcmTokenRepository.findTokensByDeviceIdAndDeletedYN(request.getDeviceId(), BaseTime.Yn.N);
+                    for(FcmToken t : fcmTokenList) {
+                        t.markDeleted();
+                    }
+
                     FcmToken newToken = FcmToken.builder()
                             .deviceId(request.getDeviceId())
                             .token(request.getToken())

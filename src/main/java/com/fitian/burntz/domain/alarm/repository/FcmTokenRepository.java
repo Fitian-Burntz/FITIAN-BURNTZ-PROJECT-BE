@@ -39,4 +39,7 @@ public interface FcmTokenRepository extends JpaRepository<FcmToken, Long> {
     """)
     List<FcmToken> findActiveTokensByMemberPks(@Param("memberPks") Collection<Long> memberPks,
                                                @Param("yn") BaseTime.Yn yn);
+    @Query("select ft from FcmToken ft " +
+            "where ft.deviceId = :deviceId and ft.deletedYN = :yn")
+    List<FcmToken> findTokensByDeviceIdAndDeletedYN(@Param("deviceId") String deviceId, @Param("yn") BaseTime.Yn yn);
 }
