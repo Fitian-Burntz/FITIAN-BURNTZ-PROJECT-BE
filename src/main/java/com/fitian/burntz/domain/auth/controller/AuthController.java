@@ -1,7 +1,5 @@
 package com.fitian.burntz.domain.auth.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitian.burntz.domain.auth.docs.AuthDocs;
 import com.fitian.burntz.domain.auth.dto.AuthTokenResponse;
 import com.fitian.burntz.domain.auth.dto.LoginRequest;
@@ -58,16 +56,10 @@ public class AuthController implements AuthDocs {
             claims.put("boxPks",boxPks);
             claims.put("memberPk",loginResponse.getMember().getMemberPk());
             String firebaseCustomToken = FirebaseAuth.getInstance().createCustomToken(loginResponse.getMember().getMemberId(), claims);
-            loginResponse.setFirebaseCustomToken(firebaseCustomToken);
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            log.info("loginResponse = {}", objectMapper.writeValueAsString(loginResponse));
-
+            if(!boxPks.isEmpty()) {loginResponse.setFirebaseCustomToken(firebaseCustomToken);}
             return ResponseEntity.ok(ApiResponse.success(loginResponse));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Firebase 연동 실패: " + e.getMessage()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
     }
 
