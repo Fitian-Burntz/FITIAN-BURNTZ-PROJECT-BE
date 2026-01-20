@@ -179,7 +179,9 @@ public class MemberListServiceImpl implements MemberListService{
 
         // 최신 멤버십 조회 (없을 수 있음 -> optional)
         MembershipDto targetMembershipDto = membershipRepository
-                .findLatestByBoxPkAndMemberPk(boxPk, memberPk)
+                .findAllMembershipByBoxPkAndMemberPk(boxPk, memberPk)
+                .stream()
+                .findFirst()
                 .map(MembershipDto::from)
                 .orElse(null);
 
@@ -328,7 +330,9 @@ public class MemberListServiceImpl implements MemberListService{
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERLIST_NOT_FOUND));
 
         MembershipDto targetMembership = membershipRepository
-                .findLatestByBoxPkAndMemberPk(boxPk, targetMemberPk)
+                .findAllMembershipByBoxPkAndMemberPk(boxPk, targetMemberPk)
+                .stream()
+                .findFirst()
                 .map(MembershipDto::from)
                 .orElse(null);
 

@@ -43,7 +43,7 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
           AND m.deletedYN = 'N'
         ORDER BY m.membershipPk DESC
         """)
-    Optional<Membership> findLatestByBoxPkAndMemberPk(@Param("boxPk") Long boxPk,
+    List<Membership> findAllMembershipByBoxPkAndMemberPk(@Param("boxPk") Long boxPk,
                                                       @Param("memberPk") Long memberPk);
 
     /** box 별 사용자의 최신 membership 을 한번에 가져옴
