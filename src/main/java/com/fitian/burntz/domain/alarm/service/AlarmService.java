@@ -1,5 +1,7 @@
 package com.fitian.burntz.domain.alarm.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitian.burntz.domain.alarm.entity.FcmToken;
 import com.fitian.burntz.domain.alarm.port.FirestorePushPort;
 import com.fitian.burntz.domain.alarm.repository.FcmTokenRepository;
@@ -114,6 +116,10 @@ public class AlarmService {
                     .body(request.getBoxNickname() + " : " + request.getText())
                     .build();
 
+            ObjectMapper objectMapper = new ObjectMapper();
+            log.info("PushDto = {}", objectMapper.writeValueAsString(dto));
+            log.info("memberPks = {}", memberPks);
+
             pushService.notifyUsers(memberPks, dto);
 
             firestorePushPort.markSent(request.getBoxCode(), request.getChannelId(), request.getMessageId());
@@ -132,7 +138,11 @@ public class AlarmService {
                     request.getMessageId(),
                     safeReason(e)
             );
-            throw e;
+            try {
+                throw e;
+            } catch (JsonProcessingException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
