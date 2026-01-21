@@ -1,5 +1,7 @@
 package com.fitian.burntz.domain.box.service;
 
+import com.fitian.burntz.domain.alarm.service.PushService;
+import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.box.dto.*;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
@@ -36,6 +38,7 @@ public class BoxServiceImpl implements BoxService {
 
     private final BoxRepository boxRepository;
     private final ChannelService channelService;
+    private final PushService pushService;
     private final MemberRepository memberRepository;
     private final MemberListService memberListService;
     private final MemberListRepository memberListRepository;
@@ -155,6 +158,13 @@ public class BoxServiceImpl implements BoxService {
 
             joinMember.updateLastVisitedBoxPk(belongBox.getBoxPk());
             memberRepository.save(joinMember);
+
+            // 변경 대상에게 푸시 발송
+            PushDto dto = PushDto.builder()
+                    .title(belongBox.getBoxName())
+                    .body("가입 대기 중인 회원이 있습니다.")
+                    .build();
+            pushService.notifyUser(belongBox.getOwnerPk(), dto);
 
             return JoinBoxDto.from(joinMemberPk, belongBoxCode);
         }

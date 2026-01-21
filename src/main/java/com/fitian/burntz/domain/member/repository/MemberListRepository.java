@@ -95,4 +95,9 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     List<MemberList> findAllByMemberMemberPkAndDeletedYN(
             Long memberPk,
             BaseTime.Yn deletedYN);
+
+    /** Box 엔티티로 해당 박스의 활성화중인 모든 멤버 반환 **/
+    List<MemberList> findAllByBoxAndDeletedYN(
+            Box box,
+            BaseTime.Yn deletedYN);
 }

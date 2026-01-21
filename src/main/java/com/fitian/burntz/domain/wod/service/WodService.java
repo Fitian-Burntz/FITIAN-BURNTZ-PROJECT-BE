@@ -1,11 +1,12 @@
 package com.fitian.burntz.domain.wod.service;
 
+import com.fitian.burntz.domain.alarm.service.PushService;
+import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
-import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.repository.WodRespository;
 import com.fitian.burntz.domain.wod.v1.dto.WodCreateRequest;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author : 선순주
@@ -35,6 +37,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class WodService {
 
+    private final PushService pushService;
     private final WodRespository wodRespository;
     private final BoxRepository boxRepository;
     private final MemberListRepository memberListRepository;
@@ -62,6 +65,15 @@ public class WodService {
         //동시성 대비 -> DB의 유니크 제약 조건에러(DataIntegrityViolationException)를 WOD_ALREADY_EXISTS로 변환함
         try {
             wodRespository.save(wod);
+
+
+            // 해당 box 내 멤버에게 와드 등록 푸시 발송
+            PushDto dto = PushDto.builder()
+                    .title(box.getBoxName())
+                    .body(request.getWodDate()+" 와드가 등록되었습니다.")
+                    .build();
+            pushService.notifyUsers(getAllMemberPkInBox(box), dto);
+
         } catch (DataIntegrityViolationException e) {
             throw new ValidationException(ErrorCode.WOD_ALREADY_EXISTS);
         }
@@ -145,5 +157,13 @@ public class WodService {
     private Wod requireActiveWod(Box box, LocalDate date){
         return wodRespository.findByBoxAndWodDateAndDeletedYN(box,date,BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.WOD_NOT_FOUND));
+    }
+
+    private List<Long> getAllMemberPkInBox(Box box) {
+        List<MemberList> memberLists = memberListRepository.findAllByBoxAndDeletedYN(box, BaseTime.Yn.N);
+
+        return memberLists.stream()
+                .map(ml -> ml.getMember().getMemberPk())
+                .toList();
     }
 }

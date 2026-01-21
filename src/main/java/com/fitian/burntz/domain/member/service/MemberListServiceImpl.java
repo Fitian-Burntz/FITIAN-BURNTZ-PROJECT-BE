@@ -1,5 +1,7 @@
 package com.fitian.burntz.domain.member.service;
 
+import com.fitian.burntz.domain.alarm.service.PushService;
+import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
@@ -53,6 +55,7 @@ public class MemberListServiceImpl implements MemberListService{
     private final RecordRepository recordRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ChannelService channelService;
+    private final PushService pushService;
 
     /** box 와 연관된 memberList 생성. box 생성 및 member 추가 시 종속적으로 생성 **/
     @Override
@@ -139,6 +142,13 @@ public class MemberListServiceImpl implements MemberListService{
         targetMember.changeRole(newRole);
         memberListRepository.save(targetMember);
         memberListRepository.flush();
+
+        // 변경 대상에게 푸시 발송
+        PushDto dto = PushDto.builder()
+                .title(operator.getBox().getBoxName())
+                .body("회원 등급이 "+newRole+"으로 변경되었습니다.")
+                .build();
+        pushService.notifyUser(updateMemberRoleDto.getMemberPk(), dto);
 
         log.info("Changed member role: boxPk={} operatorPk={} from={} to={} byOperator={}",
                 boxPk, targetMemberPk, oldRole, newRole, operatorPk);
