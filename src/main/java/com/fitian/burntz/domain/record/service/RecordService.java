@@ -378,6 +378,25 @@ public class RecordService {
         });
     }
 
+    @Transactional
+    public void deleteAllRecords(Long memberPk, Long boxPk, Long wodPk){
+        //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
+        requireManagerOrOwner(memberPk, boxPk);
+
+        //2. wod 유효성 검증 : box+date로 조회
+        Wod wod = wodRespository.findByWodPkAndBoxBoxPkAndDeletedYN(wodPk, boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.WOD_NOT_FOUND));
+
+        List<Record> recordList = recordRepository.findByWodWodPkAndDeletedYN(wodPk, BaseTime.Yn.N);
+
+        //delete
+        for(Record r : recordList){
+            r.markDeleted();
+        }
+        recordRepository.flush();
+
+    }
+
     /**
      * DB 폴백 (Redis 미스 시)
      */

@@ -7,6 +7,7 @@ import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
+import com.fitian.burntz.domain.record.service.RecordService;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.repository.WodRespository;
 import com.fitian.burntz.domain.wod.v1.dto.WodCreateRequest;
@@ -38,6 +39,7 @@ import java.util.List;
 public class WodService {
 
     private final PushService pushService;
+    private final RecordService recordService;
     private final WodRespository wodRespository;
     private final BoxRepository boxRepository;
     private final MemberListRepository memberListRepository;
@@ -111,6 +113,9 @@ public class WodService {
         //3. Wod 유효성 검증
         Wod wod = requireActiveWod(box, date);
 
+        //4. 기존 Wod와 연계된 Record 전체 삭제 deleteYN 처리
+        recordService.deleteAllRecords(memberPk, boxPk, wod.getWodPk());
+
         //update
         request.applyTo(wod);
     }
@@ -128,6 +133,9 @@ public class WodService {
 
         //3. Wod 유효성 검증
         Wod wod = requireActiveWod(box, date);
+
+        //4. 기존 Wod와 연계된 Record 전체 삭제 deleteYN 처리
+        recordService.deleteAllRecords(memberPk, boxPk, wod.getWodPk());
 
         //delete
         wod.markDeleted();
