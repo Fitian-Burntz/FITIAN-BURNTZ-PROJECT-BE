@@ -113,8 +113,9 @@ public class WodService {
         //3. Wod 유효성 검증
         Wod wod = requireActiveWod(box, date);
 
-        //4. 기존 Wod와 연계된 Record 전체 삭제 deleteYN 처리
-        recordService.deleteAllRecords(memberPk, boxPk, wod.getWodPk());
+        //4. 기존 Wod와 연계된 Record 전체 하드 딜리트
+        int deleteCount = recordService.deleteAllRecords(memberPk, boxPk, wod.getWodPk());
+        log.info("wod Pk = {} 변경으로 인한 Record {} 건 삭제", wod.getWodPk(), deleteCount);
 
         //update
         request.applyTo(wod);
@@ -134,8 +135,9 @@ public class WodService {
         //3. Wod 유효성 검증
         Wod wod = requireActiveWod(box, date);
 
-        //4. 기존 Wod와 연계된 Record 전체 삭제 deleteYN 처리
-        recordService.deleteAllRecords(memberPk, boxPk, wod.getWodPk());
+        //4. 기존 Wod와 연계된 Record 전체 하드 딜리트
+        int deleteCount = recordService.deleteAllRecords(memberPk, boxPk, wod.getWodPk());
+        log.info("wod Pk = {} 삭제로 인한 Record {} 건 삭제", wod.getWodPk(), deleteCount);
 
         //delete
         wod.markDeleted();

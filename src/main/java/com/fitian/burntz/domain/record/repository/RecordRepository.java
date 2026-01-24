@@ -140,5 +140,5 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
 
     List<Record> findByClassesClassesPkAndDeletedYN(Long classesPk, BaseTime.Yn deletedYN);
 
-    List<Record> findByWodWodPkAndDeletedYN(Long wodPk, BaseTime.Yn deletedYN);
+    int deleteByWodWodPkAndDeletedYN(Long wodPk, BaseTime.Yn deletedYN);
 }
