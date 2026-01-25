@@ -453,4 +453,25 @@ public class RecordService {
         return r.getMemberList() != null ? r.getMemberList().getMemberListPk() : null;
     }
 
+    @Transactional
+    private void deleteTeamRecord(Long boxPk, LocalDate date , Record record){
+
+        // 삭제 전 정보 저장 (Redis 제거용)
+        String level = record.getLevel();
+        String nickname = getNickname(record);
+        Long memberListPk = getMemberListPk(record);
+
+        //delete
+        record.markDeleted();
+        recordRepository.flush();
+
+        // 6. 트랜잭션 커밋 후 Redis 제거
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                rankingService.remove(boxPk, date, level, nickname, record.getRecordPk(), memberListPk);
+            }
+        });
+    }
+
 }

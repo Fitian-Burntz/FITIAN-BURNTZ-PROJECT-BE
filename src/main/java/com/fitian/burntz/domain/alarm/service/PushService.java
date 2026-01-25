@@ -50,6 +50,7 @@ public class PushService {
 
         try {
             BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+            log.info("[PUSH LOG] Sent to {}, body : {}",memberPk, dto.getBody());
             log.debug("Sent multicast to {} tokens : success = {}, failure = {}",
                     tokens.size(),response.getSuccessCount(),response.getFailureCount());
 
