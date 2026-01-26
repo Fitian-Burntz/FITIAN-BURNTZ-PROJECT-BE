@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.enums.WodType;
-import com.fitian.burntz.global.common.entity.BaseTime;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +25,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Schema(name = "WodCreateRequest", description = "Wod 생성 요청")
 public class WodCreateRequest{
-    @NotBlank(message = "wodTitle must not be blank")
+
     @Schema(description = "wod 제목", example="HSPU+HPCL")
     private String wodTitle;
 
