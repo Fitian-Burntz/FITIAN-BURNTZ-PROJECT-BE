@@ -82,6 +82,7 @@ public enum ErrorCode {
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND,"RECORD_NOT_FOUND","운동기록을  찾을 수 없습니다."),
     MEMBERLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBERLIST_NOT_FOUND", "memberList 에 해당 조건을 만족하는 값이 없습니다."),
     FCMTOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "FCMTOKEN_NOT_FOUND", "FcmToken 에 해당 조건을 만족하는 값이 없습니다."),
+    AGREEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "AGREEMENT_NOT_FOUND", "Agreement 에 해당 조건을 만족하는 값이 없습니다."),
 
     // 405 Method Not Allowed
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "허용되지 않은 HTTP 메서드입니다."),

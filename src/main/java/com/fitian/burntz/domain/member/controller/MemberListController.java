@@ -157,7 +157,7 @@ public class MemberListController implements MemberListDocs {
 
     /** OWNER 양도
      * MANAGER 등급 회원에게만 양도가능
-     * 기존 OWNER 는 MEMBER 로 강등 **/
+     * 기존 OWNER 는 MANAGER 로 강등 **/
     @Override
     @PostMapping("/assignment")
     public ResponseEntity<ApiResponse<ChangeOwnerSuccessDto>> changeOwner(

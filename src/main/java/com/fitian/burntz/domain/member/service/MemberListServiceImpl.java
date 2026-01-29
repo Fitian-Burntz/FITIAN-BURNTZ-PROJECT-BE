@@ -503,7 +503,7 @@ public class MemberListServiceImpl implements MemberListService{
             }
 
             // 변경 순서: 기존 Owner 먼저 강등 -> 대상자 승격 -> box.ownerPk 동기화
-            operatorMember.changeRole(MemberRole.MEMBER); // 기존 owner 강등
+            operatorMember.changeRole(MemberRole.MANAGER); // 기존 owner 강등
             targetMember.changeRole(MemberRole.OWNER);   // 대상자 승격
             targetBox.changeBoxOwnerPk(targetMemberPk);  // box.ownerPk 동기화
 
