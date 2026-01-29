@@ -32,10 +32,12 @@ public class PushService {
 
     //한명의 유저가 사용하는 여러기기에 보내는 노티
     public void notifyUser(Long memberPk, PushDto dto) {
+        log.info("[PUSH LOG] 푸시 알람 스타트");
+
         List<String> tokens = getTokens(memberPk);
 
         if(tokens.isEmpty()){
-            log.debug("No token for user {}", memberPk);
+            log.info("No token for user {}", memberPk);
             return;
         }
 
@@ -50,9 +52,8 @@ public class PushService {
 
         try {
             BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
-            log.info("[PUSH LOG] Sent to {}, body : {}",memberPk, dto.getBody());
-            log.debug("Sent multicast to {} tokens : success = {}, failure = {}",
-                    tokens.size(),response.getSuccessCount(),response.getFailureCount());
+            log.info("[PUSH LOG] Sent to {}, body : {}, Sent multicast to {} tokens : success = {}, failure = {}",
+                    memberPk, dto.getBody(), tokens.size(),response.getSuccessCount(),response.getFailureCount());
 
             for(int i = 0; i < response.getResponses().size(); i++) {
                 SendResponse resp = response.getResponses().get(i);

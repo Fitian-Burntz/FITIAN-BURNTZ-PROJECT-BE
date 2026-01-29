@@ -162,7 +162,7 @@ public class BoxServiceImpl implements BoxService {
             // 변경 대상에게 푸시 발송
             PushDto dto = PushDto.builder()
                     .title(belongBox.getBoxName())
-                    .body("가입 대기 중인 회원이 있습니다.")
+                    .body(savedJoinNewMember.getBoxNickname()+" 님이 가입 대기 중입니다.")
                     .build();
             pushService.notifyUser(belongBox.getOwnerPk(), dto);
 
