@@ -113,7 +113,7 @@ public class RecordService {
                 .title(wod.getBox().getBoxName())
                 .body(wod.getWodDate()+" 기록이 등록되었습니다.")
                 .build();
-        if(targetMember != null) pushService.notifyUser(targetMember.getMember().getMemberPk(), dto);
+        if(targetMember != null && !memberPk.equals(targetMember.getMember().getMemberPk())) pushService.notifyUser(targetMember.getMember().getMemberPk(), dto);
 
         //DB 커밋 이후에 Redis 반영을 하도록 등록 (트랜잭션 안전)
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
