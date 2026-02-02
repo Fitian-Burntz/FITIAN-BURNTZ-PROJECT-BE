@@ -94,6 +94,9 @@ public class MembershipService {
         MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
+        boolean exists = membershipRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N);
+        if(exists) throw new ValidationException(ErrorCode.DUPLICATE_MEMBERSHIP);
+
         Membership membership = Membership.builder()
                 .membershipName(request.getMembershipName())
                 .startDate(request.getStartDate())
