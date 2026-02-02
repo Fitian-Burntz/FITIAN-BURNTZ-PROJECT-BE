@@ -100,4 +100,18 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     List<MemberList> findAllByBoxAndDeletedYN(
             Box box,
             BaseTime.Yn deletedYN);
+
+    /** 해당 Box 내의 특정 MemberRole의 memberPk를 리스트로 반환하는 메서드 **/
+    @Query("""
+    select ml.member.memberPk
+    from MemberList ml
+    where ml.box.boxPk = :boxPk
+      and ml.role in :roles
+      and ml.deletedYN = :deletedYN
+    """)
+    List<Long> findMemberPksByBoxPkAndRoles(
+            @Param("boxPk") Long boxPk,
+            @Param("roles") List<MemberRole> roles,
+            @Param("deletedYN") BaseTime.Yn deletedYN
+    );
 }

@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.alarm.service.PushService;
 import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.box.dto.*;
 import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.channel.enums.ChannelType;
 import com.fitian.burntz.domain.channel.service.ChannelService;
@@ -159,12 +160,14 @@ public class BoxServiceImpl implements BoxService {
             joinMember.updateLastVisitedBoxPk(belongBox.getBoxPk());
             memberRepository.save(joinMember);
 
+            List<Long> toMemberPks = memberListRepository.findMemberPksByBoxPkAndRoles(belongBox.getBoxPk(),
+                    List.of(MemberRole.MANAGER, MemberRole.OWNER), BaseTime.Yn.N);
             // 변경 대상에게 푸시 발송
             PushDto dto = PushDto.builder()
                     .title(belongBox.getBoxName())
                     .body(savedJoinNewMember.getBoxNickname()+" 님이 가입 대기 중입니다.")
                     .build();
-            pushService.notifyUser(belongBox.getOwnerPk(), dto);
+            pushService.notifyUsers(toMemberPks, dto);
 
             return JoinBoxDto.from(joinMemberPk, belongBoxCode);
         }
