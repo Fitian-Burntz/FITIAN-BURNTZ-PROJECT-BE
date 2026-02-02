@@ -1,5 +1,7 @@
 package com.fitian.burntz.domain.record.service;
 
+import com.fitian.burntz.domain.alarm.service.PushService;
+import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
@@ -45,7 +47,7 @@ public class RecordService {
     private final MemberListRepository memberListRepository;
     private final ClassesRepository classesRepository;
     private final RecordRepository recordRepository;
-
+    private final PushService pushService;
     private final RankingService rankingService;
     /*
      * record 생성
@@ -106,6 +108,12 @@ public class RecordService {
             // DB 유니크 제약 위반 등 동시성 문제로 인해 발생할 수 있음
             throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
         }
+
+        PushDto dto = PushDto.builder()
+                .title(wod.getBox().getBoxName())
+                .body(wod.getWodDate()+" 기록이 등록되었습니다.")
+                .build();
+        if(targetMember != null) pushService.notifyUser(targetMember.getMember().getMemberPk(), dto);
 
         //DB 커밋 이후에 Redis 반영을 하도록 등록 (트랜잭션 안전)
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -210,6 +218,16 @@ public class RecordService {
         }
 
         List<Record> saved = recordRepository.saveAll(toSave);
+
+        List<Long> memberPks = new ArrayList<>(saved.stream()
+                .map(r -> r.getMemberList().getMember().getMemberPk())
+                .toList());
+        memberPks.removeIf(value -> value.equals(memberPk));
+        PushDto dto = PushDto.builder()
+                .title(wod.getBox().getBoxName())
+                .body(wod.getWodDate()+" 기록이 등록되었습니다.")
+                .build();
+        pushService.notifyUsers(memberPks, dto);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
