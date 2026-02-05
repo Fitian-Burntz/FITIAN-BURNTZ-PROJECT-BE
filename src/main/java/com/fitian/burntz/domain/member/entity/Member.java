@@ -105,4 +105,8 @@ public class Member extends BaseTime {
 
     }
 
+    public void changeMemberId(String newMemberId) {
+        this.memberId = newMemberId;
+    }
+
 }

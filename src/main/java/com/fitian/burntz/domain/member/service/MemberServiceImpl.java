@@ -20,6 +20,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -185,6 +188,15 @@ public class MemberServiceImpl implements MemberService {
             );
         }
 
+        String oldMemberId = member.getMemberId();
+
+        String ts = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+                .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+
+        // 예: originalId__DEL__20260205180530123
+        String changedMemberId = oldMemberId + "__DEL__" + ts;
+
+        member.changeMemberId(changedMemberId);
         member.markDeleted();
 
         Member savedMember = memberRepository.save(member);
