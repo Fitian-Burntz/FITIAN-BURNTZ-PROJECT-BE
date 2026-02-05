@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.member.repository;
 
 import com.fitian.burntz.domain.member.entity.Member;
 
+import com.fitian.burntz.global.common.entity.BaseTime;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,7 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    Optional<Member> findByProviderAndMemberId(String provider, String memberId);
+    Optional<Member> findByProviderAndMemberIdAndDeletedYN(String provider, String memberId, BaseTime.Yn deletedYN);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Member m SET m.lastVisitedBoxPk = :boxPk WHERE m.memberPk = :memberPk")

@@ -43,7 +43,7 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     public MemberCreateResult getOrCreateMember(String provider, String memberId, String nickname, String email) {
-        Optional<Member> existing = memberRepository.findByProviderAndMemberId(provider, memberId);
+        Optional<Member> existing = memberRepository.findByProviderAndMemberIdAndDeletedYN(provider, memberId, BaseTime.Yn.N);
 
         if (existing.isPresent()) {
             Member existingMember = existing.get();
@@ -70,7 +70,7 @@ public class MemberServiceImpl implements MemberService {
             return new MemberCreateResult(savedMember, true);
         } catch (DataIntegrityViolationException dive) {
             // 동시성으로 다른 트랜잭션이 생성했을 가능성 -> 재조회
-            Member savedMember = memberRepository.findByProviderAndMemberId(provider, memberId)
+            Member savedMember = memberRepository.findByProviderAndMemberIdAndDeletedYN(provider, memberId, BaseTime.Yn.N)
                     .orElseThrow(() -> dive); // 예외 재던지기
             return new MemberCreateResult(savedMember, false);
         }
@@ -188,6 +188,8 @@ public class MemberServiceImpl implements MemberService {
         member.markDeleted();
 
         Member savedMember = memberRepository.save(member);
+
+        // MemberList, Box 탈퇴, Record, ClassParticipant, ChannelParticipant, FcmToken, Membership, MembershipHistory 전부 딜리트 해야함
 
         return MemberDto.from(savedMember);
     }
