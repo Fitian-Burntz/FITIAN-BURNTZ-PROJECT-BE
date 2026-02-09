@@ -24,7 +24,7 @@ public class BoxController implements BoxDocs {
 
     private final BoxService boxService;
     private final PreconditionValidator preconditionValidator;
-    private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 10_000;
 
     /** box 생성하기 **/
     @Override
@@ -76,7 +76,7 @@ public class BoxController implements BoxDocs {
     @Override
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<Page<BoxResponse>>> getAllActiveBoxes(
-            @PageableDefault(size = 20, sort = "boxPk", direction = Sort.Direction.ASC) Pageable pageable) {
+            @PageableDefault(size = MAX_PAGE_SIZE, sort = "boxPk", direction = Sort.Direction.ASC) Pageable pageable) {
 
         // 클라이언트가 과도한 size 요청을 못하도록 방어
         Pageable safePageable = preconditionValidator.limitPageable(pageable, MAX_PAGE_SIZE);
