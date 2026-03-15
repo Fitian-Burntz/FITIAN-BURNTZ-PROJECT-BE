@@ -1,14 +1,17 @@
 package com.fitian.burntz.infra.payment.v1.controller;
 
 import com.fitian.burntz.global.common.response.ApiResponse;
-import com.fitian.burntz.global.common.response.ResponseDTO;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import com.fitian.burntz.infra.payment.docs.PaymentDocs;
 import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
 import com.fitian.burntz.infra.payment.service.PaymentService;
+import com.fitian.burntz.infra.payment.v1.dto.PaymentSyncRequest;
+import com.fitian.burntz.infra.payment.v1.dto.PaymentSyncResponse;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -43,14 +46,25 @@ public class PaymentController implements PaymentDocs {
     return ResponseEntity.ok().build();
   }
 
-  @Override
-  @PostMapping("/purchase/refund/{boxPk}")
+//  @Override
+//  @PostMapping("/purchase/refund/{boxPk}")
 
+
+  @PostMapping("/sync")
+  public ApiResponse<PaymentSyncResponse> syncPayment(
+          @AuthenticationPrincipal CustomUserDetails userDetails,
+          @Valid @RequestBody PaymentSyncRequest request) {
+
+    PaymentSyncResponse response =
+            paymentService.syncPayment(userDetails.getMemberPk(), request.getBoxPk());
+
+    return ApiResponse.success(response);
+  }
 
 
   @GetMapping("/purchase/log/{boxPk}")
-  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "boxPk") Long bokPk) {
-    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(bokPk);
+  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "boxPk") Long boxPk) {
+    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(boxPk);
     return ApiResponse.success(response);
   }
 

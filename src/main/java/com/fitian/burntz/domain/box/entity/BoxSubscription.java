@@ -120,8 +120,19 @@ public class BoxSubscription extends BaseTime {
     return ChronoUnit.DAYS.between(now, expiredAt);
   }
 
-
-
-
-
+  public void sync(
+          String productId,
+          PaymentStore store,
+          SubscriptionStatus status,
+          LocalDateTime startedAt,
+          LocalDateTime expiredAt,
+          Double price
+  ) {
+    this.productId = productId;
+    this.store = store;
+    this.status = status;
+    this.startedAt = startedAt;
+    this.expiredAt = expiredAt;
+    this.price = price;
+  }
 }

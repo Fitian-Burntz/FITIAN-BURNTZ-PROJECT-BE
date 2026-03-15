@@ -13,4 +13,14 @@ public interface BoxSubscriptionRepository extends JpaRepository<BoxSubscription
   @Query("select bs from BoxSubscription bs join fetch bs.member where bs.box.boxPk = :boxPk")
   Optional<BoxSubscription> findByBoxPk(Long boxPk);
 
+  @Query("""
+      select bs
+      from BoxSubscription bs
+      join fetch bs.member m
+      join fetch bs.box b
+      where m.memberPk = :ownerMemberId
+        and b.boxPk = :boxPk
+      """)
+  Optional<BoxSubscription> findByOwnerMemberIdAndBoxPk(Long ownerMemberId, Long boxPk);
+
 }

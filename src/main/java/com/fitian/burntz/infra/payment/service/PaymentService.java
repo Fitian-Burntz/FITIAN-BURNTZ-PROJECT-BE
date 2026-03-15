@@ -13,12 +13,20 @@ import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.NotFoundException;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
+import com.fitian.burntz.infra.payment.client.RevenueCatClient;
 import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
+import com.fitian.burntz.infra.payment.enums.PaymentEventType;
 import com.fitian.burntz.infra.payment.enums.PaymentStore;
+import com.fitian.burntz.infra.payment.v1.dto.PaymentSyncResponse;
+import com.fitian.burntz.infra.payment.v1.dto.RevenueCatSubscriberResponse;
 import com.fitian.burntz.infra.payment.v1.dto.WebhookPurchaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +41,7 @@ public class PaymentService {
   private final BoxRepository boxRepository;
   private final SubscriptionEventLogRepository subscriptionEventLogRepository;
   private final MemberRepository memberRepository;
+  private final RevenueCatClient revenueCatClient;
 
   private final JwtTokenProvider jwtTokenProvider;
 
@@ -53,12 +62,12 @@ public class PaymentService {
     log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
 
     // 1. 토큰 검증
-    log.info("[1. 토큰 검증]");
-    String token = extractToken(request);
-    if(!jwtTokenProvider.validateToken(token)) {
-      log.error("[1. 토큰 검증] - 결제완료 웹훅 처리중 토큰이 유효하지 않습니다.(" + "구매한 box pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue() + ")" + "(" + "구매자 pk : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + ")");
-      throw new ValidationException(ErrorCode.TOKEN_INVALID);
-    }
+//    log.info("[1. 토큰 검증]");
+//    String token = extractToken(request);
+//    if(!jwtTokenProvider.validateToken(token)) {
+//      log.error("[1. 토큰 검증] - 결제완료 웹훅 처리중 토큰이 유효하지 않습니다.(" + "구매한 box pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue() + ")" + "(" + "구매자 pk : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + ")");
+//      throw new ValidationException(ErrorCode.TOKEN_INVALID);
+//    }
 
 
     // 2. 멤버가 존재하는지 확인
@@ -111,6 +120,196 @@ public class PaymentService {
     log.info("[7. 최종 BOX 구독상태 변경]");
     box.subscribe();
 
+  }
+
+  @Transactional
+  public PaymentSyncResponse syncPayment(Long memberPk, Long boxPk) {
+    log.info("[결제 동기화 시작] memberPk={}, boxPk={}", memberPk, boxPk);
+
+    Member member = memberRepository.findById(memberPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+    Box box = boxRepository.findActiveBoxByIdWithLock(boxPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+    validateBoxOwner(memberPk, box);
+
+    String appUserId = String.valueOf(memberPk);
+
+    RevenueCatSubscriberResponse rcResponse = revenueCatClient.getSubscriber(appUserId);
+    if (rcResponse == null || rcResponse.getSubscriber() == null) {
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
+
+    RevenueCatSubscriberResponse.Subscriber subscriber = rcResponse.getSubscriber();
+
+    String rcBoxPk = extractBoxPk(subscriber);
+    validateRequestedBox(boxPk, rcBoxPk);
+
+    RevenueCatSubscriberResponse.Entitlement premiumEntitlement =
+            extractPremiumEntitlement(subscriber.getEntitlements());
+
+    boolean premiumActive = premiumEntitlement != null;
+
+    LocalDateTime startedAt = null;
+    LocalDateTime expiredAt = null;
+    String productId = null;
+    Double price = null;
+
+    if (premiumActive) {
+      startedAt = parseDateTime(premiumEntitlement.getPurchaseDate());
+      expiredAt = parseDateTime(premiumEntitlement.getExpiresDate());
+      productId = premiumEntitlement.getProductIdentifier();
+    }
+
+    BoxSubscription boxSubscription = boxSubscriptionRepository
+            .findByOwnerMemberIdAndBoxPk(memberPk, boxPk)
+            .orElseGet(() -> createEmptySubscription(member, box));
+
+    boxSubscription = updateSubscription(
+            boxSubscription,
+            productId,
+            PaymentStore.APP_STORE,
+            premiumActive,
+            startedAt,
+            expiredAt,
+            price
+    );
+    boxSubscriptionRepository.save(boxSubscription);
+
+    updateBoxPremium(box, premiumActive);
+
+    saveSyncLog(
+            member,
+            box,
+            productId,
+            PaymentStore.APP_STORE,
+            price,
+            premiumActive,
+            null,
+            String.valueOf(memberPk)
+    );
+
+    return PaymentSyncResponse.builder()
+            .boxPk(boxPk)
+            .premium(premiumActive)
+            .productId(productId)
+            .store(PaymentStore.APP_STORE.name())
+            .startedAt(startedAt)
+            .expiredAt(expiredAt)
+            .syncedFrom("MANUAL_SYNC")
+            .build();
+  }
+
+  private void validateBoxOwner(Long memberPk, Box box) {
+    if (box.getOwnerPk() == null || !box.getOwnerPk().equals(memberPk)) {
+      throw new ValidationException(ErrorCode.FORBIDDEN);
+    }
+  }
+
+  private String extractBoxPk(RevenueCatSubscriberResponse.Subscriber subscriber) {
+    Map<String, RevenueCatSubscriberResponse.SubscriberAttribute> attrs = subscriber.getSubscriberAttributes();
+    if (attrs == null || !attrs.containsKey("boxPK") || attrs.get("boxPK") == null) {
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
+    return attrs.get("boxPK").getValue();
+  }
+
+  private void validateRequestedBox(Long requestedBoxPk, String rcBoxPk) {
+    if (rcBoxPk == null || !requestedBoxPk.equals(Long.parseLong(rcBoxPk))) {
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
+  }
+
+  private RevenueCatSubscriberResponse.Entitlement extractPremiumEntitlement(
+          Map<String, RevenueCatSubscriberResponse.Entitlement> entitlements) {
+
+    if (entitlements == null || entitlements.isEmpty()) {
+      return null;
+    }
+
+    return entitlements.get("premium");
+  }
+
+  private LocalDateTime parseDateTime(String dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+    return OffsetDateTime.parse(dateTime)
+            .atZoneSameInstant(ZoneId.systemDefault())
+            .toLocalDateTime();
+  }
+
+  private BoxSubscription createEmptySubscription(Member member, Box box) {
+    return BoxSubscription.of(
+            member,
+            box,
+            null,
+            null,
+            SubscriptionStatus.EXPIRED,
+            null,
+            null,
+            null
+    );
+  }
+
+  private BoxSubscription updateSubscription(
+          BoxSubscription subscription,
+          String productId,
+          PaymentStore store,
+          boolean premiumActive,
+          LocalDateTime startedAt,
+          LocalDateTime expiredAt,
+          Double price
+  ) {
+    subscription.sync(
+            productId,
+            store,
+            premiumActive ? SubscriptionStatus.ACTIVE : SubscriptionStatus.EXPIRED,
+            startedAt,
+            expiredAt,
+            price
+    );
+
+    return subscription;
+  }
+
+  private void updateBoxPremium(Box box, boolean premiumActive) {
+    if (premiumActive) {
+      box.subscribe();
+    } else {
+      box.unsubscribe();
+    }
+    boxRepository.save(box);
+  }
+
+  private void saveSyncLog(
+          Member member,
+          Box box,
+          String productId,
+          PaymentStore store,
+          Double price,
+          boolean premiumActive,
+          String appId,
+          String appUserId
+  ) {
+
+    SubscriptionEventLog logEntity = SubscriptionEventLog.of(
+            member,
+            box,
+            productId,
+            store,
+            premiumActive ? SubscriptionStatus.ACTIVE : SubscriptionStatus.EXPIRED,
+            null,           // cancelledAt
+            null,           // refundedAt
+            price,
+            appId,
+            appUserId,
+            premiumActive ? PaymentEventType.INITIAL_PURCHASE : PaymentEventType.EXPIRATION,
+            null            // payload (sync에서는 raw payload 없음)
+    );
+
+    subscriptionEventLogRepository.save(logEntity);
   }
 
   /**
