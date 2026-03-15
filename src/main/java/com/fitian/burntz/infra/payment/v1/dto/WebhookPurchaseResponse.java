@@ -43,14 +43,13 @@ public class WebhookPurchaseResponse {
     @JsonProperty("expiration_at_ms")
     private Long expirationAtMs;
 
-    @JsonProperty("environment")
     private String environment;
 
     @JsonProperty("entitlement_id")
     private String entitlementId;
 
     @JsonProperty("entitlement_ids")
-    private String entitlementIds;
+    private List<String> entitlementIds;
 
     @JsonProperty("presented_offering_id")
     private String presentedOfferingId;
@@ -70,16 +69,12 @@ public class WebhookPurchaseResponse {
     @JsonProperty("app_user_id")
     private String ownerMemberId;
 
-    @JsonProperty("aliases")
     private List<String> aliases;
 
     @JsonProperty("original_app_user_id")
     private String originalAppUserId;
 
-    @JsonProperty("currency")
     private String currency;
-
-    @JsonProperty("price")
     private Double price;
 
     @JsonProperty("price_in_purchased_currency")
@@ -102,16 +97,12 @@ public class WebhookPurchaseResponse {
     @JsonProperty("commission_percentage")
     private Double commissionPercentage;
 
-    @JsonProperty("metadata")
     private String metadata;
 
     @JsonProperty("renewal_number")
-    private String renewalNumber;
+    private Integer renewalNumber;
 
-    @JsonProperty("type")
     private PaymentEventType type;
-
-    @JsonProperty("id")
     private String id;
 
     @JsonProperty("app_id")
