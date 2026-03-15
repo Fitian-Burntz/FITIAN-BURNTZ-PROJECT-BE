@@ -128,28 +128,36 @@ public class PaymentService {
 
     Member member = memberRepository.findById(memberPk)
             .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+    log.info("[sync] member 조회 완료 memberPk={}", memberPk);
 
     Box box = boxRepository.findActiveBoxByIdWithLock(boxPk)
             .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+    log.info("[sync] box 조회 완료 boxPk={}", boxPk);
 
     validateBoxOwner(memberPk, box);
+    log.info("[sync] box owner 검증 완료");
 
     String appUserId = String.valueOf(memberPk);
 
     RevenueCatSubscriberResponse rcResponse = revenueCatClient.getSubscriber(appUserId);
     if (rcResponse == null || rcResponse.getSubscriber() == null) {
+      log.error("[sync] RevenueCat subscriber 조회 실패 appUserId={}", appUserId);
       throw new ValidationException(ErrorCode.INVALID_REQUEST);
     }
+    log.info("[sync] RevenueCat subscriber 조회 성공 appUserId={}", appUserId);
 
     RevenueCatSubscriberResponse.Subscriber subscriber = rcResponse.getSubscriber();
 
     String rcBoxPk = extractBoxPk(subscriber);
+    log.info("[sync] RevenueCat subscriber attribute boxPk={}", rcBoxPk);
+
     validateRequestedBox(boxPk, rcBoxPk);
 
     RevenueCatSubscriberResponse.Entitlement premiumEntitlement =
             extractPremiumEntitlement(subscriber.getEntitlements());
 
     boolean premiumActive = premiumEntitlement != null;
+    log.info("[sync] entitlement 확인 premiumActive={}", premiumActive);
 
     LocalDateTime startedAt = null;
     LocalDateTime expiredAt = null;
@@ -160,11 +168,14 @@ public class PaymentService {
       startedAt = parseDateTime(premiumEntitlement.getPurchaseDate());
       expiredAt = parseDateTime(premiumEntitlement.getExpiresDate());
       productId = premiumEntitlement.getProductIdentifier();
+      log.info("[sync] entitlement detail productId={}, startedAt={}, expiredAt={}",
+              productId, startedAt, expiredAt);
     }
 
     BoxSubscription boxSubscription = boxSubscriptionRepository
             .findByOwnerMemberIdAndBoxPk(memberPk, boxPk)
             .orElseGet(() -> createEmptySubscription(member, box));
+    log.info("[sync] subscription 조회 또는 생성 완료");
 
     boxSubscription = updateSubscription(
             boxSubscription,
@@ -175,7 +186,9 @@ public class PaymentService {
             expiredAt,
             price
     );
+
     boxSubscriptionRepository.save(boxSubscription);
+    log.info("[sync] subscription 저장 완료");
 
     updateBoxPremium(box, premiumActive);
 
@@ -189,6 +202,7 @@ public class PaymentService {
             null,
             String.valueOf(memberPk)
     );
+    log.info("[sync] 결제 동기화 로그 저장 완료");
 
     return PaymentSyncResponse.builder()
             .boxPk(boxPk)
