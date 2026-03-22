@@ -1,5 +1,6 @@
 package com.fitian.burntz.infra.payment.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.entity.BoxSubscription;
 import com.fitian.burntz.domain.box.entity.SubscriptionEventLog;
@@ -12,7 +13,6 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.NotFoundException;
 import com.fitian.burntz.global.exception.ValidationException;
-import com.fitian.burntz.global.security.jwt.JwtTokenProvider;
 import com.fitian.burntz.infra.payment.client.RevenueCatClient;
 import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
 import com.fitian.burntz.infra.payment.enums.PaymentEventType;
@@ -29,6 +29,7 @@ import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +44,10 @@ public class PaymentService {
   private final MemberRepository memberRepository;
   private final RevenueCatClient revenueCatClient;
 
-  private final JwtTokenProvider jwtTokenProvider;
+  @Value("${revenuecat.secret.key}")
+  private String revenueCatWebhookAuthorization;
+
+  private final ObjectMapper objectMapper;
 
   /**
    * [결제 완료 웹훅 처리 메서드]
@@ -62,12 +66,7 @@ public class PaymentService {
     log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
 
     // 1. 토큰 검증
-//    log.info("[1. 토큰 검증]");
-//    String token = extractToken(request);
-//    if(!jwtTokenProvider.validateToken(token)) {
-//      log.error("[1. 토큰 검증] - 결제완료 웹훅 처리중 토큰이 유효하지 않습니다.(" + "구매한 box pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue() + ")" + "(" + "구매자 pk : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + ")");
-//      throw new ValidationException(ErrorCode.TOKEN_INVALID);
-//    }
+    verifyWebhookAuthorization(request);
 
 
     // 2. 멤버가 존재하는지 확인
@@ -120,6 +119,113 @@ public class PaymentService {
     log.info("[7. 최종 BOX 구독상태 변경]");
     box.subscribe();
 
+  }
+
+  @Transactional
+  public void handleCancelWebhook(WebhookPurchaseResponse webhookPurchaseResponse, HttpServletRequest request) {
+    verifyWebhookAuthorization(request);
+
+    log.info("[cancel webhook] 수신 시작");
+
+    validateWebhookType(webhookPurchaseResponse, PaymentEventType.CANCELLATION);
+
+    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
+    Long memberPk = Long.parseLong(ownerMemberId);
+
+    String boxPkValue = extractWebhookBoxPk(webhookPurchaseResponse);
+    Long boxPk = Long.parseLong(boxPkValue);
+
+    Member member = memberRepository.findById(memberPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+    Box box = boxRepository.findActiveBoxByIdWithLock(boxPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+    BoxSubscription boxSubscription = boxSubscriptionRepository
+            .findByOwnerMemberIdAndBoxPk(memberPk, boxPk)
+            .orElseGet(() -> createEmptySubscription(member, box));
+
+    LocalDateTime expiredAt = toLocalDateTime(webhookPurchaseResponse.getEvent().getExpirationAtMs());
+
+    boxSubscription.sync(
+            webhookPurchaseResponse.getEvent().getProductId(),
+            webhookPurchaseResponse.getEvent().getStore(),
+            SubscriptionStatus.CANCELED,
+            boxSubscription.getStartedAt(),
+            expiredAt,
+            webhookPurchaseResponse.getEvent().getPrice()
+    );
+
+    boxSubscriptionRepository.save(boxSubscription);
+
+    // 취소는 아직 만료가 아니므로 premium 유지
+    box.subscribe();
+    boxRepository.save(box);
+
+    SubscriptionEventLog eventLog = createWebhookLog(
+            webhookPurchaseResponse,
+            member,
+            box,
+            SubscriptionStatus.CANCELED,
+            LocalDateTime.now(),
+            null
+    );
+    subscriptionEventLogRepository.save(eventLog);
+
+    log.info("[cancel webhook] 처리 완료 memberPk={}, boxPk={}, expiredAt={}", memberPk, boxPk, expiredAt);
+  }
+
+  @Transactional
+  public void handleUncancelWebhook(WebhookPurchaseResponse webhookPurchaseResponse, HttpServletRequest request) {
+    verifyWebhookAuthorization(request);
+
+    log.info("[uncancel webhook] 수신 시작");
+
+    validateWebhookType(webhookPurchaseResponse, PaymentEventType.UNCANCELLATION);
+
+    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
+    Long memberPk = Long.parseLong(ownerMemberId);
+
+    String boxPkValue = extractWebhookBoxPk(webhookPurchaseResponse);
+    Long boxPk = Long.parseLong(boxPkValue);
+
+    Member member = memberRepository.findById(memberPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+    Box box = boxRepository.findActiveBoxByIdWithLock(boxPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+    BoxSubscription boxSubscription = boxSubscriptionRepository
+            .findByOwnerMemberIdAndBoxPk(memberPk, boxPk)
+            .orElseGet(() -> createEmptySubscription(member, box));
+
+    LocalDateTime expiredAt = toLocalDateTime(webhookPurchaseResponse.getEvent().getExpirationAtMs());
+
+    boxSubscription.sync(
+            webhookPurchaseResponse.getEvent().getProductId(),
+            webhookPurchaseResponse.getEvent().getStore(),
+            SubscriptionStatus.ACTIVE,
+            boxSubscription.getStartedAt(),
+            expiredAt,
+            webhookPurchaseResponse.getEvent().getPrice()
+    );
+
+    boxSubscriptionRepository.save(boxSubscription);
+
+    box.subscribe();
+    boxRepository.save(box);
+
+    SubscriptionEventLog eventLog = createWebhookLog(
+            webhookPurchaseResponse,
+            member,
+            box,
+            SubscriptionStatus.ACTIVE,
+            null,
+            null
+    );
+    subscriptionEventLogRepository.save(eventLog);
+
+    log.info("[uncancel webhook] 처리 완료 memberPk={}, boxPk={}", memberPk, boxPk);
   }
 
   @Transactional
@@ -223,14 +329,22 @@ public class PaymentService {
 
   private String extractBoxPk(RevenueCatSubscriberResponse.Subscriber subscriber) {
     Map<String, RevenueCatSubscriberResponse.SubscriberAttribute> attrs = subscriber.getSubscriberAttributes();
-    if (attrs == null || !attrs.containsKey("boxPK") || attrs.get("boxPK") == null) {
+    if (attrs == null || !attrs.containsKey("boxPk") || attrs.get("boxPk") == null) {
       throw new ValidationException(ErrorCode.INVALID_REQUEST);
     }
-    return attrs.get("boxPK").getValue();
+    return attrs.get("boxPk").getValue();
   }
 
   private void validateRequestedBox(Long requestedBoxPk, String rcBoxPk) {
-    if (rcBoxPk == null || !requestedBoxPk.equals(Long.parseLong(rcBoxPk))) {
+    if (rcBoxPk == null || rcBoxPk.isBlank()) {
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
+
+    try {
+      if (!requestedBoxPk.equals(Long.parseLong(rcBoxPk))) {
+        throw new ValidationException(ErrorCode.INVALID_REQUEST);
+      }
+    } catch (NumberFormatException e) {
       throw new ValidationException(ErrorCode.INVALID_REQUEST);
     }
   }
@@ -376,6 +490,84 @@ public class PaymentService {
         }).toList();
 
     return responses;
+  }
+
+  private void verifyWebhookAuthorization(HttpServletRequest request) {
+    String authHeader = request.getHeader("Authorization");
+
+    if (authHeader == null || authHeader.isBlank()) {
+      log.error("[webhook auth] Authorization 헤더 없음");
+      throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
+    }
+
+    if (!authHeader.equals(revenueCatWebhookAuthorization)) {
+      log.error("[webhook auth] Authorization 불일치");
+      throw new ValidationException(ErrorCode.TOKEN_INVALID);
+    }
+  }
+
+  private void validateWebhookType(WebhookPurchaseResponse response, PaymentEventType expectedType) {
+    if (response == null || response.getEvent() == null || response.getEvent().getType() == null) {
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
+
+    if (response.getEvent().getType() != expectedType) {
+      log.error("[webhook type] expectedType={}, actualType={}", expectedType, response.getEvent().getType());
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
+  }
+
+  private String extractWebhookBoxPk(WebhookPurchaseResponse response) {
+    if (response == null
+            || response.getEvent() == null
+            || response.getEvent().getSubscriberAttributes() == null
+            || response.getEvent().getSubscriberAttributes().getBoxPk() == null
+            || response.getEvent().getSubscriberAttributes().getBoxPk().getValue() == null
+            || response.getEvent().getSubscriberAttributes().getBoxPk().getValue().isBlank()) {
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
+
+    return response.getEvent().getSubscriberAttributes().getBoxPk().getValue();
+  }
+
+  private LocalDateTime toLocalDateTime(Long epochMillis) {
+    if (epochMillis == null) {
+      return null;
+    }
+
+    return LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(epochMillis),
+            ZoneId.systemDefault()
+    );
+  }
+
+  private SubscriptionEventLog createWebhookLog(
+          WebhookPurchaseResponse webhookPurchaseResponse,
+          Member member,
+          Box box,
+          SubscriptionStatus status,
+          LocalDateTime cancelledAt,
+          LocalDateTime refundedAt
+  ) {
+    try {
+      return SubscriptionEventLog.of(
+              member,
+              box,
+              webhookPurchaseResponse.getEvent().getProductId(),
+              webhookPurchaseResponse.getEvent().getStore(),
+              status,
+              cancelledAt,
+              refundedAt,
+              webhookPurchaseResponse.getEvent().getPrice(),
+              webhookPurchaseResponse.getEvent().getAppId(),
+              webhookPurchaseResponse.getEvent().getOwnerMemberId(),
+              webhookPurchaseResponse.getEvent().getType(),
+              objectMapper.writeValueAsString(webhookPurchaseResponse)
+      );
+    } catch (Exception e) {
+      log.error("[webhook log] payload 직렬화 실패", e);
+      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    }
   }
 
 }

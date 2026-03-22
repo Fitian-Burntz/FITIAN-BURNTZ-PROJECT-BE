@@ -46,6 +46,24 @@ public class PaymentController implements PaymentDocs {
     return ResponseEntity.ok().build();
   }
 
+  @PostMapping("/webhook/cancel")
+  public ResponseEntity<?> handleCancelWebhook(
+          @RequestBody WebhookPurchaseResponse webhookPurchaseResponse,
+          HttpServletRequest request
+  ) {
+    paymentService.handleCancelWebhook(webhookPurchaseResponse, request);
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/webhook/uncancel")
+  public ResponseEntity<?> handleUncancelWebhook(
+          @RequestBody WebhookPurchaseResponse webhookPurchaseResponse,
+          HttpServletRequest request
+  ) {
+    paymentService.handleUncancelWebhook(webhookPurchaseResponse, request);
+    return ResponseEntity.ok().build();
+  }
+
 //  @Override
 //  @PostMapping("/purchase/refund/{boxPk}")
 

@@ -12,22 +12,18 @@ import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.box.repository.BoxSubscriptionRepository;
 import com.fitian.burntz.domain.box.repository.SubscriptionEventLogRepository;
 import com.fitian.burntz.domain.member.entity.Member;
-import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.NotFoundException;
 import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -108,107 +104,105 @@ public class AdminPaymentController {
       Box box = boxSubscription.getBox();
 
 
-      if(status.equals("활성")) {
-        boxSubscription.updateStatus(SubscriptionStatus.ACTIVE);
-        box.subscribe();
-        SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
-            member,
-            box,
-            boxSubscription.getProductId() + "(관리자에 의해 활성화됨)",
-            boxSubscription.getStore(),
-            SubscriptionStatus.ACTIVE,
-            null,
-            null,
-            0.0,
-            null,
-            boxSubscription.getMember().getMemberId(),
-            null,
-            null
-        );
-        subscriptionEventLogRepository.save(subscriptionEventLog);
-      }
+        switch (status) {
+            case "활성" -> {
+                boxSubscription.updateStatus(SubscriptionStatus.ACTIVE);
+                box.subscribe();
+                SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
+                        member,
+                        box,
+                        boxSubscription.getProductId() + "(관리자에 의해 활성화됨)",
+                        boxSubscription.getStore(),
+                        SubscriptionStatus.ACTIVE,
+                        null,
+                        null,
+                        0.0,
+                        null,
+                        boxSubscription.getMember().getMemberId(),
+                        null,
+                        null
+                );
+                subscriptionEventLogRepository.save(subscriptionEventLog);
+            }
+            case "만료" -> {
+                boxSubscription.updateStatus(SubscriptionStatus.EXPIRED);
+                box.unsubscribe();
+                SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
+                        member,
+                        box,
+                        boxSubscription.getProductId() + "(관리자에 의해 만료 처리됨)",
+                        boxSubscription.getStore(),
+                        SubscriptionStatus.EXPIRED,
+                        null,
+                        null,
+                        0.0,
+                        null,
+                        boxSubscription.getMember().getMemberId(),
+                        null,
+                        null
+                );
+                subscriptionEventLogRepository.save(subscriptionEventLog);
+            }
+            case "취소" -> {
+                boxSubscription.updateStatus(SubscriptionStatus.CANCELED);
+                box.unsubscribe();
+                SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
+                        member,
+                        box,
+                        boxSubscription.getProductId() + "(관리자에 의해 취소 처리됨)",
+                        boxSubscription.getStore(),
+                        SubscriptionStatus.CANCELED,
+                        null,
+                        null,
+                        0.0,
+                        null,
+                        boxSubscription.getMember().getMemberId(),
+                        null,
+                        null
+                );
+                subscriptionEventLogRepository.save(subscriptionEventLog);
+            }
+            case "환불" -> {
+                boxSubscription.updateStatus(SubscriptionStatus.REFUNDED);
+                box.unsubscribe();
+                SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
+                        member,
+                        box,
+                        boxSubscription.getProductId() + "(관리자에 의해 환불 처리됨)",
+                        boxSubscription.getStore(),
+                        SubscriptionStatus.REFUNDED,
+                        null,
+                        null,
+                        0.0,
+                        null,
+                        boxSubscription.getMember().getMemberId(),
+                        null,
+                        null
+                );
+                subscriptionEventLogRepository.save(subscriptionEventLog);
 
-      else if(status.equals("만료")) {
-        boxSubscription.updateStatus(SubscriptionStatus.EXPIRED);
-        box.unsubscribe();
-        SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
-            member,
-            box,
-            boxSubscription.getProductId() + "(관리자에 의해 만료 처리됨)",
-            boxSubscription.getStore(),
-            SubscriptionStatus.EXPIRED,
-            null,
-            null,
-            0.0,
-            null,
-            boxSubscription.getMember().getMemberId(),
-            null,
-            null
-        );
-        subscriptionEventLogRepository.save(subscriptionEventLog);
-      }
-
-      else if(status.equals("취소")) {
-        boxSubscription.updateStatus(SubscriptionStatus.CANCELLED);
-        box.unsubscribe();
-        SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
-            member,
-            box,
-            boxSubscription.getProductId() + "(관리자에 의해 취소 처리됨)",
-            boxSubscription.getStore(),
-            SubscriptionStatus.CANCELLED,
-            null,
-            null,
-            0.0,
-            null,
-            boxSubscription.getMember().getMemberId(),
-            null,
-            null
-        );
-        subscriptionEventLogRepository.save(subscriptionEventLog);
-      }
-
-      else if(status.equals("환불")) {
-        boxSubscription.updateStatus(SubscriptionStatus.REFUNDED);
-        box.unsubscribe();
-        SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
-            member,
-            box,
-            boxSubscription.getProductId() + "(관리자에 의해 환불 처리됨)",
-            boxSubscription.getStore(),
-            SubscriptionStatus.REFUNDED,
-            null,
-            null,
-            0.0,
-            null,
-            boxSubscription.getMember().getMemberId(),
-            null,
-            null
-        );
-        subscriptionEventLogRepository.save(subscriptionEventLog);
-
-      }
-      else if(status.equals("보류")) {
-        boxSubscription.updateStatus(SubscriptionStatus.PENDING);
-        box.unsubscribe();
-        SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
-            member,
-            box,
-            boxSubscription.getProductId() + "(관리자에 의해 보류 처리됨)",
-            boxSubscription.getStore(),
-            SubscriptionStatus.PENDING,
-            null,
-            null,
-            0.0,
-            null,
-            boxSubscription.getMember().getMemberId(),
-            null,
-            null
-        );
-        subscriptionEventLogRepository.save(subscriptionEventLog);
-      }
+            }
+            case "보류" -> {
+                boxSubscription.updateStatus(SubscriptionStatus.PENDING);
+                box.unsubscribe();
+                SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.of(
+                        member,
+                        box,
+                        boxSubscription.getProductId() + "(관리자에 의해 보류 처리됨)",
+                        boxSubscription.getStore(),
+                        SubscriptionStatus.PENDING,
+                        null,
+                        null,
+                        0.0,
+                        null,
+                        boxSubscription.getMember().getMemberId(),
+                        null,
+                        null
+                );
+                subscriptionEventLogRepository.save(subscriptionEventLog);
+            }
+        }
     }
-    return;
   }
 
 }

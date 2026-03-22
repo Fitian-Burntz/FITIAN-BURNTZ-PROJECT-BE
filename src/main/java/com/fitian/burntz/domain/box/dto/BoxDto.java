@@ -5,6 +5,7 @@ import com.fitian.burntz.domain.box.enums.SubscribeYN;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
@@ -26,6 +27,7 @@ public class BoxDto {
     private String boxTimetableUrl;
     private String boxInsta;
     private SubscribeYN subscribe; // Y/N
+    private LocalDateTime subscriptionExpiredAt;
 
     public static BoxDto from(Box box) {
         Objects.requireNonNull(box, "box required.");

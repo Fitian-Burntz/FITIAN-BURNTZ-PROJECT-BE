@@ -4,8 +4,10 @@ import com.fitian.burntz.domain.alarm.service.PushService;
 import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.box.dto.*;
 import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.entity.BoxSubscription;
 import com.fitian.burntz.domain.box.enums.MemberRole;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.box.repository.BoxSubscriptionRepository;
 import com.fitian.burntz.domain.channel.enums.ChannelType;
 import com.fitian.burntz.domain.channel.service.ChannelService;
 import com.fitian.burntz.domain.channel.v1.dto.ChannelCreateRequest;
@@ -28,6 +30,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,6 +47,7 @@ public class BoxServiceImpl implements BoxService {
     private final MemberListService memberListService;
     private final MemberListRepository memberListRepository;
     private final PreconditionValidator preconditionValidator;
+    private final BoxSubscriptionRepository boxSubscriptionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -51,7 +55,17 @@ public class BoxServiceImpl implements BoxService {
         Box box = boxRepository.findActiveById(boxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
-        return BoxDto.from(box);
+        BoxDto boxDto = BoxDto.from(box);
+
+        // ✅ subscription expiredAt 조회
+        LocalDateTime subscriptionExpiredAt = boxSubscriptionRepository.findByBoxPk(boxPk)
+                .map(BoxSubscription::getExpiredAt)
+                .orElse(null);
+
+        // ✅ DTO에 세팅
+        boxDto.setSubscriptionExpiredAt(subscriptionExpiredAt);
+
+        return boxDto;
 
     }
 
