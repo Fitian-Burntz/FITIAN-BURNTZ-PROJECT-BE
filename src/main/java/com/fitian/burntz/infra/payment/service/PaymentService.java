@@ -158,8 +158,8 @@ public class PaymentService {
 
     boxSubscriptionRepository.save(boxSubscription);
 
-    // 취소는 아직 만료가 아니므로 premium 유지
-    box.subscribe();
+    // 취소는 아직 만료가 아니므로 premium 유지,cancel 상태로 변경
+    box.subscribeCancel();
     boxRepository.save(box);
 
     SubscriptionEventLog eventLog = createWebhookLog(

@@ -1,6 +1,5 @@
 package com.fitian.burntz.domain.box.entity;
 
-import com.fitian.burntz.domain.box.dto.BoxDto;
 import com.fitian.burntz.domain.box.dto.CreateBoxRequest;
 import com.fitian.burntz.domain.box.dto.UpdateBoxInfoDto;
 import com.fitian.burntz.domain.box.enums.SubscribeYN;
@@ -106,6 +105,10 @@ public class  Box extends BaseTime {
 
     public void subscribe() {
         this.subscribe = SubscribeYN.Y;
+    }
+
+    public void subscribeCancel() {
+        this.subscribe = SubscribeYN.C;
     }
 
     public void unsubscribe() {

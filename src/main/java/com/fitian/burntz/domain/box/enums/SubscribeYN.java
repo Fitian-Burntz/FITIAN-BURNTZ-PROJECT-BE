@@ -7,4 +7,4 @@ package com.fitian.burntz.domain.box.enums;
  * @date : 2025-09-04
  * @description : box 구독 여부 enum
  */
-public enum SubscribeYN { Y,N }
+public enum SubscribeYN { Y,N,C }
