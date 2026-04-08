@@ -493,17 +493,17 @@ public class PaymentService {
   }
 
   private void verifyWebhookAuthorization(HttpServletRequest request) {
-    String authHeader = request.getHeader("Authorization");
+      String token = extractToken(request);
 
-    if (authHeader == null || authHeader.isBlank()) {
-      log.error("[webhook auth] Authorization 헤더 없음");
-      throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
-    }
+      if (token == null || token.isBlank()) {
+          log.error("[webhook auth] Authorization 헤더 없음");
+          throw new ValidationException(ErrorCode.TOKEN_EXTRACTION_FAILED);
+      }
 
-    if (!authHeader.equals(revenueCatWebhookAuthorization)) {
-      log.error("[webhook auth] Authorization 불일치");
-      throw new ValidationException(ErrorCode.TOKEN_INVALID);
-    }
+      if (!token.equals(revenueCatWebhookAuthorization)) {
+          log.error("[webhook auth] Authorization 불일치");
+          throw new ValidationException(ErrorCode.TOKEN_INVALID);
+      }
   }
 
   private void validateWebhookType(WebhookPurchaseResponse response, PaymentEventType expectedType) {
