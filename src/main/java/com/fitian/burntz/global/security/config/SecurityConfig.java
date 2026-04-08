@@ -74,6 +74,8 @@ public class SecurityConfig {
                                 //wod(임시로 permitAll)
                                 "/api/v1/boxes/**",
 
+                                //
+                                "/api/v1/payments/webhook/**",
                                 // 스웨거
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
