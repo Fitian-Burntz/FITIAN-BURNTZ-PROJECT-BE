@@ -81,6 +81,7 @@ public enum ErrorCode {
     MEMBER_NOT_IN_BOX(HttpStatus.NOT_FOUND,"MEMBER_NOT_IN_BOX","해당 박스에 속해있지 않은 사용자입니다."),
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND,"RECORD_NOT_FOUND","운동기록을  찾을 수 없습니다."),
     MEMBERLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBERLIST_NOT_FOUND", "memberList 에 해당 조건을 만족하는 값이 없습니다."),
+    BOX_SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "BOX_SUBSCRIPTION_NOT_FOUND", "해당 박스 구독 정보를 찾을 수 없습니다."),
     FCMTOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "FCMTOKEN_NOT_FOUND", "FcmToken 에 해당 조건을 만족하는 값이 없습니다."),
     AGREEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "AGREEMENT_NOT_FOUND", "Agreement 에 해당 조건을 만족하는 값이 없습니다."),
 

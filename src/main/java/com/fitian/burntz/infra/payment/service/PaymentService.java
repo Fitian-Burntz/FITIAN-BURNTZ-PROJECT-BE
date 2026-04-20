@@ -88,8 +88,8 @@ public class PaymentService {
     String productId = webhookPurchaseResponse.getEvent().getProductId();
     PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
     SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
-    LocalDateTime startedAt = LocalDateTime.now();
-    LocalDateTime expiredAt = LocalDateTime.now().plusMonths(1);
+    LocalDateTime startedAt = toLocalDateTime(webhookPurchaseResponse.getEvent().getPurchasedAtMs());
+    LocalDateTime expiredAt = toLocalDateTime(webhookPurchaseResponse.getEvent().getExpirationAtMs());
     Double price = webhookPurchaseResponse.getEvent().getPrice();
 
     BoxSubscription boxSubscription = BoxSubscription
@@ -282,8 +282,8 @@ public class PaymentService {
 
     BoxSubscription boxSubscription = boxSubscriptionRepository
             .findByOwnerMemberIdAndBoxPk(memberPk, boxPk)
-            .orElseGet(() -> createEmptySubscription(member, box));
-    log.info("[sync] subscription 조회 또는 생성 완료");
+            .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_SUBSCRIPTION_NOT_FOUND));
+    log.info("[sync] subscription 조회 완료");
 
     boxSubscription = updateSubscription(
             boxSubscription,
