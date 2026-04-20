@@ -12,4 +12,13 @@ public enum PaymentStore {
 
   private final String value;
   private final String description;
+
+  public static PaymentStore from(String rcStore) {
+    if (rcStore == null) return OTHER;
+    return switch (rcStore.toLowerCase()) {
+      case "app_store"  -> APP_STORE;
+      case "play_store" -> PLAY_STORE;
+      default           -> OTHER;
+    };
+  }
 }

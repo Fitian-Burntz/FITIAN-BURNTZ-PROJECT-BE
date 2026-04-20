@@ -391,7 +391,7 @@
     const statusMap = {
       "ACTIVE": "활성",
       "EXPIRED": "만료",
-      "CANCELLED": "취소",
+      "CANCELED": "취소",
       "REFUNDED": "환불",
       "PENDING": "보류"
     };
@@ -455,7 +455,7 @@
             <select class="status-select" onchange="changeStatus(this.value)">
               <option value="ACTIVE" ${data.status === 'ACTIVE' ? 'selected' : ''}>활성</option>
               <option value="EXPIRED" ${data.status === 'EXPIRED' ? 'selected' : ''}>만료</option>
-              <option value="CANCELLED" ${data.status === 'CANCELLED' ? 'selected' : ''}>취소</option>
+              <option value="CANCELED" ${data.status === 'CANCELED' ? 'selected' : ''}>취소</option>
               <option value="REFUNDED" ${data.status === 'REFUNDED' ? 'selected' : ''}>환불</option>
               <option value="PENDING" ${data.status === 'PENDING' ? 'selected' : ''}>보류</option>
             </select>
@@ -493,7 +493,7 @@
     const statusMap = {
       "ACTIVE": "활성",
       "EXPIRED": "만료",
-      "CANCELLED": "취소",
+      "CANCELED": "취소",
       "REFUNDED": "환불",
       "PENDING": "보류"
     };

@@ -269,13 +269,15 @@ public class PaymentService {
     LocalDateTime expiredAt = null;
     String productId = null;
     Double price = null;
+    PaymentStore store = PaymentStore.OTHER;
 
     if (premiumActive) {
       startedAt = parseDateTime(premiumEntitlement.getPurchaseDate());
       expiredAt = parseDateTime(premiumEntitlement.getExpiresDate());
       productId = premiumEntitlement.getProductIdentifier();
-      log.info("[sync] entitlement detail productId={}, startedAt={}, expiredAt={}",
-              productId, startedAt, expiredAt);
+      store = PaymentStore.from(premiumEntitlement.getStore());
+      log.info("[sync] entitlement detail productId={}, store={}, startedAt={}, expiredAt={}",
+              productId, store, startedAt, expiredAt);
     }
 
     BoxSubscription boxSubscription = boxSubscriptionRepository
@@ -286,7 +288,7 @@ public class PaymentService {
     boxSubscription = updateSubscription(
             boxSubscription,
             productId,
-            PaymentStore.APP_STORE,
+            store,
             premiumActive,
             startedAt,
             expiredAt,
@@ -302,7 +304,7 @@ public class PaymentService {
             member,
             box,
             productId,
-            PaymentStore.APP_STORE,
+            store,
             price,
             premiumActive,
             null,
@@ -314,7 +316,7 @@ public class PaymentService {
             .boxPk(boxPk)
             .premium(premiumActive)
             .productId(productId)
-            .store(PaymentStore.APP_STORE.name())
+            .store(store.name())
             .startedAt(startedAt)
             .expiredAt(expiredAt)
             .syncedFrom("MANUAL_SYNC")

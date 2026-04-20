@@ -49,6 +49,8 @@ public class RevenueCatSubscriberResponse {
 
         @JsonProperty("expires_date")
         private String expiresDate;
+
+        private String store;
     }
 
     @Getter
