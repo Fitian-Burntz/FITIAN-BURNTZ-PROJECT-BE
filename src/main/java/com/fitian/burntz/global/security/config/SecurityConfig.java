@@ -64,17 +64,12 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/index.html",
-                                "/login-token-test3.html",
+                                "/auth-test.html",
                                 "/css/**",
                                 "/js/**",
-                                //결제 테스트용
-                                "/api/v1/payments/purchase/**",
                                 //ECS 헬스체크
                                 "/actuator/health", "/actuator/health/**",
-                                //wod(임시로 permitAll)
-                                "/api/v1/boxes/**",
-
-                                //
+                                //결제 webhook
                                 "/api/v1/payments/webhook/**",
                                 // 스웨거
                                 "/swagger-ui/**",
@@ -94,6 +89,11 @@ public class SecurityConfig {
                         //== Box 무인증 경로 ==//
                         .requestMatchers(
                                HttpMethod.GET, "/api/v1/boxes/all"
+                        ).permitAll()
+
+                        // 비로그인 상태에서 박스 코드로 박스 검색 (가입 플로우)
+                        .requestMatchers(
+                               HttpMethod.GET, "/api/v1/boxes/code"
                         ).permitAll()
 
                         //firebase push
