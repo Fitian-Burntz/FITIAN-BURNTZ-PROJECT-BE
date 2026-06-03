@@ -12,15 +12,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author : 선순주
- * @packageName : com.fitian.burntz.domain.wod.repository
- * @fileName : WodRespository
- * @date : 2025-09-16
- * @description : Wod 레포지토리
- */
 @Repository
-public interface WodRespository extends JpaRepository<Wod, Long> {
+public interface WodRepository extends JpaRepository<Wod, Long> {
     //특정 날짜에 해당하는 wod 조회(deleteYN이 N인것만)
     Optional<Wod> findByBoxAndWodDateAndDeletedYN(Box box, LocalDate wodDate, BaseTime.Yn deletedYN);
 
@@ -32,5 +25,4 @@ public interface WodRespository extends JpaRepository<Wod, Long> {
 
     //wod 존재 및 소속 검증 (box+date로 조회)
     Optional<Wod> findByBoxBoxPkAndWodDateAndDeletedYN(Long boxPk, LocalDate date, BaseTime.Yn deletedYN);
-
- }
+}

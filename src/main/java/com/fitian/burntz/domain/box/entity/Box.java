@@ -2,7 +2,7 @@ package com.fitian.burntz.domain.box.entity;
 
 import com.fitian.burntz.domain.box.dto.CreateBoxRequest;
 import com.fitian.burntz.domain.box.dto.UpdateBoxInfoDto;
-import com.fitian.burntz.domain.box.enums.SubscribeYN;
+import com.fitian.burntz.domain.box.enums.BoxSubscribeStatus;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,6 +34,7 @@ public class  Box extends BaseTime {
     @Column(name = "box_pk")
     private Long boxPk;
 
+    // ownerPk: member FK. 권한 체크 목적으로만 사용하므로 @ManyToOne 대신 ID 직접 관리.
     @Column(name = "owner_pk", nullable = false)
     private Long ownerPk;
 
@@ -70,10 +71,10 @@ public class  Box extends BaseTime {
     @Enumerated(EnumType.STRING)
     @Column(name = "subscribe", length = 1)
     @Builder.Default
-    private SubscribeYN subscribe = SubscribeYN.N; // Y/N
+    private BoxSubscribeStatus subscribe = BoxSubscribeStatus.N; // Y/N
 
 
-    /** Box 생성 정적 팩토리 매서드 **/
+    /** Box 생성 정적 팩토리 메서드 **/
     public static Box create(Long ownerPk, CreateBoxRequest createBoxRequest) {
         return Box.builder()
                 .boxName(trimToNull(createBoxRequest.getBoxName()))
@@ -104,15 +105,15 @@ public class  Box extends BaseTime {
     }
 
     public void subscribe() {
-        this.subscribe = SubscribeYN.Y;
+        this.subscribe = BoxSubscribeStatus.Y;
     }
 
     public void subscribeCancel() {
-        this.subscribe = SubscribeYN.C;
+        this.subscribe = BoxSubscribeStatus.C;
     }
 
     public void unsubscribe() {
-        this.subscribe = SubscribeYN.N;
+        this.subscribe = BoxSubscribeStatus.N;
     }
 
 

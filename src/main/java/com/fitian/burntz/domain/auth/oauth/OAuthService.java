@@ -1,19 +1,72 @@
 package com.fitian.burntz.domain.auth.oauth;
 
-
 import com.fitian.burntz.domain.auth.dto.OAuthUserInfo;
 import com.fitian.burntz.domain.member.dto.MemberCreateResult;
+import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.repository.MemberRepository;
+import com.fitian.burntz.domain.member.service.MemberService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
-public interface OAuthService {
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class OAuthService {
 
-    /**
-     * provider: "apple" | "google"
-     * token: id_token 또는 authorization code (클라이언트에서 전달 방식에 따라)
-     */
-    // 기존 token 기반 메서드(필요하면 유지)
-//    Member findOrCreateUserBySocialToken(String token, String provider);
+    private final AppleApiClient appleApiClient;
+    private final GoogleApiClient googleApiClient;
+    private final MemberService memberService;
+    private final MemberRepository memberRepository;
 
-    // 새로 추가: 이미 검증된 OAuthUserInfo 를 전달하여 멤버 조회/생성
-    MemberCreateResult findOrCreateUserBySocialToken(String token, String deviceId, String provider);
-    MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider);
+    @Transactional
+    public MemberCreateResult findOrCreateUserBySocialToken(String token, String deviceId, String provider) {
+        OAuthUserInfo userInfo = switch (provider.toLowerCase()) {
+            case "apple" -> appleApiClient.getUserInfoFromIdToken(token);
+            case "google" -> googleApiClient.getUserInfo(token);
+            default -> throw new IllegalArgumentException("지원하지 않는 provider: " + provider);
+        };
+        return findOrCreateUserByUserInfo(userInfo, deviceId, provider);
+    }
+
+    @Transactional
+    public MemberCreateResult findOrCreateUserByUserInfo(OAuthUserInfo userInfo, String deviceId, String provider) {
+        if (userInfo == null || userInfo.getMemberId() == null) {
+            throw new IllegalArgumentException("Invalid userInfo");
+        }
+        String providerKey = provider.toLowerCase();
+        String providerMemberId = userInfo.getMemberId();
+
+        // 변경: 직접 memberRepository로 먼저 조회하지 않고 getOrCreate 호출만 함
+        MemberCreateResult memberCreateResult = memberService.getOrCreateMember(
+                providerKey,
+                providerMemberId,
+                userInfo.getNickname() != null ? userInfo.getNickname() : "",
+                userInfo.getEmail()
+        );
+
+        Member member = memberCreateResult.member();
+        boolean isNew = memberCreateResult.isNewMember();
+
+        // 기존 로직: 기존 사용자라면 프로필 갱신 처리
+        if (!isNew) {
+            boolean changed = false;
+            if (userInfo.getNickname() != null && !userInfo.getNickname().isBlank()
+                    && (member.getNickname() == null || !member.getNickname().equals(userInfo.getNickname()))) {
+                member.updateMemberProfile(userInfo.getNickname(), null, null);
+                changed = true;
+            }
+            if (userInfo.getEmail() != null && !userInfo.getEmail().isBlank()
+                    && (member.getEmail() == null || !member.getEmail().equals(userInfo.getEmail()))) {
+                member.updateMemberProfile(null, userInfo.getEmail(), null);
+                changed = true;
+            }
+            if (changed) {
+                memberRepository.save(member);
+            }
+        }
+
+        return memberCreateResult;
+    }
 }

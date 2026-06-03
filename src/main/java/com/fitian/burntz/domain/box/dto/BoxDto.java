@@ -1,7 +1,7 @@
 package com.fitian.burntz.domain.box.dto;
 
 import com.fitian.burntz.domain.box.entity.Box;
-import com.fitian.burntz.domain.box.enums.SubscribeYN;
+import com.fitian.burntz.domain.box.enums.BoxSubscribeStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -26,7 +26,7 @@ public class BoxDto {
     private String boxFeeUrl;
     private String boxTimetableUrl;
     private String boxInsta;
-    private SubscribeYN subscribe; // Y/N
+    private BoxSubscribeStatus subscribe; // Y/N
     private LocalDateTime subscriptionExpiredAt;
 
     public static BoxDto from(Box box) {

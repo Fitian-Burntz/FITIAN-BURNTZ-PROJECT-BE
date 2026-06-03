@@ -15,7 +15,7 @@ import com.fitian.burntz.domain.record.v1.dto.RecordResponse;
 import com.fitian.burntz.domain.record.v1.dto.RecordUpdateRequest;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.enums.WodType;
-import com.fitian.burntz.domain.wod.repository.WodRespository;
+import com.fitian.burntz.domain.wod.repository.WodRepository;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RecordService {
-    private final WodRespository wodRespository;
+    private final WodRepository wodRespository;
     private final MemberListRepository memberListRepository;
     private final ClassesRepository classesRepository;
     private final RecordRepository recordRepository;

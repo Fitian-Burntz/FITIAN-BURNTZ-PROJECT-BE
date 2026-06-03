@@ -1,6 +1,6 @@
 package com.fitian.burntz.domain.box.dto;
 
-import com.fitian.burntz.domain.box.enums.SubscribeYN;
+import com.fitian.burntz.domain.box.enums.BoxSubscribeStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
@@ -17,7 +17,7 @@ public record BoxResponse(
         String boxFeeUrl,
         String boxTimetableUrl,
         String boxInsta,
-        SubscribeYN subscribe
+        BoxSubscribeStatus subscribe
 ) {
 
     public static BoxResponse from(BoxDto boxDto) {

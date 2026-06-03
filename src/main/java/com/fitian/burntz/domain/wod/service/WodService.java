@@ -9,7 +9,7 @@ import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.record.service.RecordService;
 import com.fitian.burntz.domain.wod.entity.Wod;
-import com.fitian.burntz.domain.wod.repository.WodRespository;
+import com.fitian.burntz.domain.wod.repository.WodRepository;
 import com.fitian.burntz.domain.wod.v1.dto.WodCreateRequest;
 import com.fitian.burntz.domain.wod.v1.dto.WodResponse;
 import com.fitian.burntz.domain.wod.v1.dto.WodUpdateRequest;
@@ -40,7 +40,7 @@ public class WodService {
 
     private final PushService pushService;
     private final RecordService recordService;
-    private final WodRespository wodRespository;
+    private final WodRepository wodRespository;
     private final BoxRepository boxRepository;
     private final MemberListRepository memberListRepository;
 
