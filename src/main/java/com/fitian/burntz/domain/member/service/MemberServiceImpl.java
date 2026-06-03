@@ -14,11 +14,13 @@ import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
+import com.fitian.burntz.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -38,6 +40,7 @@ public class MemberServiceImpl implements MemberService {
     private final RefreshTokenService refreshTokenService;
     private final PreconditionValidator preconditionValidator;
     private final BoxRepository boxRepository;
+    private final S3Service s3Service;
 
     /**
      * 로그인 전용 멤버 정보 반환
@@ -204,6 +207,21 @@ public class MemberServiceImpl implements MemberService {
         // MemberList, Box 탈퇴, Record, ClassParticipant, ChannelParticipant, FcmToken, Membership, MembershipHistory 전부 딜리트 해야함
 
         return MemberDto.from(savedMember);
+    }
+
+    /** 프로필 이미지 업데이트 **/
+    @Override
+    public MemberDto updateProfileImage(Long memberPk, MultipartFile image) {
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
+
+        Member member = memberRepository.findActiveById(memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        S3Service.ProfileImageUrls urls = s3Service.uploadProfileImage(memberPk, image);
+        member.updateProfileImageUrl(urls.mediumUrl());
+        memberRepository.save(member);
+
+        return MemberDto.from(member);
     }
 
     /** 가장 마지막으로 방문한 Box PK 정보 멤버에 업데이트 **/

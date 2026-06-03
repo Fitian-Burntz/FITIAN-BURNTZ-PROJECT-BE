@@ -18,9 +18,14 @@ public class MemberDto {
     private String gender;   // enum이면 .name() 사용
     private String provider;
     private Long lastVisitedBoxPk;
+    private String profileImageUrl;
+    private String profileImageThumbUrl;
 
     public static MemberDto from(Member member) {
         Objects.requireNonNull(member, "member required.");
+
+        String mediumUrl = member.getProfileImageUrl();
+        String thumbUrl = mediumUrl != null ? mediumUrl.replace("/medium.jpg", "/thumb.jpg") : null;
 
         return MemberDto.builder()
                 .memberPk(member.getMemberPk())
@@ -30,6 +35,8 @@ public class MemberDto {
                 .gender(member.getGender() == null ? null : member.getGender().name())
                 .provider(member.getProvider())
                 .lastVisitedBoxPk(member.getLastVisitedBoxPk())
+                .profileImageUrl(mediumUrl)
+                .profileImageThumbUrl(thumbUrl)
                 .build();
     }
 }

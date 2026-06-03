@@ -19,7 +19,8 @@
         { "name": "SPRING_DATA_REDIS_SSL_ENABLED", "value": "true" },
         { "name": "SPRING_DATA_REDIS_USERNAME", "value": "default" },
         { "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED", "value": "true" },
-        { "name": "BURNTZ_APPLE_PRIVATE_KEY_FILE", "value": "/tmp/apple_private_key.p8" }
+        { "name": "BURNTZ_APPLE_PRIVATE_KEY_FILE", "value": "/tmp/apple_private_key.p8" },
+        { "name": "S3_BUCKET_NAME", "value": "fitian-burntz" }
       ],
       "secrets": [
         { "name": "DB_URL",      "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:burntz/app/config:DB_URL::" },

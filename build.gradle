@@ -73,6 +73,12 @@ dependencies {
 
 	// 관리자 페이지를 위한 템플릿 엔진
 	implementation 'org.springframework.boot:spring-boot-starter-mustache'
+
+	// AWS S3
+	implementation 'software.amazon.awssdk:s3:2.26.25'
+
+	// 이미지 리사이즈
+	implementation 'net.coobird:thumbnailator:0.4.20'
 }
 
 dependencyManagement {

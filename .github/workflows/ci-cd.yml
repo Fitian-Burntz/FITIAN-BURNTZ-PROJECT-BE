@@ -118,12 +118,22 @@ jobs:
             exit 1
           fi
 
+      - name: Enable deployment circuit breaker
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.CLUSTER_NAME }} \
+            --service ${{ env.SERVICE_NAME }} \
+            --deployment-configuration \
+              "minimumHealthyPercent=100,maximumPercent=200,deploymentCircuitBreaker={enable=true,rollback=true}" \
+            --region ${{ env.AWS_REGION }}
+
       - name: Deploy to ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: rendered-taskdef.json
           service: ${{ env.SERVICE_NAME }}
           cluster: ${{ env.CLUSTER_NAME }}
+          wait-for-service-stability: true
 
       - name:  Configure ECS AutoScaling (min=2, max=4, CPU=60%)
         env:

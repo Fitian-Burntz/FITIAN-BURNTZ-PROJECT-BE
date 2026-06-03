@@ -9,9 +9,11 @@ import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -59,6 +61,19 @@ public class MemberController implements MemberDocs {
         return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(updateResponse)));
     }
 
+
+    /** 프로필 이미지 업데이트 **/
+    @PatchMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<MemberInfoResponse>> updateProfileImage(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestPart("image") MultipartFile image) {
+
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        MemberDto result = memberService.updateProfileImage(loginMemberPk, image);
+
+        return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(result)));
+    }
 
     /** 멤버 자진 탈퇴
      * 서비스 재로그인 시 계정이 다시 활성화됩니다.

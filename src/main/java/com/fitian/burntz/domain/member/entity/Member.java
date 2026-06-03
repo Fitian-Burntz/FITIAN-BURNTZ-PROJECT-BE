@@ -62,6 +62,9 @@ public class Member extends BaseTime {
     @Column(name = "last_visited_box_pk")
     private Long lastVisitedBoxPk;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
 
     /** 멤버 계정 생성 정적 메서드 **/
     public static Member create(
@@ -107,6 +110,10 @@ public class Member extends BaseTime {
 
     public void changeMemberId(String newMemberId) {
         this.memberId = newMemberId;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
 }

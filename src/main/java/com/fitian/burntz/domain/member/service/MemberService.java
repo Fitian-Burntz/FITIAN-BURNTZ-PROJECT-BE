@@ -21,4 +21,7 @@ public interface MemberService {
     /** 최근에 접속한 Box 업데이트 **/
     Long updateLastVisitedBox(Long memberPk, Long boxPk);
 
+    /** 프로필 이미지 업데이트 **/
+    MemberDto updateProfileImage(Long memberPk, org.springframework.web.multipart.MultipartFile image);
+
 }
