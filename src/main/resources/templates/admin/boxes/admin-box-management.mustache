@@ -10,104 +10,184 @@
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-    /* 헤더 */
     .header{background:white;padding:16px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1);flex-shrink:0}
-    .header-content{max-width:none;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .header-content{padding:0 24px;display:flex;justify-content:space-between;align-items:center}
     .logo{font-family:'Sofia Sans Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--bw100)}
     .header-right{display:flex;align-items:center;gap:12px}
     .header-title{font-size:14px;color:var(--bw40)}
-    .back-btn{background:none;border:none;cursor:pointer;padding:8px;border-radius:4px;transition:background-color 0.2s;display:flex;align-items:center;gap:6px;color:var(--bw70);font-size:14px;font-family:inherit}
+    .back-btn{background:none;border:none;cursor:pointer;padding:8px 12px;border-radius:4px;transition:background-color 0.2s;display:flex;align-items:center;gap:6px;color:var(--bw70);font-size:14px;font-family:inherit}
     .back-btn:hover{background:var(--bw08)}
     .back-btn svg{width:18px;height:18px;fill:var(--bw70)}
 
-    /* 레이아웃: 좌측 패널 + 우측 상세 */
     .workspace{display:flex;flex:1;overflow:hidden}
 
-    /* 좌측 박스 목록 패널 */
-    .sidebar{width:320px;flex-shrink:0;background:white;border-right:1px solid var(--bw15);display:flex;flex-direction:column;overflow:hidden}
-    .sidebar-header{padding:16px;border-bottom:1px solid var(--bw15);flex-shrink:0}
-    .sidebar-title{font-size:16px;font-weight:700;color:var(--bw100);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
-    .box-count-badge{background:var(--bw08);color:var(--bw70);font-size:12px;font-weight:500;padding:2px 8px;border-radius:10px}
-    .search-input{width:100%;padding:9px 12px;border:1.5px solid var(--bw15);border-radius:6px;font-family:inherit;font-size:13px;color:var(--bw80);background:var(--bw05)}
+    /* 좌측 박스 목록 */
+    .sidebar{width:280px;flex-shrink:0;background:white;border-right:1px solid var(--bw15);display:flex;flex-direction:column;overflow:hidden}
+    .sidebar-header{padding:14px 16px;border-bottom:1px solid var(--bw15);flex-shrink:0}
+    .sidebar-title{font-size:14px;font-weight:700;color:var(--bw100);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+    .box-count-badge{background:var(--bw08);color:var(--bw70);font-size:11px;font-weight:500;padding:2px 7px;border-radius:10px}
+    .search-input{width:100%;padding:8px 12px;border:1.5px solid var(--bw15);border-radius:6px;font-family:inherit;font-size:13px;color:var(--bw80);background:var(--bw05)}
     .search-input:focus{outline:none;border-color:var(--bw100)}
     .box-list{flex:1;overflow-y:auto}
-    .box-list-item{padding:14px 16px;border-bottom:1px solid var(--bw15);cursor:pointer;transition:background-color 0.15s;display:flex;align-items:center;gap:12px}
+    .box-list-item{padding:11px 14px;border-bottom:1px solid var(--bw15);cursor:pointer;transition:background-color 0.15s;display:flex;align-items:center;gap:10px}
     .box-list-item:hover{background:var(--bw05)}
-    .box-list-item.active{background:#f0f4ff;border-right:3px solid var(--bw100)}
+    .box-list-item.active{background:#eef2ff;border-right:3px solid var(--bw100)}
     .box-list-item.active .box-item-name{color:var(--bw100)}
-    .box-avatar{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:700;flex-shrink:0}
+    .box-avatar{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0}
     .box-item-info{flex:1;min-width:0}
-    .box-item-name{font-size:14px;font-weight:600;color:var(--bw80);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .box-item-meta{font-size:11px;color:var(--bw40);display:flex;gap:6px;align-items:center}
-    .subscribe-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-    .subscribe-dot.active{background:#4CAF50}
-    .subscribe-dot.inactive{background:#9aa0a6}
-    .sidebar-loading{padding:40px 16px;text-align:center;color:var(--bw40);font-size:13px}
+    .box-item-name{font-size:13px;font-weight:600;color:var(--bw80);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .box-item-meta{font-size:11px;color:var(--bw40);display:flex;gap:5px;align-items:center}
+    .subscribe-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+    .dot-active{background:#4CAF50}
+    .dot-inactive{background:#bdbdbd}
+    .sidebar-msg{padding:40px 16px;text-align:center;color:var(--bw40);font-size:13px}
 
     /* 우측 상세 패널 */
     .detail-panel{flex:1;overflow-y:auto;background:var(--bw05)}
-    .detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--bw30);gap:16px}
-    .detail-empty-icon{font-size:48px;opacity:0.4}
-    .detail-empty-text{font-size:15px}
+    .detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--bw30);gap:14px}
+    .detail-empty-icon{font-size:44px;opacity:0.35}
+    .detail-empty-text{font-size:14px}
+    .detail-content{padding:20px 24px;max-width:1000px}
 
-    /* 상세 내용 */
-    .detail-content{padding:24px;max-width:900px}
-    .detail-box-header{background:white;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
-    .detail-box-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
-    .detail-box-avatar{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;font-weight:700;flex-shrink:0}
-    .detail-box-name{font-size:22px;font-weight:700;color:var(--bw100);margin-bottom:6px}
-    .detail-box-code{font-size:13px;color:var(--bw40);font-family:monospace}
-    .subscribe-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
-    .subscribe-badge.sub-y{background:#e8f5e9;color:#2e7d32}
-    .subscribe-badge.sub-n{background:#f5f5f5;color:#616161}
-    .subscribe-badge.sub-c{background:#fff3e0;color:#e65100}
-    .detail-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .info-item{display:flex;flex-direction:column;gap:3px}
-    .info-label{font-size:11px;color:var(--bw40);font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
-    .info-value{font-size:14px;color:var(--bw80)}
-    .info-value.empty{color:var(--bw30);font-style:italic}
+    /* 박스 헤더 */
+    .box-hd{background:white;border-radius:10px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;align-items:flex-start;gap:14px}
+    .box-hd-av{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:700;flex-shrink:0}
+    .box-hd-body{flex:1}
+    .box-hd-name{font-size:18px;font-weight:700;color:var(--bw100);margin-bottom:3px}
+    .box-hd-code{font-size:12px;color:var(--bw40);font-family:monospace;margin-bottom:8px}
+    .box-hd-meta{display:flex;gap:16px;flex-wrap:wrap}
+    .meta-item{display:flex;flex-direction:column;gap:1px}
+    .meta-label{font-size:10px;color:var(--bw40);font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
+    .meta-val{font-size:12px;color:var(--bw80)}
+    .meta-val.empty{color:var(--bw30);font-style:italic}
+    .sub-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+    .sub-y{background:#e8f5e9;color:#2e7d32}
+    .sub-n{background:#f5f5f5;color:#757575}
+    .sub-c{background:#fff3e0;color:#e65100}
 
-    /* 오너 섹션 */
-    .section{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
-    .section-title{font-size:14px;font-weight:700;color:var(--bw100);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-    .section-title-icon{font-size:16px}
-    .owner-card{display:flex;align-items:center;gap:14px;padding:14px;background:var(--bw05);border-radius:8px}
-    .owner-avatar{width:44px;height:44px;border-radius:50%;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
-    .owner-info{flex:1}
-    .owner-name{font-size:15px;font-weight:600;color:var(--bw80);margin-bottom:3px}
-    .owner-email{font-size:12px;color:var(--bw40)}
-    .owner-tag{font-size:11px;font-weight:600;background:var(--bw100);color:white;padding:2px 8px;border-radius:4px}
+    /* 오너 */
+    .owner-row{background:white;border-radius:10px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;align-items:center;gap:10px}
+    .owner-av{width:36px;height:36px;border-radius:50%;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+    .owner-name{font-size:13px;font-weight:600;color:var(--bw80)}
+    .owner-email{font-size:11px;color:var(--bw40)}
+    .owner-lbl{font-size:11px;font-weight:700;background:var(--bw100);color:white;padding:2px 7px;border-radius:4px;margin-left:auto;flex-shrink:0}
 
-    /* 멤버 테이블 */
-    .member-count-info{font-size:12px;color:var(--bw40);font-weight:400;margin-left:4px}
-    .members-table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--bw15)}
-    table{width:100%;border-collapse:collapse;font-size:13px}
+    /* 탭 */
+    .tabs-wrap{background:white;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden}
+    .tab-nav{display:flex;border-bottom:1px solid var(--bw15);padding:0 4px;overflow-x:auto}
+    .tab-btn{padding:11px 15px;border:none;background:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;color:var(--bw40);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:color 0.15s}
+    .tab-btn:hover{color:var(--bw80)}
+    .tab-btn.active{color:var(--bw100);font-weight:700;border-bottom-color:var(--bw100)}
+    .tab-cnt{background:var(--bw08);color:var(--bw70);font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px}
+    .tab-btn.active .tab-cnt{background:var(--bw15)}
+    .tab-body{padding:18px}
+    .tab-msg{padding:32px;text-align:center;color:var(--bw40);font-size:13px}
+
+    /* 공통 테이블 */
+    .tbl{overflow-x:auto;border-radius:7px;border:1px solid var(--bw15)}
+    table{width:100%;border-collapse:collapse;font-size:12px}
     thead{background:var(--bw08)}
-    th{padding:10px 14px;text-align:left;font-weight:600;color:var(--bw70);font-size:12px;white-space:nowrap;border-bottom:1px solid var(--bw15)}
-    td{padding:11px 14px;border-bottom:1px solid var(--bw15);color:var(--bw80);vertical-align:middle}
+    th{padding:8px 12px;text-align:left;font-weight:600;color:var(--bw70);font-size:11px;white-space:nowrap;border-bottom:1px solid var(--bw15)}
+    td{padding:9px 12px;border-bottom:1px solid var(--bw15);color:var(--bw80);vertical-align:middle}
     tr:last-child td{border-bottom:none}
     tr:hover td{background:var(--bw05)}
-    .role-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+
+    /* 배지 */
+    .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700}
     .role-OWNER{background:#212121;color:white}
     .role-MANAGER{background:#1565C0;color:white}
     .role-MEMBER{background:#2E7D32;color:white}
     .role-GUEST{background:#e0e0e0;color:#616161}
-    .ms-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
     .ms-ACTIVE{background:#e8f5e9;color:#2e7d32}
     .ms-EXPIRED{background:#fce4ec;color:#c62828}
     .ms-PENDING{background:#fff8e1;color:#f57f17}
     .ms-DELETE{background:#f5f5f5;color:#9e9e9e}
-    .ms-none{color:var(--bw30);font-style:italic;font-size:12px}
-    .detail-loading{padding:60px 24px;text-align:center;color:var(--bw40)}
-    .detail-error{padding:40px 24px;text-align:center;color:#f44336;font-size:14px}
+    .wt-ForTime,.wt-AMRAP,.wt-EMOM,.wt-SuccessFail,.wt-EMOMMAX,.wt-MaxReps{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700}
+    .wt-ForTime{background:#e3f2fd;color:#1565c0}
+    .wt-AMRAP{background:#f3e5f5;color:#6a1b9a}
+    .wt-EMOM{background:#e8f5e9;color:#2e7d32}
+    .wt-SuccessFail{background:#fff3e0;color:#e65100}
+    .wt-EMOMMAX{background:#fce4ec;color:#c62828}
+    .wt-MaxReps{background:#e0f2f1;color:#00695c}
+    .res-S{background:#e8f5e9;color:#2e7d32}
+    .res-F{background:#fce4ec;color:#c62828}
+    .hist-CREATE{background:#e3f2fd;color:#1565c0}
+    .hist-UPDATE{background:#fff8e1;color:#f57f17}
+    .hist-DELETE{background:#fce4ec;color:#c62828}
+    .nil{color:var(--bw30);font-style:italic;font-size:11px}
+
+    /* 멤버십 클릭 링크 */
+    .ms-link{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;color:inherit}
+    .ms-link:hover{opacity:0.75}
+
+    /* WOD 날짜 뷰 */
+    .wod-date-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .date-nav-btn{background:none;border:1.5px solid var(--bw15);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--bw70);transition:all 0.15s}
+    .date-nav-btn:hover{background:var(--bw08);border-color:var(--bw30)}
+    .date-display{font-size:15px;font-weight:700;color:var(--bw100);min-width:110px;text-align:center}
+    input[type=date].date-pick{border:1.5px solid var(--bw15);border-radius:6px;padding:6px 10px;font-family:inherit;font-size:13px;color:var(--bw80);background:white;cursor:pointer}
+    input[type=date].date-pick:focus{outline:none;border-color:var(--bw100)}
+    .wod-card{background:var(--bw05);border:1px solid var(--bw15);border-radius:8px;padding:14px 16px;margin-bottom:16px}
+    .wod-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .wod-card-title{font-size:15px;font-weight:700;color:var(--bw100)}
+    .wod-script{font-size:13px;color:var(--bw70);white-space:pre-wrap;line-height:1.6;margin-top:6px}
+    .wod-none{padding:20px;text-align:center;color:var(--bw40);font-size:13px;background:var(--bw05);border-radius:8px;border:1px dashed var(--bw20)}
+    .records-section-title{font-size:13px;font-weight:700;color:var(--bw80);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+
+    /* 클래스 시간표 */
+    .timetable-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .week-label{font-size:14px;font-weight:700;color:var(--bw100);min-width:180px;text-align:center}
+    .timetable{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;min-width:600px;overflow-x:auto}
+    .tt-day-col{display:flex;flex-direction:column;gap:5px}
+    .tt-day-hd{text-align:center;padding:7px 4px;border-radius:6px;background:var(--bw08)}
+    .tt-day-name{font-size:11px;font-weight:700;color:var(--bw70)}
+    .tt-day-date{font-size:12px;font-weight:600;color:var(--bw100);margin-top:2px}
+    .tt-day-hd.today{background:var(--bw100)}
+    .tt-day-hd.today .tt-day-name,.tt-day-hd.today .tt-day-date{color:white}
+    .tt-class-card{background:white;border:1px solid var(--bw15);border-radius:6px;padding:8px 9px;cursor:default;transition:box-shadow 0.15s}
+    .tt-class-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+    .tt-class-time{font-size:10px;color:var(--bw40);margin-bottom:3px}
+    .tt-class-title{font-size:12px;font-weight:600;color:var(--bw80);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tt-class-count{font-size:11px;display:flex;align-items:center;gap:4px}
+    .count-btn{background:none;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;transition:background 0.15s;display:inline-flex;align-items:center;gap:3px}
+    .count-btn:hover{background:var(--bw08)}
+    .count-full{color:#c62828}
+    .count-ok{color:#2e7d32}
+    .tt-empty{color:var(--bw30);font-size:11px;text-align:center;padding:8px 0}
+
+    /* 모달 */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;z-index:200;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.open{display:flex}
+    .modal{background:white;border-radius:12px;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,0.25)}
+    .modal-hd{padding:18px 20px;border-bottom:1px solid var(--bw15);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+    .modal-title{font-size:16px;font-weight:700;color:var(--bw100)}
+    .modal-close{background:none;border:none;cursor:pointer;padding:6px;border-radius:4px;font-size:18px;color:var(--bw40);line-height:1;transition:background 0.15s}
+    .modal-close:hover{background:var(--bw08)}
+    .modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+
+    /* 멤버십 히스토리 모달 */
+    .ms-block{border:1px solid var(--bw15);border-radius:8px;margin-bottom:12px;overflow:hidden}
+    .ms-block-hd{padding:10px 14px;background:var(--bw08);display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .ms-block-name{font-size:13px;font-weight:700;color:var(--bw80)}
+    .ms-block-dates{font-size:11px;color:var(--bw40)}
+    .ms-hist-list{padding:0}
+    .ms-hist-item{padding:9px 14px;border-top:1px solid var(--bw15);font-size:12px}
+    .ms-hist-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:4px}
+    .ms-hist-val{color:var(--bw70);font-size:11px;margin-top:3px;padding:4px 8px;background:var(--bw05);border-radius:4px;word-break:break-all}
+    .ms-hist-by{font-size:11px;color:var(--bw40);margin-top:4px}
+
+    /* 참여자 모달 */
+    .participant-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bw15)}
+    .participant-item:last-child{border-bottom:none}
+    .participant-av{width:32px;height:32px;border-radius:50%;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+    .participant-name{font-size:13px;font-weight:600;color:var(--bw80)}
 
     @media (max-width:900px){
       body{overflow:auto}
-      .workspace{flex-direction:column;overflow:visible;height:auto}
-      .sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--bw15)}
-      .box-list{max-height:280px}
+      .workspace{flex-direction:column;height:auto;overflow:visible}
+      .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--bw15)}
+      .box-list{max-height:240px}
       .detail-panel{overflow:visible}
-      .detail-info-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -127,22 +207,14 @@
 </div>
 
 <div class="workspace">
-
-  <!-- 좌측: 박스 목록 -->
   <div class="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-title">
-        전체 박스
-        <span class="box-count-badge" id="boxCountBadge">0</span>
-      </div>
+      <div class="sidebar-title">전체 박스 <span class="box-count-badge" id="boxCountBadge">0</span></div>
       <input type="text" class="search-input" id="searchInput" placeholder="박스명 검색..." oninput="filterBoxes()">
     </div>
-    <div class="box-list" id="boxList">
-      <div class="sidebar-loading">박스 목록을 불러오는 중...</div>
-    </div>
+    <div class="box-list" id="boxList"><div class="sidebar-msg">불러오는 중...</div></div>
   </div>
 
-  <!-- 우측: 상세 패널 -->
   <div class="detail-panel" id="detailPanel">
     <div class="detail-empty" id="detailEmpty">
       <div class="detail-empty-icon">🏋️</div>
@@ -150,49 +222,62 @@
     </div>
     <div class="detail-content" id="detailContent" style="display:none;"></div>
   </div>
+</div>
 
+<!-- 멤버십 히스토리 모달 -->
+<div class="modal-overlay" id="msModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="msModalTitle">멤버십 히스토리</div>
+      <button class="modal-close" onclick="closeModal('msModal')">✕</button>
+    </div>
+    <div class="modal-body" id="msModalBody"></div>
+  </div>
+</div>
+
+<!-- 참여자 모달 -->
+<div class="modal-overlay" id="ptModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="ptModalTitle">참여자</div>
+      <button class="modal-close" onclick="closeModal('ptModal')">✕</button>
+    </div>
+    <div class="modal-body" id="ptModalBody"></div>
+  </div>
 </div>
 
 <script>
   let allBoxes = [];
   let selectedBoxPk = null;
+  let activeTab = 'members';
+  let tabCache = {};
+  let wodDate = todayStr();
+  let weekStart = getWeekStart(new Date());
 
   document.addEventListener('DOMContentLoaded', async () => {
     await validateAuth();
     await loadBoxes();
   });
 
+  /* ── 인증 ── */
   async function validateAuth() {
-    const token = localStorage.getItem('A_Token');
-    const password = localStorage.getItem('A_Password');
-    if (!token || !password) { window.location.href = '/api/v1/admin/error'; return; }
+    const { t, p } = auth();
+    if (!t || !p) { go('/api/v1/admin/error'); return; }
     try {
-      const res = await fetch('/api/v1/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'A_Token': token, 'A_Password': password }
-      });
-      if (!res.ok || !(await res.json()).data) window.location.href = '/api/v1/admin/error';
-    } catch { window.location.href = '/api/v1/admin/error'; }
+      const res = await fetch('/api/v1/admin/login', { method:'POST', headers:{'Content-Type':'application/json','A_Token':t,'A_Password':p} });
+      if (!res.ok || !(await res.json()).data) go('/api/v1/admin/error');
+    } catch { go('/api/v1/admin/error'); }
   }
 
+  /* ── 박스 목록 ── */
   async function loadBoxes() {
-    const token = localStorage.getItem('A_Token');
-    const password = localStorage.getItem('A_Password');
+    const { t, p } = auth();
     try {
-      const res = await fetch('/api/v1/admin/boxes', {
-        headers: { 'A_Token': token, 'A_Password': password }
-      });
-      const result = await res.json();
-      if (result.success && result.data) {
-        allBoxes = result.data;
-        document.getElementById('boxCountBadge').textContent = allBoxes.length;
-        renderBoxList(allBoxes);
-      } else {
-        document.getElementById('boxList').innerHTML = '<div class="sidebar-loading">박스가 없습니다.</div>';
-      }
-    } catch {
-      document.getElementById('boxList').innerHTML = '<div class="sidebar-loading">불러오기 실패</div>';
-    }
+      const r = await apiFetch('/api/v1/admin/boxes');
+      if (r.success && r.data) { allBoxes = r.data; renderBoxList(allBoxes); }
+      else document.getElementById('boxList').innerHTML = '<div class="sidebar-msg">박스가 없습니다.</div>';
+    } catch { document.getElementById('boxList').innerHTML = '<div class="sidebar-msg">불러오기 실패</div>'; }
+    document.getElementById('boxCountBadge').textContent = allBoxes.length;
   }
 
   function filterBoxes() {
@@ -203,160 +288,344 @@
   }
 
   function renderBoxList(boxes) {
-    if (!boxes.length) {
-      document.getElementById('boxList').innerHTML = '<div class="sidebar-loading">검색 결과 없음</div>';
-      return;
-    }
-    document.getElementById('boxList').innerHTML = boxes.map(box => `
-      <div class="box-list-item ${selectedBoxPk === box.boxPk ? 'active' : ''}" onclick="selectBox(${box.boxPk})" id="box-item-${box.boxPk}">
-        <div class="box-avatar" style="background:${getBoxColor(box.boxPk)}">${box.boxName.charAt(0)}</div>
+    if (!boxes.length) { document.getElementById('boxList').innerHTML = '<div class="sidebar-msg">검색 결과 없음</div>'; return; }
+    document.getElementById('boxList').innerHTML = boxes.map(b => `
+      <div class="box-list-item ${selectedBoxPk===b.boxPk?'active':''}" onclick="selectBox(${b.boxPk})" id="box-item-${b.boxPk}">
+        <div class="box-avatar" style="background:${boxColor(b.boxPk)}">${b.boxName.charAt(0)}</div>
         <div class="box-item-info">
-          <div class="box-item-name">${escHtml(box.boxName)}</div>
+          <div class="box-item-name">${esc(b.boxName)}</div>
           <div class="box-item-meta">
-            <span class="subscribe-dot ${box.subscribeStatus === 'Y' ? 'active' : 'inactive'}"></span>
-            <span>#${box.boxPk}</span>
+            <span class="subscribe-dot ${b.subscribeStatus==='Y'?'dot-active':'dot-inactive'}"></span>
+            <span>#${b.boxPk}</span>
           </div>
         </div>
-      </div>
-    `).join('');
+      </div>`).join('');
   }
 
+  /* ── 박스 선택 ── */
   async function selectBox(boxPk) {
+    if (selectedBoxPk === boxPk) return;
     selectedBoxPk = boxPk;
-    // 활성 상태 업데이트
+    activeTab = 'members';
+    tabCache = {};
+    wodDate = todayStr();
+    weekStart = getWeekStart(new Date());
+
     document.querySelectorAll('.box-list-item').forEach(el => el.classList.remove('active'));
     const item = document.getElementById('box-item-' + boxPk);
     if (item) item.classList.add('active');
 
     document.getElementById('detailEmpty').style.display = 'none';
     document.getElementById('detailContent').style.display = 'block';
-    document.getElementById('detailContent').innerHTML = '<div class="detail-loading">상세 정보를 불러오는 중...</div>';
+    document.getElementById('detailContent').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
 
-    const token = localStorage.getItem('A_Token');
-    const password = localStorage.getItem('A_Password');
     try {
-      const res = await fetch(`/api/v1/admin/boxes/${boxPk}/detail`, {
-        headers: { 'A_Token': token, 'A_Password': password }
-      });
-      const result = await res.json();
-      if (result.success && result.data) {
-        renderDetail(result.data);
-      } else {
-        document.getElementById('detailContent').innerHTML = '<div class="detail-error">상세 정보를 불러올 수 없습니다.</div>';
-      }
-    } catch {
-      document.getElementById('detailContent').innerHTML = '<div class="detail-error">오류가 발생했습니다.</div>';
-    }
+      const r = await apiFetch(`/api/v1/admin/boxes/${boxPk}/detail`);
+      if (r.success && r.data) { tabCache['members'] = r.data.members; renderDetail(r.data); }
+      else document.getElementById('detailContent').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>';
+    } catch { document.getElementById('detailContent').innerHTML = '<div class="tab-msg" style="color:#f44336">오류 발생</div>'; }
   }
 
   function renderDetail(d) {
-    const subClass = d.subscribeStatus === 'Y' ? 'sub-y' : d.subscribeStatus === 'C' ? 'sub-c' : 'sub-n';
-    const subLabel = d.subscribeStatus === 'Y' ? '구독 중' : d.subscribeStatus === 'C' ? '해지' : '미구독';
-
-    const ownerHtml = d.owner ? `
-      <div class="owner-card">
-        <div class="owner-avatar">${d.owner.nickname.charAt(0)}</div>
-        <div class="owner-info">
-          <div class="owner-name">${escHtml(d.owner.nickname)}</div>
-          <div class="owner-email">${escHtml(d.owner.email)}</div>
-        </div>
-        <span class="owner-tag">OWNER</span>
-      </div>
-    ` : '<div style="color:var(--bw40);font-size:13px;">오너 정보 없음</div>';
-
-    const membersHtml = d.members && d.members.length > 0 ? `
-      <div class="members-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>닉네임</th>
-              <th>역할</th>
-              <th>이메일</th>
-              <th>멤버십명</th>
-              <th>멤버십 상태</th>
-              <th>시작일</th>
-              <th>만료일</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${d.members.map(m => `
-              <tr>
-                <td><strong>${escHtml(m.boxNickname)}</strong></td>
-                <td><span class="role-badge role-${m.role}">${roleLabel(m.role)}</span></td>
-                <td style="color:var(--bw70)">${escHtml(m.email)}</td>
-                <td>${m.membershipName ? escHtml(m.membershipName) : '<span class="ms-none">없음</span>'}</td>
-                <td>${m.membershipStatus ? `<span class="ms-badge ms-${m.membershipStatus}">${msLabel(m.membershipStatus)}</span>` : '<span class="ms-none">-</span>'}</td>
-                <td style="color:var(--bw70)">${m.startDate ? m.startDate : '<span class="ms-none">-</span>'}</td>
-                <td style="color:var(--bw70)">${m.expirationDate ? m.expirationDate : '<span class="ms-none">-</span>'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    ` : '<div style="color:var(--bw40);font-size:13px;padding:12px 0;">등록된 회원이 없습니다.</div>';
+    const sc = d.subscribeStatus==='Y'?'sub-y':d.subscribeStatus==='C'?'sub-c':'sub-n';
+    const sl = d.subscribeStatus==='Y'?'구독 중':d.subscribeStatus==='C'?'해지':'미구독';
+    const ownerHtml = d.owner
+      ? `<div class="owner-row">
+           <div class="owner-av">${d.owner.nickname.charAt(0)}</div>
+           <div><div class="owner-name">${esc(d.owner.nickname)}</div><div class="owner-email">${esc(d.owner.email)}</div></div>
+           <span class="owner-lbl">OWNER</span>
+         </div>`
+      : '';
 
     document.getElementById('detailContent').innerHTML = `
-      <div class="detail-box-header">
-        <div class="detail-box-top">
-          <div class="detail-box-avatar" style="background:${getBoxColor(d.boxPk)}">${d.boxName.charAt(0)}</div>
-          <div style="flex:1">
-            <div class="detail-box-name">${escHtml(d.boxName)}</div>
-            <div class="detail-box-code">${escHtml(d.boxCode || '-')}</div>
-          </div>
-          <span class="subscribe-badge ${subClass}">${subLabel}</span>
-        </div>
-        <div class="detail-info-grid">
-          <div class="info-item">
-            <div class="info-label">주소</div>
-            <div class="info-value ${!d.boxAddress ? 'empty' : ''}">${d.boxAddress ? escHtml(d.boxAddress) : '미등록'}</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">연락처</div>
-            <div class="info-value ${!d.boxContact ? 'empty' : ''}">${d.boxContact ? escHtml(d.boxContact) : '미등록'}</div>
+      <div class="box-hd">
+        <div class="box-hd-av" style="background:${boxColor(d.boxPk)}">${d.boxName.charAt(0)}</div>
+        <div class="box-hd-body">
+          <div class="box-hd-name">${esc(d.boxName)}</div>
+          <div class="box-hd-code">${esc(d.boxCode||'-')}</div>
+          <div class="box-hd-meta">
+            <div class="meta-item"><div class="meta-label">구독</div><div class="meta-val"><span class="sub-badge ${sc}">${sl}</span></div></div>
+            <div class="meta-item"><div class="meta-label">주소</div><div class="meta-val ${!d.boxAddress?'empty':''}">${d.boxAddress?esc(d.boxAddress):'미등록'}</div></div>
+            <div class="meta-item"><div class="meta-label">연락처</div><div class="meta-val ${!d.boxContact?'empty':''}">${d.boxContact?esc(d.boxContact):'미등록'}</div></div>
           </div>
         </div>
       </div>
-
-      <div class="section">
-        <div class="section-title"><span class="section-title-icon">👑</span> 오너</div>
-        ${ownerHtml}
-      </div>
-
-      <div class="section">
-        <div class="section-title">
-          <span class="section-title-icon">👥</span>
-          회원 목록
-          <span class="member-count-info">(총 ${d.memberCount}명)</span>
+      ${ownerHtml}
+      <div class="tabs-wrap">
+        <div class="tab-nav">
+          <button class="tab-btn active" id="tab-btn-members" onclick="switchTab('members')">👥 회원 <span class="tab-cnt" id="cnt-members">${d.memberCount}</span></button>
+          <button class="tab-btn" id="tab-btn-wods" onclick="switchTab('wods')">🏋️ WOD</button>
+          <button class="tab-btn" id="tab-btn-classes" onclick="switchTab('classes')">📅 클래스</button>
         </div>
-        ${membersHtml}
+        <div class="tab-body" id="tabBody">${renderMembersTab(d.members)}</div>
+      </div>`;
+  }
+
+  /* ── 탭 전환 ── */
+  async function switchTab(tab) {
+    if (activeTab === tab) return;
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-btn-' + tab).classList.add('active');
+
+    if (tab === 'wods')    { renderWodTab(); return; }
+    if (tab === 'classes') { renderClassesTab(); return; }
+
+    if (tabCache[tab] !== undefined) { document.getElementById('tabBody').innerHTML = renderMembersTab(tabCache[tab]); return; }
+    document.getElementById('tabBody').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/${tab}`);
+      const data = (r.success && r.data) ? r.data : [];
+      tabCache[tab] = data;
+      document.getElementById('tabBody').innerHTML = renderMembersTab(data);
+    } catch { document.getElementById('tabBody').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
+  /* ── 회원 탭 ── */
+  function renderMembersTab(members) {
+    if (!members || !members.length) return '<div class="tab-msg">등록된 회원이 없습니다.</div>';
+    return `<div class="tbl"><table>
+      <thead><tr><th>닉네임</th><th>역할</th><th>이메일</th><th>멤버십</th><th>상태</th><th>시작일</th><th>만료일</th></tr></thead>
+      <tbody>${members.map(m=>`<tr>
+        <td><strong>${esc(m.boxNickname)}</strong></td>
+        <td><span class="badge role-${m.role}">${roleLabel(m.role)}</span></td>
+        <td style="color:var(--bw70)">${esc(m.email)}</td>
+        <td>${m.membershipName
+          ? `<span class="ms-link" onclick="openMsHistory(${m.memberPk},'${esc(m.boxNickname)}')">${esc(m.membershipName)}</span>`
+          : `<span class="nil">없음</span>`}</td>
+        <td>${m.membershipStatus?`<span class="badge ms-${m.membershipStatus}">${msLabel(m.membershipStatus)}</span>`:'<span class="nil">-</span>'}</td>
+        <td style="color:var(--bw70)">${m.startDate||'<span class="nil">-</span>'}</td>
+        <td style="color:var(--bw70)">${m.expirationDate||'<span class="nil">-</span>'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  }
+
+  /* ── 멤버십 히스토리 모달 ── */
+  async function openMsHistory(memberPk, nickname) {
+    document.getElementById('msModalTitle').textContent = nickname + ' 멤버십 히스토리';
+    document.getElementById('msModalBody').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
+    openModal('msModal');
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/members/${memberPk}/memberships`);
+      const data = (r.success && r.data) ? r.data : [];
+      if (!data.length) { document.getElementById('msModalBody').innerHTML = '<div class="tab-msg">멤버십 기록이 없습니다.</div>'; return; }
+      document.getElementById('msModalBody').innerHTML = data.map(ms => `
+        <div class="ms-block">
+          <div class="ms-block-hd">
+            <div>
+              <div class="ms-block-name">${ms.membershipName ? esc(ms.membershipName) : '<span class="nil">이름 없음</span>'} <span class="badge ms-${ms.status}">${msLabel(ms.status)}</span></div>
+              <div class="ms-block-dates">${ms.startDate||'-'} ~ ${ms.expirationDate||'-'}${ms.memo?'　·　'+esc(ms.memo):''}</div>
+            </div>
+          </div>
+          <div class="ms-hist-list">
+            ${ms.histories && ms.histories.length
+              ? ms.histories.map(h=>`
+                <div class="ms-hist-item">
+                  <div class="ms-hist-row">
+                    <span class="badge hist-${h.actionType}">${histLabel(h.actionType)}</span>
+                    <span style="font-size:11px;color:var(--bw70)">${h.createdAt ? h.createdAt.replace('T',' ').substring(0,16) : ''}</span>
+                  </div>
+                  ${h.preValue||h.newValue?`
+                    <div class="ms-hist-val">
+                      ${h.preValue?'이전: '+esc(h.preValue)+'<br>':''}
+                      ${h.newValue?'변경: '+esc(h.newValue):''}
+                    </div>`:''}
+                  ${h.memo?`<div class="ms-hist-val">메모: ${esc(h.memo)}</div>`:''}
+                  <div class="ms-hist-by">작성: ${h.createdByNickname?esc(h.createdByNickname):'-'}</div>
+                </div>`).join('')
+              : '<div class="tab-msg" style="padding:12px">히스토리 없음</div>'}
+          </div>
+        </div>`).join('');
+    } catch { document.getElementById('msModalBody').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
+  /* ── WOD 탭 ── */
+  function renderWodTab() {
+    document.getElementById('tabBody').innerHTML = `
+      <div class="wod-date-nav">
+        <button class="date-nav-btn" onclick="changeWodDate(-1)">◀ 이전</button>
+        <input type="date" class="date-pick" id="wodDatePick" value="${wodDate}" onchange="onWodDateChange(this.value)">
+        <button class="date-nav-btn" onclick="changeWodDate(1)">다음 ▶</button>
       </div>
-    `;
+      <div id="wodDayContent"><div class="tab-msg">불러오는 중...</div></div>`;
+    loadWodDay();
   }
 
-  function roleLabel(role) {
-    const map = { OWNER: '오너', MANAGER: '매니저', MEMBER: '멤버', GUEST: '게스트' };
-    return map[role] || role;
+  async function loadWodDay() {
+    const el = document.getElementById('wodDayContent');
+    if (!el) return;
+    el.innerHTML = '<div class="tab-msg">불러오는 중...</div>';
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/wod-day?date=${wodDate}`);
+      if (!r.success) { el.innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; return; }
+      const d = r.data;
+      const wodHtml = d.wod
+        ? `<div class="wod-card">
+            <div class="wod-card-top">
+              <div class="wod-card-title">${d.wod.wodTitle ? esc(d.wod.wodTitle) : '<span class="nil">제목 없음</span>'}</div>
+              ${d.wod.wodType?`<span class="wt-${d.wod.wodType}">${d.wod.wodType}</span>`:''}
+            </div>
+            ${d.wod.wodScript?`<div class="wod-script">${esc(d.wod.wodScript)}</div>`:''}
+           </div>`
+        : `<div class="wod-none">이 날짜에 등록된 WOD가 없습니다.</div>`;
+
+      const recHtml = d.records && d.records.length
+        ? `<div class="tbl"><table>
+            <thead><tr><th>닉네임</th><th>레벨</th><th>타임 / 라운드·렙</th><th>결과</th><th>메모</th></tr></thead>
+            <tbody>${d.records.map(r=>{
+              const score = r.time!=null ? r.time+'s' : (r.round!=null ? r.round+'R '+(r.reps!=null?r.reps+'rep':'') : (r.reps!=null?r.reps+'rep':'-'));
+              return `<tr>
+                <td><strong>${r.nickname?esc(r.nickname):'<span class="nil">-</span>'}</strong></td>
+                <td>${r.level?esc(r.level):'<span class="nil">-</span>'}</td>
+                <td style="font-family:monospace">${score}</td>
+                <td>${r.result?`<span class="badge res-${r.result}">${r.result==='S'?'성공':'실패'}</span>`:'<span class="nil">-</span>'}</td>
+                <td style="color:var(--bw70)">${r.memo?esc(r.memo):'<span class="nil">-</span>'}</td>
+              </tr>`;}).join('')}
+            </tbody>
+           </table></div>`
+        : '<div class="tab-msg" style="padding:12px 0">이 날짜의 레코드가 없습니다.</div>';
+
+      el.innerHTML = wodHtml +
+        `<div class="records-section-title">📝 레코드 <span style="font-size:11px;color:var(--bw40);font-weight:400">${d.records?d.records.length:0}건</span></div>` +
+        recHtml;
+    } catch { el.innerHTML = '<div class="tab-msg" style="color:#f44336">오류 발생</div>'; }
   }
 
-  function msLabel(status) {
-    const map = { ACTIVE: '활성', EXPIRED: '만료', PENDING: '대기', DELETE: '삭제' };
-    return map[status] || status;
+  function changeWodDate(delta) {
+    const d = new Date(wodDate + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    wodDate = fmtDate(d);
+    const pick = document.getElementById('wodDatePick');
+    if (pick) pick.value = wodDate;
+    loadWodDay();
   }
 
-  function getBoxColor(boxPk) {
-    const colors = ['#3949AB','#00897B','#E53935','#8E24AA','#F4511E','#1E88E5','#43A047'];
-    const h = String(boxPk).split('').reduce((a,b) => { a=((a<<5)-a)+b.charCodeAt(0); return a&a; }, 0);
-    return colors[Math.abs(h) % colors.length];
+  function onWodDateChange(val) { wodDate = val; loadWodDay(); }
+
+  /* ── 클래스 시간표 탭 ── */
+  function renderClassesTab() {
+    document.getElementById('tabBody').innerHTML = `
+      <div class="timetable-nav">
+        <button class="date-nav-btn" onclick="changeWeek(-1)">◀ 이전 주</button>
+        <div class="week-label" id="weekLabel"></div>
+        <button class="date-nav-btn" onclick="changeWeek(1)">다음 주 ▶</button>
+      </div>
+      <div style="overflow-x:auto">
+        <div class="timetable" id="timetable"><div class="tab-msg">불러오는 중...</div></div>
+      </div>`;
+    loadClasses();
   }
 
-  function escHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  async function loadClasses() {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const startStr = fmtDate(weekStart);
+    const endStr = fmtDate(weekEnd);
+
+    document.getElementById('weekLabel').textContent = `${startStr} ~ ${endStr}`;
+
+    const tt = document.getElementById('timetable');
+    if (!tt) return;
+    tt.innerHTML = '<div class="tab-msg">불러오는 중...</div>';
+
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/classes?start=${startStr}&end=${endStr}`);
+      const classes = (r.success && r.data) ? r.data : [];
+
+      // 날짜별 그룹핑
+      const byDate = {};
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+        byDate[fmtDate(d)] = [];
+      }
+      classes.forEach(c => { if (byDate[c.classDate]) byDate[c.classDate].push(c); });
+
+      const days = ['월','화','수','목','금','토','일'];
+      const todayS = todayStr();
+
+      tt.innerHTML = Object.entries(byDate).map(([dateStr, cls], idx) => {
+        const isToday = dateStr === todayS;
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        const mm = dateObj.getMonth()+1, dd = dateObj.getDate();
+        return `<div class="tt-day-col">
+          <div class="tt-day-hd ${isToday?'today':''}">
+            <div class="tt-day-name">${days[idx]}</div>
+            <div class="tt-day-date">${mm}/${dd}</div>
+          </div>
+          ${cls.length
+            ? cls.sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||'')).map(c=>{
+                const full = c.capacity && c.participantCount >= c.capacity;
+                return `<div class="tt-class-card">
+                  <div class="tt-class-time">${c.startTime||''}${c.endTime?' ~ '+c.endTime:''}</div>
+                  <div class="tt-class-title" title="${esc(c.classTitle||'')}">${c.classTitle?esc(c.classTitle):'<span class="nil">제목없음</span>'}</div>
+                  <div class="tt-class-count">
+                    <button class="count-btn ${full?'count-full':'count-ok'}" onclick="openParticipants(${c.classesPk},'${esc(c.classTitle||'')}')">
+                      👤 ${c.participantCount}${c.capacity?'/'+c.capacity:''}
+                    </button>
+                  </div>
+                </div>`;}).join('')
+            : '<div class="tt-empty">수업 없음</div>'}
+        </div>`;
+      }).join('');
+    } catch { tt.innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
   }
 
-  function goBack() {
-    window.location.href = '/api/v1/admin/lobby';
+  function changeWeek(delta) {
+    weekStart = new Date(weekStart);
+    weekStart.setDate(weekStart.getDate() + delta * 7);
+    loadClasses();
   }
+
+  /* ── 참여자 모달 ── */
+  async function openParticipants(classesPk, classTitle) {
+    document.getElementById('ptModalTitle').textContent = (classTitle||'클래스') + ' 참여자';
+    document.getElementById('ptModalBody').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
+    openModal('ptModal');
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/classes/${classesPk}/participants`);
+      const data = (r.success && r.data) ? r.data : [];
+      if (!data.length) { document.getElementById('ptModalBody').innerHTML = '<div class="tab-msg">참여자가 없습니다.</div>'; return; }
+      document.getElementById('ptModalBody').innerHTML = data.map(p=>`
+        <div class="participant-item">
+          <div class="participant-av">${p.boxNickname.charAt(0)}</div>
+          <div>
+            <div class="participant-name">${esc(p.boxNickname)}</div>
+          </div>
+          <span class="badge role-${p.role}" style="margin-left:auto">${roleLabel(p.role)}</span>
+        </div>`).join('');
+    } catch { document.getElementById('ptModalBody').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
+  /* ── 모달 헬퍼 ── */
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open')); });
+
+  /* ── 유틸 ── */
+  function auth() { return { t: localStorage.getItem('A_Token'), p: localStorage.getItem('A_Password') }; }
+  async function apiFetch(url) {
+    const { t, p } = auth();
+    const res = await fetch(url, { headers:{ 'A_Token':t, 'A_Password':p } });
+    return res.json();
+  }
+  function roleLabel(r) { return {OWNER:'오너',MANAGER:'매니저',MEMBER:'멤버',GUEST:'게스트'}[r]||r; }
+  function msLabel(s) { return {ACTIVE:'활성',EXPIRED:'만료',PENDING:'대기',DELETE:'삭제'}[s]||s; }
+  function histLabel(a) { return {CREATE:'생성',UPDATE:'수정',DELETE:'삭제'}[a]||a; }
+  function boxColor(pk) {
+    const c = ['#3949AB','#00897B','#E53935','#8E24AA','#F4511E','#1E88E5','#43A047'];
+    const h = String(pk).split('').reduce((a,b)=>{ a=((a<<5)-a)+b.charCodeAt(0); return a&a; }, 0);
+    return c[Math.abs(h)%c.length];
+  }
+  function esc(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function todayStr() { return fmtDate(new Date()); }
+  function fmtDate(d) { const m=d.getMonth()+1, dd=d.getDate(); return `${d.getFullYear()}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`; }
+  function getWeekStart(d) { const day=d.getDay(); const diff=day===0?-6:1-day; const s=new Date(d); s.setDate(d.getDate()+diff); s.setHours(0,0,0,0); return s; }
+  function go(url) { window.location.href = url; }
+  function goBack() { go('/api/v1/admin/lobby'); }
 </script>
 </body>
 </html>

@@ -141,4 +141,20 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     List<Record> findByClassesClassesPkAndDeletedYN(Long classesPk, BaseTime.Yn deletedYN);
 
     int deleteByWodWodPkAndDeletedYN(Long wodPk, BaseTime.Yn deletedYN);
+
+    @Query("""
+        SELECT r FROM Record r
+        JOIN FETCH r.wod w
+        LEFT JOIN FETCH r.memberList ml
+        WHERE w.box.boxPk = :boxPk
+          AND w.wodDate BETWEEN :startDate AND :endDate
+          AND r.deletedYN = :deletedYN
+        ORDER BY w.wodDate DESC, r.recordPk ASC
+    """)
+    List<Record> findByBoxPkAndWodDateBetweenAndDeletedYN(
+            @Param("boxPk") Long boxPk,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("deletedYN") BaseTime.Yn deletedYN
+    );
 }

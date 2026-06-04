@@ -31,6 +31,9 @@ public interface ClassParticipantRepository extends JpaRepository<ClassParticipa
 
     List<ClassParticipant> findByClassesClassesPkAndDeletedYN(Long classesPk, BaseTime.Yn deletedYN);
 
+    @Query("SELECT cp FROM ClassParticipant cp JOIN FETCH cp.memberList ml JOIN FETCH ml.member WHERE cp.classes.classesPk = :classesPk AND cp.deletedYN = :deletedYN")
+    List<ClassParticipant> findByClassesPkWithMemberList(@Param("classesPk") Long classesPk, @Param("deletedYN") BaseTime.Yn deletedYN);
+
     List<ClassParticipant> findByClassesClassesPkInAndDeletedYN(List<Long> classesPks, BaseTime.Yn deletedYN);
 
     @Query("SELECT cp.classes.classesPk FROM ClassParticipant cp " +
