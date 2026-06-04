@@ -61,7 +61,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(restAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/**/*.env", "/**/.env").denyAll()
+                        .requestMatchers(request -> request.getRequestURI().endsWith(".env")).denyAll()
                         .requestMatchers(
                                 "/",
                                 "/index.html",
