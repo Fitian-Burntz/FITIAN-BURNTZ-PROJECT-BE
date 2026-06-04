@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -79,6 +80,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                 );
                                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                                MDC.put("memberPk", String.valueOf(memberPk));
                                 log.debug("JWT authenticated memberPk={}", memberPk);
                             } catch (UsernameNotFoundException usernameNotFoundException) {
                                 log.warn("Member not found for memberPk={} - skipping authentication", memberPk);

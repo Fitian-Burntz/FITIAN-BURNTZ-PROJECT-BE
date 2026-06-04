@@ -63,28 +63,21 @@ public class PaymentService {
    */
   @Transactional
   public void handlePuchaseWebhook(WebhookPurchaseResponse webhookPurchaseResponse, HttpServletRequest request) {
-    log.info("\n" + "결제완료 데이터 수신" + "\n" + "주문자 ID : " + webhookPurchaseResponse.getEvent().getOwnerMemberId() + "\n" + "박스 pk : " + webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue());
-
     // 1. 토큰 검증
     verifyWebhookAuthorization(request);
 
-
-    // 2. 멤버가 존재하는지 확인
-    log.info("[2. 멤버가 존재하는지 확인]");
     String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
+    String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
+    log.info("[purchase webhook] 수신 memberPk={} boxPk={}", ownerMemberId, boxPk);
+
     Long ownerMemberIdToLong = Long.parseLong(ownerMemberId);
     Member member = memberRepository.findById(ownerMemberIdToLong)
         .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-    // 3. 박스가 존재하는지 확인
-    log.info("[3. 박스가 존재하는지 확인]");
-    String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
     Long boxPkToLong = Long.parseLong(boxPk);
     Box box = boxRepository.findById(boxPkToLong)
         .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
-    // 4. box_subscription 테이블 업데이트 또는 삽입
-    log.info("[4. box_subscription 테이블 업데이트 또는 삽입]");
     String productId = webhookPurchaseResponse.getEvent().getProductId();
     PaymentStore store = webhookPurchaseResponse.getEvent().getStore();
     SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
@@ -97,27 +90,20 @@ public class PaymentService {
 
     SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse, member, box);
 
-    // 5. 박스 구독 정보 저장
-    log.info("[5. 박스 구독 정보 저장]");
     if(boxSubscriptionRepository.findByBoxPk(boxPkToLong).isPresent()) {
-      log.info("[5. 박스 구독 정보 저장] - 기존 구독 정보가 존재하여 업데이트를 진행합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
+      log.info("[purchase webhook] 구독 업데이트 memberPk={} boxPk={}", ownerMemberId, boxPk);
       BoxSubscription oldBoxSubscription = boxSubscriptionRepository.findByBoxPk(boxPkToLong)
           .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
       BoxSubscription updatedBoxSubscription = oldBoxSubscription.replaceTo(boxSubscription);
       boxSubscriptionRepository.save(updatedBoxSubscription);
     } else {
-      log.info("[5. 박스 구독 정보 저장] - 새로운 구독 정보를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
+      log.info("[purchase webhook] 신규 구독 생성 memberPk={} boxPk={}", ownerMemberId, boxPk);
       boxSubscriptionRepository.save(boxSubscription);
     }
 
-    // 6. 박스 구독 로그 저장
-    log.info("[6. 박스 구독 로그 저장]");
-    log.info("[6. 박스 구독 로그 저장] - 구매 로그를 저장합니다.(" + "구매한 box pk : " + boxPk + ")" + "(" + "구매자 pk : " + ownerMemberId + ")");
     subscriptionEventLogRepository.save(subscriptionEventLog);
-
-    // 7. 최종 BOX 구독상태 변경
-    log.info("[7. 최종 BOX 구독상태 변경]");
     box.subscribe();
+    log.info("[purchase webhook] 처리 완료 memberPk={} boxPk={} expiredAt={}", ownerMemberId, boxPk, expiredAt);
 
   }
 
@@ -230,40 +216,33 @@ public class PaymentService {
 
   @Transactional
   public PaymentSyncResponse syncPayment(Long memberPk, Long boxPk) {
-    log.info("[결제 동기화 시작] memberPk={}, boxPk={}", memberPk, boxPk);
+    log.info("[sync] start memberPk={} boxPk={}", memberPk, boxPk);
 
     Member member = memberRepository.findById(memberPk)
             .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
-    log.info("[sync] member 조회 완료 memberPk={}", memberPk);
 
     Box box = boxRepository.findActiveBoxByIdWithLock(boxPk)
             .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
-    log.info("[sync] box 조회 완료 boxPk={}", boxPk);
 
     validateBoxOwner(memberPk, box);
-    log.info("[sync] box owner 검증 완료");
 
     String appUserId = String.valueOf(memberPk);
 
     RevenueCatSubscriberResponse rcResponse = revenueCatClient.getSubscriber(appUserId);
     if (rcResponse == null || rcResponse.getSubscriber() == null) {
-      log.error("[sync] RevenueCat subscriber 조회 실패 appUserId={}", appUserId);
+      log.error("[sync] RevenueCat 조회 실패 appUserId={}", appUserId);
       throw new ValidationException(ErrorCode.INVALID_REQUEST);
     }
-    log.info("[sync] RevenueCat subscriber 조회 성공 appUserId={}", appUserId);
 
     RevenueCatSubscriberResponse.Subscriber subscriber = rcResponse.getSubscriber();
 
     String rcBoxPk = extractBoxPk(subscriber);
-    log.info("[sync] RevenueCat subscriber attribute boxPk={}", rcBoxPk);
-
     validateRequestedBox(boxPk, rcBoxPk);
 
     RevenueCatSubscriberResponse.Entitlement premiumEntitlement =
             extractPremiumEntitlement(subscriber.getEntitlements());
 
     boolean premiumActive = premiumEntitlement != null;
-    log.info("[sync] entitlement 확인 premiumActive={}", premiumActive);
 
     LocalDateTime startedAt = null;
     LocalDateTime expiredAt = null;
@@ -276,14 +255,13 @@ public class PaymentService {
       expiredAt = parseDateTime(premiumEntitlement.getExpiresDate());
       productId = premiumEntitlement.getProductIdentifier();
       store = PaymentStore.from(premiumEntitlement.getStore());
-      log.info("[sync] entitlement detail productId={}, store={}, startedAt={}, expiredAt={}",
-              productId, store, startedAt, expiredAt);
     }
+
+    log.info("[sync] RC 응답 premiumActive={} productId={} store={} expiredAt={}", premiumActive, productId, store, expiredAt);
 
     BoxSubscription boxSubscription = boxSubscriptionRepository
             .findByOwnerMemberIdAndBoxPk(memberPk, boxPk)
             .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_SUBSCRIPTION_NOT_FOUND));
-    log.info("[sync] subscription 조회 완료");
 
     boxSubscription = updateSubscription(
             boxSubscription,
@@ -296,7 +274,6 @@ public class PaymentService {
     );
 
     boxSubscriptionRepository.save(boxSubscription);
-    log.info("[sync] subscription 저장 완료");
 
     updateBoxPremium(box, premiumActive);
 
@@ -310,7 +287,7 @@ public class PaymentService {
             null,
             String.valueOf(memberPk)
     );
-    log.info("[sync] 결제 동기화 로그 저장 완료");
+    log.info("[sync] 완료 memberPk={} boxPk={} premium={}", memberPk, boxPk, premiumActive);
 
     return PaymentSyncResponse.builder()
             .boxPk(boxPk)
