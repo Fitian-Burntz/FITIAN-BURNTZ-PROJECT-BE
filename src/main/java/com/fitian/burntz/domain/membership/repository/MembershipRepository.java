@@ -72,4 +72,12 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             Long memberPk,
             BaseTime.Yn deletedYN
     );
+
+    /** 활성 멤버십 존재하는지 체크 (만료/삭제 제외) **/
+    boolean existsByBoxBoxPkAndMemberMemberPkAndDeletedYNAndStatus(
+            Long boxPk,
+            Long memberPk,
+            BaseTime.Yn deletedYN,
+            MembershipStatus status
+    );
 }

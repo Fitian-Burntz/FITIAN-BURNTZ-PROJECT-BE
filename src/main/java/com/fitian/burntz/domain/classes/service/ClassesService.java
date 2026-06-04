@@ -191,6 +191,7 @@ public class ClassesService {
         //해당 박스에 존재하는 회원인지 검증
         MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        if (memberList.getRole() == MemberRole.GUEST) throw new ValidationException(ErrorCode.ACCESS_DENIED);
         //해당 수업에 참여중인지 검증
         boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(isInClass) throw new ValidationException(ErrorCode.DUPLICATED_USER);

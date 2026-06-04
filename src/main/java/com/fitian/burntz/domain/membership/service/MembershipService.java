@@ -94,7 +94,7 @@ public class MembershipService {
         MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-        boolean exists = membershipRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N);
+        boolean exists = membershipRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYNAndStatus(boxPk, memberPk, BaseTime.Yn.N, MembershipStatus.ACTIVE);
         if(exists) throw new ValidationException(ErrorCode.DUPLICATE_MEMBERSHIP);
 
         Membership membership = Membership.builder()
@@ -283,6 +283,7 @@ public class MembershipService {
 
                 ml.changeRole(MemberRole.GUEST);
                 mlList.add(ml);
+                channelService.removeMemberFromAllPublicChannels(membership.getMember().getMemberPk(), membership.getBox().getBoxPk());
                 pushService.notifyUserString(membership.getMember().getMemberPk(), "멤버십 만료", membership.getBox().getBoxName()+"의 멤버십이 만료되었습니다.");
                 log.info("memberPk = {}, boxPk = {}, membershipPk = {}   -> EXPIRED", ml.getMember().getMemberPk(), ml.getBox().getBoxPk(), membership.getMembershipPk());
             } catch (Exception e) {
