@@ -91,6 +91,16 @@
         <div class="card-footer">
         </div>
       </div>
+
+      <div class="admin-card" onclick="goToBoxManagement()">
+        <div class="card-icon">🏋️</div>
+        <div class="card-title">박스 관리</div>
+        <div class="card-description">
+          전체 박스 현황 및 오너, 회원, 멤버십 정보를 확인할 수 있습니다.
+        </div>
+        <div class="card-footer">
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -140,6 +150,10 @@
 
   function goToUserManagement() {
     window.location.href = '/api/v1/admin/users';
+  }
+
+  function goToBoxManagement() {
+    window.location.href = '/api/v1/admin/box-management';
   }
 
   function logout() {

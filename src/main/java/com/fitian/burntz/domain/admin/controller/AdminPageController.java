@@ -27,4 +27,10 @@ public class AdminPageController {
     return "admin/admin-error";
   }
 
+  @GetMapping("/box-management")
+  public String boxManagementPage() {
+    log.info("Admin Box Management Page Accessed");
+    return "admin/boxes/admin-box-management";
+  }
+
 }

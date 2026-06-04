@@ -63,7 +63,8 @@ public class MembershipService {
            memberPk = userDetails.getMemberPk();
         }
 
-        Membership membership = membershipRepository.findByBoxBoxPkAndMemberMemberPkAndDeletedYN(boxPk, memberPk, BaseTime.Yn.N)
+        Membership membership = membershipRepository.findAllMembershipByBoxPkAndMemberPk(boxPk, memberPk)
+                .stream().findFirst()
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
         MemberList target = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
@@ -96,6 +97,10 @@ public class MembershipService {
 
         boolean exists = membershipRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYNAndStatus(boxPk, memberPk, BaseTime.Yn.N, MembershipStatus.ACTIVE);
         if(exists) throw new ValidationException(ErrorCode.DUPLICATE_MEMBERSHIP);
+
+        // 기존 만료/삭제 멤버십 soft-delete (새 멤버십과 중복 조회 방지)
+        membershipRepository.findAllMembershipByBoxPkAndMemberPk(boxPk, memberPk)
+                .forEach(BaseTime::markDeleted);
 
         Membership membership = Membership.builder()
                 .membershipName(request.getMembershipName())

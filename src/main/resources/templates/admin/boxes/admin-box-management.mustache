@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burntz Admin - 박스 관리</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bw05:#f8f9fa;--bw08:#f1f3f4;--bw15:#e8eaed;--bw20:#dadce0;--bw30:#9aa0a6;--bw40:#80868b;--bw70:#5f6368;--bw80:#3c4043;--bw100:#202124}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+    /* 헤더 */
+    .header{background:white;padding:16px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1);flex-shrink:0}
+    .header-content{max-width:none;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .logo{font-family:'Sofia Sans Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--bw100)}
+    .header-right{display:flex;align-items:center;gap:12px}
+    .header-title{font-size:14px;color:var(--bw40)}
+    .back-btn{background:none;border:none;cursor:pointer;padding:8px;border-radius:4px;transition:background-color 0.2s;display:flex;align-items:center;gap:6px;color:var(--bw70);font-size:14px;font-family:inherit}
+    .back-btn:hover{background:var(--bw08)}
+    .back-btn svg{width:18px;height:18px;fill:var(--bw70)}
+
+    /* 레이아웃: 좌측 패널 + 우측 상세 */
+    .workspace{display:flex;flex:1;overflow:hidden}
+
+    /* 좌측 박스 목록 패널 */
+    .sidebar{width:320px;flex-shrink:0;background:white;border-right:1px solid var(--bw15);display:flex;flex-direction:column;overflow:hidden}
+    .sidebar-header{padding:16px;border-bottom:1px solid var(--bw15);flex-shrink:0}
+    .sidebar-title{font-size:16px;font-weight:700;color:var(--bw100);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+    .box-count-badge{background:var(--bw08);color:var(--bw70);font-size:12px;font-weight:500;padding:2px 8px;border-radius:10px}
+    .search-input{width:100%;padding:9px 12px;border:1.5px solid var(--bw15);border-radius:6px;font-family:inherit;font-size:13px;color:var(--bw80);background:var(--bw05)}
+    .search-input:focus{outline:none;border-color:var(--bw100)}
+    .box-list{flex:1;overflow-y:auto}
+    .box-list-item{padding:14px 16px;border-bottom:1px solid var(--bw15);cursor:pointer;transition:background-color 0.15s;display:flex;align-items:center;gap:12px}
+    .box-list-item:hover{background:var(--bw05)}
+    .box-list-item.active{background:#f0f4ff;border-right:3px solid var(--bw100)}
+    .box-list-item.active .box-item-name{color:var(--bw100)}
+    .box-avatar{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:700;flex-shrink:0}
+    .box-item-info{flex:1;min-width:0}
+    .box-item-name{font-size:14px;font-weight:600;color:var(--bw80);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .box-item-meta{font-size:11px;color:var(--bw40);display:flex;gap:6px;align-items:center}
+    .subscribe-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+    .subscribe-dot.active{background:#4CAF50}
+    .subscribe-dot.inactive{background:#9aa0a6}
+    .sidebar-loading{padding:40px 16px;text-align:center;color:var(--bw40);font-size:13px}
+
+    /* 우측 상세 패널 */
+    .detail-panel{flex:1;overflow-y:auto;background:var(--bw05)}
+    .detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--bw30);gap:16px}
+    .detail-empty-icon{font-size:48px;opacity:0.4}
+    .detail-empty-text{font-size:15px}
+
+    /* 상세 내용 */
+    .detail-content{padding:24px;max-width:900px}
+    .detail-box-header{background:white;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+    .detail-box-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+    .detail-box-avatar{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;font-weight:700;flex-shrink:0}
+    .detail-box-name{font-size:22px;font-weight:700;color:var(--bw100);margin-bottom:6px}
+    .detail-box-code{font-size:13px;color:var(--bw40);font-family:monospace}
+    .subscribe-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+    .subscribe-badge.sub-y{background:#e8f5e9;color:#2e7d32}
+    .subscribe-badge.sub-n{background:#f5f5f5;color:#616161}
+    .subscribe-badge.sub-c{background:#fff3e0;color:#e65100}
+    .detail-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .info-item{display:flex;flex-direction:column;gap:3px}
+    .info-label{font-size:11px;color:var(--bw40);font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+    .info-value{font-size:14px;color:var(--bw80)}
+    .info-value.empty{color:var(--bw30);font-style:italic}
+
+    /* 오너 섹션 */
+    .section{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+    .section-title{font-size:14px;font-weight:700;color:var(--bw100);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .section-title-icon{font-size:16px}
+    .owner-card{display:flex;align-items:center;gap:14px;padding:14px;background:var(--bw05);border-radius:8px}
+    .owner-avatar{width:44px;height:44px;border-radius:50%;background:var(--bw100);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+    .owner-info{flex:1}
+    .owner-name{font-size:15px;font-weight:600;color:var(--bw80);margin-bottom:3px}
+    .owner-email{font-size:12px;color:var(--bw40)}
+    .owner-tag{font-size:11px;font-weight:600;background:var(--bw100);color:white;padding:2px 8px;border-radius:4px}
+
+    /* 멤버 테이블 */
+    .member-count-info{font-size:12px;color:var(--bw40);font-weight:400;margin-left:4px}
+    .members-table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--bw15)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead{background:var(--bw08)}
+    th{padding:10px 14px;text-align:left;font-weight:600;color:var(--bw70);font-size:12px;white-space:nowrap;border-bottom:1px solid var(--bw15)}
+    td{padding:11px 14px;border-bottom:1px solid var(--bw15);color:var(--bw80);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--bw05)}
+    .role-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+    .role-OWNER{background:#212121;color:white}
+    .role-MANAGER{background:#1565C0;color:white}
+    .role-MEMBER{background:#2E7D32;color:white}
+    .role-GUEST{background:#e0e0e0;color:#616161}
+    .ms-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+    .ms-ACTIVE{background:#e8f5e9;color:#2e7d32}
+    .ms-EXPIRED{background:#fce4ec;color:#c62828}
+    .ms-PENDING{background:#fff8e1;color:#f57f17}
+    .ms-DELETE{background:#f5f5f5;color:#9e9e9e}
+    .ms-none{color:var(--bw30);font-style:italic;font-size:12px}
+    .detail-loading{padding:60px 24px;text-align:center;color:var(--bw40)}
+    .detail-error{padding:40px 24px;text-align:center;color:#f44336;font-size:14px}
+
+    @media (max-width:900px){
+      body{overflow:auto}
+      .workspace{flex-direction:column;overflow:visible;height:auto}
+      .sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--bw15)}
+      .box-list{max-height:280px}
+      .detail-panel{overflow:visible}
+      .detail-info-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-content">
+    <div class="logo">Burntz Admin</div>
+    <div class="header-right">
+      <span class="header-title">박스 관리</span>
+      <button class="back-btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        대시보드
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="workspace">
+
+  <!-- 좌측: 박스 목록 -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        전체 박스
+        <span class="box-count-badge" id="boxCountBadge">0</span>
+      </div>
+      <input type="text" class="search-input" id="searchInput" placeholder="박스명 검색..." oninput="filterBoxes()">
+    </div>
+    <div class="box-list" id="boxList">
+      <div class="sidebar-loading">박스 목록을 불러오는 중...</div>
+    </div>
+  </div>
+
+  <!-- 우측: 상세 패널 -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-empty" id="detailEmpty">
+      <div class="detail-empty-icon">🏋️</div>
+      <div class="detail-empty-text">좌측에서 박스를 선택하세요</div>
+    </div>
+    <div class="detail-content" id="detailContent" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script>
+  let allBoxes = [];
+  let selectedBoxPk = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await validateAuth();
+    await loadBoxes();
+  });
+
+  async function validateAuth() {
+    const token = localStorage.getItem('A_Token');
+    const password = localStorage.getItem('A_Password');
+    if (!token || !password) { window.location.href = '/api/v1/admin/error'; return; }
+    try {
+      const res = await fetch('/api/v1/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'A_Token': token, 'A_Password': password }
+      });
+      if (!res.ok || !(await res.json()).data) window.location.href = '/api/v1/admin/error';
+    } catch { window.location.href = '/api/v1/admin/error'; }
+  }
+
+  async function loadBoxes() {
+    const token = localStorage.getItem('A_Token');
+    const password = localStorage.getItem('A_Password');
+    try {
+      const res = await fetch('/api/v1/admin/boxes', {
+        headers: { 'A_Token': token, 'A_Password': password }
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        allBoxes = result.data;
+        document.getElementById('boxCountBadge').textContent = allBoxes.length;
+        renderBoxList(allBoxes);
+      } else {
+        document.getElementById('boxList').innerHTML = '<div class="sidebar-loading">박스가 없습니다.</div>';
+      }
+    } catch {
+      document.getElementById('boxList').innerHTML = '<div class="sidebar-loading">불러오기 실패</div>';
+    }
+  }
+
+  function filterBoxes() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = q ? allBoxes.filter(b => b.boxName.toLowerCase().includes(q)) : allBoxes;
+    document.getElementById('boxCountBadge').textContent = filtered.length;
+    renderBoxList(filtered);
+  }
+
+  function renderBoxList(boxes) {
+    if (!boxes.length) {
+      document.getElementById('boxList').innerHTML = '<div class="sidebar-loading">검색 결과 없음</div>';
+      return;
+    }
+    document.getElementById('boxList').innerHTML = boxes.map(box => `
+      <div class="box-list-item ${selectedBoxPk === box.boxPk ? 'active' : ''}" onclick="selectBox(${box.boxPk})" id="box-item-${box.boxPk}">
+        <div class="box-avatar" style="background:${getBoxColor(box.boxPk)}">${box.boxName.charAt(0)}</div>
+        <div class="box-item-info">
+          <div class="box-item-name">${escHtml(box.boxName)}</div>
+          <div class="box-item-meta">
+            <span class="subscribe-dot ${box.subscribeStatus === 'Y' ? 'active' : 'inactive'}"></span>
+            <span>#${box.boxPk}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function selectBox(boxPk) {
+    selectedBoxPk = boxPk;
+    // 활성 상태 업데이트
+    document.querySelectorAll('.box-list-item').forEach(el => el.classList.remove('active'));
+    const item = document.getElementById('box-item-' + boxPk);
+    if (item) item.classList.add('active');
+
+    document.getElementById('detailEmpty').style.display = 'none';
+    document.getElementById('detailContent').style.display = 'block';
+    document.getElementById('detailContent').innerHTML = '<div class="detail-loading">상세 정보를 불러오는 중...</div>';
+
+    const token = localStorage.getItem('A_Token');
+    const password = localStorage.getItem('A_Password');
+    try {
+      const res = await fetch(`/api/v1/admin/boxes/${boxPk}/detail`, {
+        headers: { 'A_Token': token, 'A_Password': password }
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        renderDetail(result.data);
+      } else {
+        document.getElementById('detailContent').innerHTML = '<div class="detail-error">상세 정보를 불러올 수 없습니다.</div>';
+      }
+    } catch {
+      document.getElementById('detailContent').innerHTML = '<div class="detail-error">오류가 발생했습니다.</div>';
+    }
+  }
+
+  function renderDetail(d) {
+    const subClass = d.subscribeStatus === 'Y' ? 'sub-y' : d.subscribeStatus === 'C' ? 'sub-c' : 'sub-n';
+    const subLabel = d.subscribeStatus === 'Y' ? '구독 중' : d.subscribeStatus === 'C' ? '해지' : '미구독';
+
+    const ownerHtml = d.owner ? `
+      <div class="owner-card">
+        <div class="owner-avatar">${d.owner.nickname.charAt(0)}</div>
+        <div class="owner-info">
+          <div class="owner-name">${escHtml(d.owner.nickname)}</div>
+          <div class="owner-email">${escHtml(d.owner.email)}</div>
+        </div>
+        <span class="owner-tag">OWNER</span>
+      </div>
+    ` : '<div style="color:var(--bw40);font-size:13px;">오너 정보 없음</div>';
+
+    const membersHtml = d.members && d.members.length > 0 ? `
+      <div class="members-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>닉네임</th>
+              <th>역할</th>
+              <th>이메일</th>
+              <th>멤버십명</th>
+              <th>멤버십 상태</th>
+              <th>시작일</th>
+              <th>만료일</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${d.members.map(m => `
+              <tr>
+                <td><strong>${escHtml(m.boxNickname)}</strong></td>
+                <td><span class="role-badge role-${m.role}">${roleLabel(m.role)}</span></td>
+                <td style="color:var(--bw70)">${escHtml(m.email)}</td>
+                <td>${m.membershipName ? escHtml(m.membershipName) : '<span class="ms-none">없음</span>'}</td>
+                <td>${m.membershipStatus ? `<span class="ms-badge ms-${m.membershipStatus}">${msLabel(m.membershipStatus)}</span>` : '<span class="ms-none">-</span>'}</td>
+                <td style="color:var(--bw70)">${m.startDate ? m.startDate : '<span class="ms-none">-</span>'}</td>
+                <td style="color:var(--bw70)">${m.expirationDate ? m.expirationDate : '<span class="ms-none">-</span>'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : '<div style="color:var(--bw40);font-size:13px;padding:12px 0;">등록된 회원이 없습니다.</div>';
+
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-box-header">
+        <div class="detail-box-top">
+          <div class="detail-box-avatar" style="background:${getBoxColor(d.boxPk)}">${d.boxName.charAt(0)}</div>
+          <div style="flex:1">
+            <div class="detail-box-name">${escHtml(d.boxName)}</div>
+            <div class="detail-box-code">${escHtml(d.boxCode || '-')}</div>
+          </div>
+          <span class="subscribe-badge ${subClass}">${subLabel}</span>
+        </div>
+        <div class="detail-info-grid">
+          <div class="info-item">
+            <div class="info-label">주소</div>
+            <div class="info-value ${!d.boxAddress ? 'empty' : ''}">${d.boxAddress ? escHtml(d.boxAddress) : '미등록'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">연락처</div>
+            <div class="info-value ${!d.boxContact ? 'empty' : ''}">${d.boxContact ? escHtml(d.boxContact) : '미등록'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="section-title-icon">👑</span> 오너</div>
+        ${ownerHtml}
+      </div>
+
+      <div class="section">
+        <div class="section-title">
+          <span class="section-title-icon">👥</span>
+          회원 목록
+          <span class="member-count-info">(총 ${d.memberCount}명)</span>
+        </div>
+        ${membersHtml}
+      </div>
+    `;
+  }
+
+  function roleLabel(role) {
+    const map = { OWNER: '오너', MANAGER: '매니저', MEMBER: '멤버', GUEST: '게스트' };
+    return map[role] || role;
+  }
+
+  function msLabel(status) {
+    const map = { ACTIVE: '활성', EXPIRED: '만료', PENDING: '대기', DELETE: '삭제' };
+    return map[status] || status;
+  }
+
+  function getBoxColor(boxPk) {
+    const colors = ['#3949AB','#00897B','#E53935','#8E24AA','#F4511E','#1E88E5','#43A047'];
+    const h = String(boxPk).split('').reduce((a,b) => { a=((a<<5)-a)+b.charCodeAt(0); return a&a; }, 0);
+    return colors[Math.abs(h) % colors.length];
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function goBack() {
+    window.location.href = '/api/v1/admin/lobby';
+  }
+</script>
+</body>
+</html>
