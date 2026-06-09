@@ -114,6 +114,19 @@
     .hist-CREATE{background:#e3f2fd;color:#1565c0}
     .hist-UPDATE{background:#fff8e1;color:#f57f17}
     .hist-DELETE{background:#fce4ec;color:#c62828}
+    .act-CHANNEL_CREATED{background:#e3f2fd;color:#1565c0}
+    .act-WOD_CREATED{background:#f3e5f5;color:#6a1b9a}
+    .act-RECORD_CREATED{background:#e8f5e9;color:#2e7d32}
+    .act-CLASS_CREATED{background:#fff3e0;color:#e65100}
+    .act-MEMBERSHIP_CREATED{background:#e0f2f1;color:#00695c}
+    .act-MEMBERSHIP_EXTENDED{background:#fce4ec;color:#c62828}
+    .act-row{padding:10px 0;border-bottom:1px solid var(--bw15);display:flex;align-items:flex-start;gap:10px}
+    .act-row:last-child{border-bottom:none}
+    .act-body{flex:1;min-width:0}
+    .act-msg{font-size:13px;color:var(--bw80);margin-bottom:3px}
+    .act-time{font-size:11px;color:var(--bw40)}
+    .load-more-btn{width:100%;padding:10px;margin-top:12px;background:var(--bw08);border:1.5px solid var(--bw15);border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--bw70);transition:background 0.15s}
+    .load-more-btn:hover{background:var(--bw15)}
     .nil{color:var(--bw30);font-style:italic;font-size:11px}
 
     /* 멤버십 클릭 링크 */
@@ -312,6 +325,8 @@
     tabCache = {};
     wodDate = todayStr();
     weekStart = getWeekStart(new Date());
+    actPage = 0;
+    actHasMore = true;
 
     document.querySelectorAll('.box-list-item').forEach(el => el.classList.remove('active'));
     const item = document.getElementById('box-item-' + boxPk);
@@ -359,6 +374,7 @@
           <button class="tab-btn" id="tab-btn-wods" onclick="switchTab('wods')">🏋️ WOD</button>
           <button class="tab-btn" id="tab-btn-classes" onclick="switchTab('classes')">📅 클래스</button>
           <button class="tab-btn" id="tab-btn-channels" onclick="switchTab('channels')">💬 채널</button>
+          <button class="tab-btn" id="tab-btn-activities" onclick="switchTab('activities')">📋 활동</button>
         </div>
         <div class="tab-body" id="tabBody">${renderMembersTab(d.members)}</div>
       </div>`;
@@ -371,9 +387,10 @@
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-btn-' + tab).classList.add('active');
 
-    if (tab === 'wods')     { renderWodTab(); return; }
-    if (tab === 'classes')  { renderClassesTab(); return; }
-    if (tab === 'channels') { renderChannelsTab(); return; }
+    if (tab === 'wods')       { renderWodTab(); return; }
+    if (tab === 'classes')    { renderClassesTab(); return; }
+    if (tab === 'channels')   { renderChannelsTab(); return; }
+    if (tab === 'activities') { renderActivitiesTab(); return; }
 
     if (tabCache[tab] !== undefined) { document.getElementById('tabBody').innerHTML = renderMembersTab(tabCache[tab]); return; }
     document.getElementById('tabBody').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
@@ -598,6 +615,90 @@
         </tr>`).join('')}</tbody>
       </table></div>`;
     } catch { document.getElementById('tabBody').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
+  /* ── 활동 탭 ── */
+  let actPage = 0;
+  let actHasMore = true;
+
+  function renderActivitiesTab() {
+    actPage = 0;
+    actHasMore = true;
+    document.getElementById('tabBody').innerHTML = '<div id="actList"></div>';
+    loadActivities();
+  }
+
+  async function loadActivities() {
+    const listEl = document.getElementById('actList');
+    if (!listEl) return;
+    const loadingEl = document.createElement('div');
+    loadingEl.className = 'tab-msg';
+    loadingEl.id = 'actLoading';
+    loadingEl.textContent = '불러오는 중...';
+    listEl.appendChild(loadingEl);
+
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/activities?page=${actPage}&size=20`);
+      const loading = document.getElementById('actLoading');
+      if (loading) loading.remove();
+
+      if (!r.success || !r.data) { listEl.innerHTML += '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; return; }
+
+      const { content, last } = r.data;
+      actHasMore = !last;
+
+      if (actPage === 0 && (!content || !content.length)) {
+        listEl.innerHTML = '<div class="tab-msg">활동 기록이 없습니다.</div>';
+        return;
+      }
+
+      content.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'act-row';
+        div.innerHTML = `
+          <span class="badge act-${a.type}">${actTypeLabel(a.type)}</span>
+          <div class="act-body">
+            <div class="act-msg">${buildActMsg(a)}</div>
+            <div class="act-time">${a.createdAt ? a.createdAt.replace('T',' ').substring(0,16) : ''}</div>
+          </div>`;
+        listEl.appendChild(div);
+      });
+
+      const oldBtn = document.getElementById('actMoreBtn');
+      if (oldBtn) oldBtn.remove();
+
+      if (actHasMore) {
+        const btn = document.createElement('button');
+        btn.className = 'load-more-btn';
+        btn.id = 'actMoreBtn';
+        btn.textContent = '더 보기';
+        btn.onclick = () => { actPage++; loadActivities(); };
+        listEl.appendChild(btn);
+      }
+    } catch {
+      const loading = document.getElementById('actLoading');
+      if (loading) loading.remove();
+      listEl.innerHTML += '<div class="tab-msg" style="color:#f44336">오류 발생</div>';
+    }
+  }
+
+  function actTypeLabel(t) {
+    return {CHANNEL_CREATED:'채널 생성',WOD_CREATED:'WOD 추가',RECORD_CREATED:'기록 추가',CLASS_CREATED:'클래스 추가',MEMBERSHIP_CREATED:'멤버십 생성',MEMBERSHIP_EXTENDED:'멤버십 연장'}[t]||t;
+  }
+
+  function buildActMsg(a) {
+    const actor = `<strong>${esc(a.actorName)}</strong>`;
+    const target = a.targetMemberName ? `<strong>${esc(a.targetMemberName)}</strong>` : null;
+    const detail = a.detail ? `<strong>${esc(a.detail)}</strong>` : null;
+    switch (a.type) {
+      case 'CHANNEL_CREATED':    return `${actor}이 ${detail} 채널을 생성했습니다`;
+      case 'WOD_CREATED':        return `${actor}이 ${detail} WOD를 추가했습니다`;
+      case 'RECORD_CREATED':     return target ? `${actor}이 ${target}의 ${detail} 기록을 추가했습니다` : `${actor}이 ${detail} 기록을 추가했습니다 (일일체험)`;
+      case 'CLASS_CREATED':      return `${actor}이 ${detail} 클래스를 추가했습니다`;
+      case 'MEMBERSHIP_CREATED': return `${actor}이 ${target}의 멤버십을 생성했습니다`;
+      case 'MEMBERSHIP_EXTENDED':return `${actor}이 ${target}의 멤버십을 연장했습니다`;
+      default: return `${actor}이 ${a.type} 작업을 수행했습니다`;
+    }
   }
 
   /* ── 참여자 모달 ── */
