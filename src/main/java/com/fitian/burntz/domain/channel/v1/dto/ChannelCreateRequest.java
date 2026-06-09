@@ -43,7 +43,7 @@ public class ChannelCreateRequest {
     private String channelEmoji;
 
     @NotNull(message = "type is required")
-    @Schema(description = "채널 유형", example = "GROUP", allowableValues = {"group","public","notice","general"})
+    @Schema(description = "채널 유형", example = "GROUP", allowableValues = {"GROUP","PUBLIC","NOTICE","GENERAL","DM"})
     private ChannelType type;
 
     @NotEmpty(message = "memberPks must contain at least one member")

@@ -8,5 +8,5 @@ package com.fitian.burntz.domain.channel.enums;
  * @description : 채팅방 타입 enum
  */
 public enum ChannelType {
-    PUBLIC, NOTICE, GROUP, GENERAL
+    PUBLIC, NOTICE, GROUP, GENERAL, DM
 }

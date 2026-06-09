@@ -75,8 +75,15 @@ public class ChannelService {
         MemberList ml = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(
                         userDetails.getMemberPk(), box.getBoxPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
-        if (ml.getRole() != MemberRole.OWNER && ml.getRole() != MemberRole.MANAGER) {
-            throw new ValidationException(ErrorCode.FORBIDDEN);
+
+        if (request.getType() == ChannelType.DM) {
+            if (request.getMemberPks().size() != 2) {
+                throw new ValidationException(ErrorCode.INVALID_REQUEST);
+            }
+        } else {
+            if (ml.getRole() != MemberRole.OWNER && ml.getRole() != MemberRole.MANAGER) {
+                throw new ValidationException(ErrorCode.FORBIDDEN);
+            }
         }
 
         Member creator = memberRepository.findById(userDetails.getMemberPk())
@@ -124,7 +131,7 @@ public class ChannelService {
 
         participantRepository.saveAll(CPList);
 
-        if (request.getType() != ChannelType.NOTICE && request.getType() != ChannelType.GENERAL) {
+        if (request.getType() != ChannelType.NOTICE && request.getType() != ChannelType.GENERAL && request.getType() != ChannelType.DM) {
             eventPublisher.publishEvent(BoxActivityEvent.of(
                     box.getBoxPk(), ActivityType.CHANNEL_CREATED,
                     creator.getMemberPk(), creator.getNickname(),
