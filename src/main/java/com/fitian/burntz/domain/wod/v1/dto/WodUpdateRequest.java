@@ -22,13 +22,13 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Schema(name = "WodUpdateRequest", description = "Wod 수정 요청")
 public class WodUpdateRequest {
-    @Schema(description = "wod 제목", example="HSPU+HPCL")
+    @Schema(description = "wod 제목 (생략 시 기존 값 유지)", example="HSPU+HPCL", nullable = true)
     private String wodTitle;
 
-    @Schema(description = "wod 내용", example="Strength Every 2:00 x 6 set")
+    @Schema(description = "wod 내용 (생략 시 기존 값 유지)", example="Strength Every 2:00 x 6 set", nullable = true)
     private String wodScript;
 
-    @Schema(description = "wod 종류", example="AMRAP")
+    @Schema(description = "wod 종류 (생략 시 기존 값 유지)", example="AMRAP", nullable = true)
     private WodType wodType;
 
     //DTO -> Entity 적용(DTO가 엔티티의 도메인 메서드 호출)
