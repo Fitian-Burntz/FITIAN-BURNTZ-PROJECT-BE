@@ -89,6 +89,20 @@ public class RecordController implements RecordDocs {
     }
 
     /*
+     * 팀 레코드 삭제 예고 조회
+     * */
+    @GetMapping("/{recordPk}/team")
+    public ResponseEntity<ApiResponse<List<RecordResponse>>> getTeamRecordsToDelete(
+            @PathVariable Long boxPk,
+            @PathVariable Long recordPk,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                recordService.getTeamRecordsToDelete(boxPk, userDetails.getMemberPk(), recordPk)));
+    }
+
+    /*
     * Record 삭제
     * */
     @DeleteMapping("/{recordPk}")

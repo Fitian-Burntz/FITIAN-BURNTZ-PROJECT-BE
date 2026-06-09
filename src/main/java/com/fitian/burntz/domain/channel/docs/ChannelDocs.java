@@ -25,8 +25,8 @@ import java.util.List;
 
 @Tag(name = "채널 관련 api 입니다.", description = "채널 생성하거나 수정, 삭제할 수 있습니다.")
 public interface ChannelDocs {
-    @Operation(summary = "채널 생성", description = "전체 또는 그룹 채팅을 생성합니다.")
-    ApiResponse<Void> createChannel(
+    @Operation(summary = "채널 생성", description = "전체 또는 그룹 채팅을 생성합니다. 이미 동일한 channelId가 존재하면 기존 channelPk를 반환합니다.")
+    ApiResponse<ChannelCreateResponse> createChannel(
             @Valid @RequestBody ChannelCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     );

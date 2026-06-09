@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -56,12 +57,23 @@ public class ChannelService {
     private final MemberListRepository memberListRepository;
     private final Firestore firestore;
 
-    public void createChannel(ChannelCreateRequest request, CustomUserDetails userDetails) {
+    public Long createChannel(ChannelCreateRequest request, CustomUserDetails userDetails) {
+
+        // 이미 활성화된 채널이 있으면 기존 channelPk 반환 (DM 멱등성 보장)
+        Optional<Channel> existing = channelRepository.findByChannelIdAndDeletedYN(request.getChannelId(), BaseTime.Yn.N);
+        if (existing.isPresent()) {
+            return existing.get().getChannelPk();
+        }
 
         Box box = boxRepository.findByBoxCode(request.getBoxCode())
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
         Member creator = memberRepository.findById(userDetails.getMemberPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        List<Member> memberList = memberRepository.findAllById(request.getMemberPks());
+        if (memberList.size() != request.getMemberPks().size()) {
+            throw new ValidationException(ErrorCode.USER_NOT_FOUND);
+        }
 
         Channel channel = Channel.builder()
                 .channelId(request.getChannelId())
@@ -74,14 +86,13 @@ public class ChannelService {
 
         Channel saved = channelRepository.save(channel);
 
-        //Firebase에 채널 생성
         try {
             Map<String, Object> data = new HashMap<>();
             data.put("channelName", request.getChannelName());
             data.put("channelEmoji", request.getChannelEmoji());
             data.put("type", request.getType());
             data.put("memberPks", request.getMemberPks());
-            data.put("createdBy",userDetails.getMemberPk());
+            data.put("createdBy", userDetails.getMemberPk());
             data.put("createdAt", com.google.cloud.Timestamp.now());
 
             firestore.collection("boxes")
@@ -93,8 +104,6 @@ public class ChannelService {
             throw new RuntimeException("Firestore 채널 문서 생성 실패", e);
         }
 
-        List<Member> memberList = memberRepository.findAllById(request.getMemberPks());
-
         List<ChannelParticipant> CPList = memberList.stream()
                 .map(m -> ChannelParticipant.builder()
                     .channel(saved)
@@ -102,6 +111,8 @@ public class ChannelService {
                 .toList();
 
         participantRepository.saveAll(CPList);
+
+        return saved.getChannelPk();
     }
 
     public List<ChannelListResponse> getChannels(CustomUserDetails userDetails, Long boxPk) {

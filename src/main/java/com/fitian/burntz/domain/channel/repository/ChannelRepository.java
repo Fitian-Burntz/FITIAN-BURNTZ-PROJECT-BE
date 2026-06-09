@@ -21,6 +21,8 @@ import java.util.Optional;
 public interface ChannelRepository extends JpaRepository<Channel, Long> {
     Optional<Channel> findByChannelId(String channelId);
 
+    Optional<Channel> findByChannelIdAndDeletedYN(String channelId, BaseTime.Yn deletedYN);
+
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Channel c " +
             "SET c.deletedYN = :yn, c.updatedAt = CURRENT_TIMESTAMP " +

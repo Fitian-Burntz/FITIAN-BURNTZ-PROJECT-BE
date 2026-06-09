@@ -31,11 +31,11 @@ public class ChannelController implements ChannelDocs {
 
     @PostMapping()
     @Override
-    public ApiResponse<Void> createChannel(
+    public ApiResponse<ChannelCreateResponse> createChannel(
             @Valid @RequestBody ChannelCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails ) {
-        channelService.createChannel(request,  userDetails);
-        return ApiResponse.success(null, "채널 개설 완료.");
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long channelPk = channelService.createChannel(request, userDetails);
+        return ApiResponse.success(ChannelCreateResponse.builder().channelPk(channelPk).build(), "채널 개설 완료.");
     }
 
     @GetMapping()

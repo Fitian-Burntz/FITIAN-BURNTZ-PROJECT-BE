@@ -220,6 +220,7 @@ public class RecordService {
         List<Record> saved = recordRepository.saveAll(toSave);
 
         List<Long> memberPks = new ArrayList<>(saved.stream()
+                .filter(r -> r.getMemberList() != null)
                 .map(r -> r.getMemberList().getMember().getMemberPk())
                 .toList());
         memberPks.removeIf(value -> value.equals(memberPk));
@@ -365,7 +366,28 @@ public class RecordService {
     }
 
     /*
-    * Record 삭제
+     * 팀 레코드 삭제 예고 조회 — 팀이면 같이 삭제될 목록, 팀이 없으면 빈 리스트
+     * */
+    @Transactional(readOnly = true)
+    public List<RecordResponse> getTeamRecordsToDelete(Long boxPk, Long memberPk, Long recordPk) {
+        requireManagerOrOwner(memberPk, boxPk);
+
+        Record record = recordRepository.findById(recordPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
+
+        if (record.getTeam() == null || record.getTeam().isBlank()) {
+            return List.of();
+        }
+
+        return recordRepository.findByClassesClassesPkAndTeamAndDeletedYN(
+                        record.getClasses().getClassesPk(), record.getTeam(), BaseTime.Yn.N)
+                .stream()
+                .map(RecordResponse::from)
+                .toList();
+    }
+
+    /*
+    * Record 삭제 (팀 레코드이면 같은 팀 전체 삭제)
     * */
     @Transactional
     public void deleteRecord(Long boxPk, Long memberPk, Long recordPk, LocalDate date){
@@ -373,25 +395,35 @@ public class RecordService {
         requireManagerOrOwner(memberPk, boxPk);
 
         //2. wod 유효성 검증 : box+date로 조회
-        Wod wod = requireActiveWod(boxPk, date);
+        requireActiveWod(boxPk, date);
 
         Record record = recordRepository.findById(recordPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.RECORD_NOT_FOUND));
 
-        // 삭제 전 정보 저장 (Redis 제거용)
-        String level = record.getLevel();
-        String nickname = getNickname(record);
-        Long memberListPk = getMemberListPk(record);
+        // 팀 레코드이면 같은 클래스의 같은 팀 전체를, 아니면 해당 레코드만 삭제
+        List<Record> toDelete;
+        if (record.getTeam() != null && !record.getTeam().isBlank()) {
+            toDelete = recordRepository.findByClassesClassesPkAndTeamAndDeletedYN(
+                    record.getClasses().getClassesPk(), record.getTeam(), BaseTime.Yn.N);
+        } else {
+            toDelete = List.of(record);
+        }
 
-        //delete
-        record.markDeleted();
+        // 삭제 전 Redis 제거용 정보 수집
+        record RankingRemoveInfo(Long recordPk, String level, String nickname, Long memberListPk) {}
+        List<RankingRemoveInfo> removeInfos = toDelete.stream()
+                .map(r -> new RankingRemoveInfo(r.getRecordPk(), r.getLevel(), getNickname(r), getMemberListPk(r)))
+                .toList();
+
+        toDelete.forEach(Record::markDeleted);
         recordRepository.flush();
 
-        // 6. 트랜잭션 커밋 후 Redis 제거
+        // 트랜잭션 커밋 후 Redis 일괄 제거
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                rankingService.remove(boxPk, date, level, nickname, recordPk, memberListPk);
+                removeInfos.forEach(info ->
+                        rankingService.remove(boxPk, date, info.level(), info.nickname(), info.recordPk(), info.memberListPk()));
             }
         });
     }
@@ -469,27 +501,6 @@ public class RecordService {
 
     private Long getMemberListPk(Record r) {
         return r.getMemberList() != null ? r.getMemberList().getMemberListPk() : null;
-    }
-
-    @Transactional
-    private void deleteTeamRecord(Long boxPk, LocalDate date , Record record){
-
-        // 삭제 전 정보 저장 (Redis 제거용)
-        String level = record.getLevel();
-        String nickname = getNickname(record);
-        Long memberListPk = getMemberListPk(record);
-
-        //delete
-        record.markDeleted();
-        recordRepository.flush();
-
-        // 6. 트랜잭션 커밋 후 Redis 제거
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                rankingService.remove(boxPk, date, level, nickname, record.getRecordPk(), memberListPk);
-            }
-        });
     }
 
 }
