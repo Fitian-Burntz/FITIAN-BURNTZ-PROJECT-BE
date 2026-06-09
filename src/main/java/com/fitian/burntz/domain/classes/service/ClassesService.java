@@ -209,6 +209,13 @@ public class ClassesService {
         Classes classes = classesRepository.findById(request.getClassesPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
 
+        if (classes.getClassMemberCapacity() != null) {
+            int currentCount = participantRepository.countByClassesClassesPkAndDeletedYN(request.getClassesPk(), BaseTime.Yn.N);
+            if (currentCount >= classes.getClassMemberCapacity()) {
+                throw new ValidationException(ErrorCode.CLASS_CAPACITY_EXCEEDED);
+            }
+        }
+
         ClassParticipant cp = ClassParticipant.builder()
                 .classes(classes)
                 .memberList(memberList)
