@@ -123,7 +123,6 @@ public class SubscriptionEventLog extends BaseTime {
   public static SubscriptionEventLog from(WebhookPurchaseResponse webhookPurchaseResponse, Member member, Box box) {
     try {
       ObjectMapper mapper = new ObjectMapper();
-      System.out.println("json data : " + mapper.writeValueAsString(webhookPurchaseResponse));
       return SubscriptionEventLog
           .builder()
           .member(member)

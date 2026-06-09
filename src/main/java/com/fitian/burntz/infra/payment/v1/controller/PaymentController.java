@@ -55,6 +55,15 @@ public class PaymentController implements PaymentDocs {
     return ResponseEntity.ok().build();
   }
 
+  @PostMapping("/webhook/expiration")
+  public ResponseEntity<?> handleExpirationWebhook(
+          @RequestBody WebhookPurchaseResponse webhookPurchaseResponse,
+          HttpServletRequest request
+  ) {
+    paymentService.handleExpirationWebhook(webhookPurchaseResponse, request);
+    return ResponseEntity.ok().build();
+  }
+
   @PostMapping("/webhook/uncancel")
   public ResponseEntity<?> handleUncancelWebhook(
           @RequestBody WebhookPurchaseResponse webhookPurchaseResponse,
@@ -80,9 +89,12 @@ public class PaymentController implements PaymentDocs {
   }
 
 
+  @Override
   @GetMapping("/purchase/log/{boxPk}")
-  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "boxPk") Long boxPk) {
-    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(boxPk);
+  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @PathVariable(value = "boxPk") Long boxPk) {
+    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(userDetails.getMemberPk(), boxPk);
     return ApiResponse.success(response);
   }
 

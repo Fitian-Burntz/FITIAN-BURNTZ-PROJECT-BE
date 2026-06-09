@@ -19,6 +19,7 @@ import java.util.Optional;
  */
 public interface ClassParticipantRepository extends JpaRepository<ClassParticipant, Long> {
     boolean existsByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
+    int countByClassesClassesPkAndDeletedYN(Long classesPk, BaseTime.Yn deletedYN);
     Optional<ClassParticipant> findByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(Long classesPk, Long memberPk, BaseTime.Yn deletedYN);
 
 //    @Query("SELECT new com.fitian.burntz.domain.classes.v1.dto.ClassParticipantResponse("

@@ -65,7 +65,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/index.html",
-                                "/auth-test.html",
                                 "/css/**",
                                 "/js/**",
                                 //ECS 헬스체크
