@@ -17,16 +17,31 @@ public class RankingScoreEncoder {
 
     /**
      * 레벨을 숫자로 변환
-     * Rx'd(0) > A(1) > B(2) > C(3) > 그외(9)
+     * Rx'd(0) > Rx'd/A(1) > Rx'd/B(2) > Rx'd/C(3) > Rx'd/S(4)
+     * > A(5) > A/B(6) > A/C(7) > A/S(8)
+     * > B(9) > B/C(10) > B/S(11)
+     * > C(12) > C/S(13) > Scale(14) > 그외(15)
      */
     private int getLevelRank(String level) {
-        if (level == null) return 9;
-        String s = level.trim().toLowerCase();
-        if (s.equals("rx'd") || s.equals("rxd") || s.equals("rx")) return 0;
-        if (s.equals("a")) return 1;
-        if (s.equals("b")) return 2;
-        if (s.equals("c")) return 3;
-        return 9;
+        if (level == null) return 15;
+        return switch (level.trim().toLowerCase()) {
+            case "rx'd", "rxd", "rx" -> 0;
+            case "rx'd/a" -> 1;
+            case "rx'd/b" -> 2;
+            case "rx'd/c" -> 3;
+            case "rx'd/s" -> 4;
+            case "a" -> 5;
+            case "a/b" -> 6;
+            case "a/c" -> 7;
+            case "a/s" -> 8;
+            case "b" -> 9;
+            case "b/c" -> 10;
+            case "b/s" -> 11;
+            case "c" -> 12;
+            case "c/s" -> 13;
+            case "scale" -> 14;
+            default -> 15;
+        };
     }
 
     /**

@@ -58,7 +58,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
         and w.wodDate = :date
         and r.deletedYN = 'N'
       order by 
-        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        case lower(r.level) when 'rx''d' then 0 when 'rx''d/a' then 1 when 'rx''d/b' then 2 when 'rx''d/c' then 3 when 'rx''d/s' then 4 when 'a' then 5 when 'a/b' then 6 when 'a/c' then 7 when 'a/s' then 8 when 'b' then 9 when 'b/c' then 10 when 'b/s' then 11 when 'c' then 12 when 'c/s' then 13 when 'scale' then 14 else 15 end,
         r.time asc nulls last,
         lower(coalesce(r.nickname, ml.boxNickname, '')) asc
     """)
@@ -73,7 +73,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
         and w.wodDate = :date
         and r.deletedYN = 'N'
       order by 
-        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        case lower(r.level) when 'rx''d' then 0 when 'rx''d/a' then 1 when 'rx''d/b' then 2 when 'rx''d/c' then 3 when 'rx''d/s' then 4 when 'a' then 5 when 'a/b' then 6 when 'a/c' then 7 when 'a/s' then 8 when 'b' then 9 when 'b/c' then 10 when 'b/s' then 11 when 'c' then 12 when 'c/s' then 13 when 'scale' then 14 else 15 end,
         r.round desc nulls last,
         r.reps  desc nulls last,
         lower(coalesce(r.nickname, ml.boxNickname, '')) asc
@@ -89,7 +89,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
         and w.wodDate = :date
         and r.deletedYN = 'N'
       order by 
-        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        case lower(r.level) when 'rx''d' then 0 when 'rx''d/a' then 1 when 'rx''d/b' then 2 when 'rx''d/c' then 3 when 'rx''d/s' then 4 when 'a' then 5 when 'a/b' then 6 when 'a/c' then 7 when 'a/s' then 8 when 'b' then 9 when 'b/c' then 10 when 'b/s' then 11 when 'c' then 12 when 'c/s' then 13 when 'scale' then 14 else 15 end,
         case when upper(coalesce(r.result,'F')) = 'S' then 0 else 1 end,
         lower(coalesce(r.nickname, ml.boxNickname, '')) asc
     """)
@@ -104,7 +104,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
         and w.wodDate = :date
         and r.deletedYN = 'N'
       order by 
-        case lower(r.level) when 'rx''d' then 0 when 'a' then 1 when 'b' then 2 when 'c' then 3 else 9 end,
+        case lower(r.level) when 'rx''d' then 0 when 'rx''d/a' then 1 when 'rx''d/b' then 2 when 'rx''d/c' then 3 when 'rx''d/s' then 4 when 'a' then 5 when 'a/b' then 6 when 'a/c' then 7 when 'a/s' then 8 when 'b' then 9 when 'b/c' then 10 when 'b/s' then 11 when 'c' then 12 when 'c/s' then 13 when 'scale' then 14 else 15 end,
         r.reps desc nulls last,
         lower(coalesce(r.nickname, ml.boxNickname, '')) asc
     """)
