@@ -42,6 +42,9 @@ public class MemberList extends BaseTime {
     @Column(name = "box_nickname", length = 50, nullable = false)
     private String boxNickname;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     // 멤버 role 변경
     public void changeRole(MemberRole newRole) {
         Objects.requireNonNull(newRole, "newRole required");
@@ -81,6 +84,11 @@ public class MemberList extends BaseTime {
 
     }
 
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+        this.setUpdatedAtToNow();
+    }
 
     /** 내 box nickname 변경하기 **/
     public void changeMyBoxNickname(String newBoxNickname) {

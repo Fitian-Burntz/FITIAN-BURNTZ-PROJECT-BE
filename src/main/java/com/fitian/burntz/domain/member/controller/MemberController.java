@@ -8,6 +8,7 @@ import com.fitian.burntz.domain.member.service.MemberService;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.common.util.PreconditionValidator;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
+import com.fitian.burntz.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -64,15 +65,16 @@ public class MemberController implements MemberDocs {
 
     /** 프로필 이미지 업데이트 **/
     @PatchMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<MemberInfoResponse>> updateProfileImage(
+    public ResponseEntity<ApiResponse<S3Service.ProfileImageUrls>> updateProfileImage(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam("boxPk") Long boxPk,
             @RequestPart("image") MultipartFile image) {
 
         Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
 
-        MemberDto result = memberService.updateProfileImage(loginMemberPk, image);
+        S3Service.ProfileImageUrls result = memberService.updateProfileImage(loginMemberPk, boxPk, image);
 
-        return ResponseEntity.ok(ApiResponse.success(MemberInfoResponse.from(result)));
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     /** 멤버 자진 탈퇴

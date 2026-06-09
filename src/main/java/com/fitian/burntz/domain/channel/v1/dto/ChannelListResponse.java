@@ -34,4 +34,7 @@ public class ChannelListResponse {
 
     @Schema(description = "채널 유형", example = "GROUP", allowableValues = {"group","public","notice","general"})
     private ChannelType type;
+
+    @Schema(description = "DM 상대방 프로필 이미지 URL (DM 채널일 때만 포함)", example = "https://example.com/profile.jpg")
+    private String dmPartnerProfileImageUrl;
 }

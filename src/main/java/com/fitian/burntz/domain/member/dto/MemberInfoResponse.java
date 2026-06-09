@@ -11,9 +11,7 @@ public record MemberInfoResponse (
         String nickname,
         String email,
         String gender,
-        String provider,
-        String profileImageUrl,
-        String profileImageThumbUrl
+        String provider
 ) {
     public static MemberInfoResponse from(MemberDto memberDto) {
         Objects.requireNonNull(memberDto, "memberDto required.");
@@ -24,9 +22,7 @@ public record MemberInfoResponse (
                 memberDto.getNickname(),
                 memberDto.getEmail(),
                 memberDto.getGender(),
-                memberDto.getProvider(),
-                memberDto.getProfileImageUrl(),
-                memberDto.getProfileImageThumbUrl()
+                memberDto.getProvider()
         );
     }
 }
