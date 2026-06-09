@@ -33,7 +33,7 @@
     <springProfile name="prod">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:---------}] [%-4.4X{method} %-40.40X{path}] [member:%X{memberPk:-?}] %logger{30} : %msg%n</pattern>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:---------}] [%-4.4X{method} %-40.40X{path}] [box:%X{boxPk:-?}] [member:%X{memberPk:-?}] %logger{30} : %msg%n</pattern>
                 <charset>UTF-8</charset>
             </encoder>
         </appender>

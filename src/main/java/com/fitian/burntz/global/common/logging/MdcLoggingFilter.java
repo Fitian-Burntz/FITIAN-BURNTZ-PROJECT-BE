@@ -21,10 +21,13 @@ import java.util.UUID;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class MdcLoggingFilter extends OncePerRequestFilter {
 
+    private static final java.util.regex.Pattern BOX_PK_PATTERN =
+            java.util.regex.Pattern.compile("/boxes/(\\d+)");
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/actuator/");
+        return path.startsWith("/actuator/") || "OPTIONS".equalsIgnoreCase(request.getMethod());
     }
 
     private static final int MAX_BODY_LOG_LENGTH = 500;
@@ -42,6 +45,11 @@ public class MdcLoggingFilter extends OncePerRequestFilter {
         MDC.put("requestId", requestId);
         MDC.put("method", request.getMethod());
         MDC.put("path", request.getRequestURI());
+
+        var boxMatcher = BOX_PK_PATTERN.matcher(request.getRequestURI());
+        if (boxMatcher.find()) {
+            MDC.put("boxPk", boxMatcher.group(1));
+        }
 
         ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, MAX_BODY_LOG_LENGTH);
 
