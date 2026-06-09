@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,5 +46,8 @@ public interface BoxRepository extends JpaRepository<Box, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM Box b WHERE b.boxPk = :boxPk AND b.deletedYN = 'N'")
     Optional<Box> findActiveBoxByIdWithLock(@Param("boxPk") Long boxPk);
+
+    @Query("SELECT b FROM Box b ORDER BY b.boxPk ASC")
+    List<Box> findAllOrderByBoxPkAsc();
 
 }

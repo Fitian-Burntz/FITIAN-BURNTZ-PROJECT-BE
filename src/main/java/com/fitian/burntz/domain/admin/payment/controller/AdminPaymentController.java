@@ -43,7 +43,7 @@ public class AdminPaymentController {
   @GetMapping("/boxes")
   public ApiResponse<List<AdminBoxesResponse>> getBoxes(HttpServletRequest request) {
      if(adminAccount.validateAccount(request)) {
-       List<Box> boxes = boxRepository.findAll();
+       List<Box> boxes = boxRepository.findAllOrderByBoxPkAsc();
        List<AdminBoxesResponse> adminBoxesResponses = boxes.stream()
            .map(box -> AdminBoxesResponse
                .builder()
