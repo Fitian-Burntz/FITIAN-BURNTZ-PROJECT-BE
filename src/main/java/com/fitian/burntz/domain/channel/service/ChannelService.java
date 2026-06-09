@@ -1,7 +1,9 @@
 package com.fitian.burntz.domain.channel.service;
 
 import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.enums.ActivityType;
 import com.fitian.burntz.domain.box.enums.MemberRole;
+import com.fitian.burntz.domain.box.event.BoxActivityEvent;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
 import com.fitian.burntz.domain.channel.enums.ChannelType;
@@ -24,6 +26,7 @@ import com.google.cloud.firestore.WriteBatch;
 import com.google.cloud.firestore.WriteResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -56,6 +59,7 @@ public class ChannelService {
     private final ChannelParticipantRepository participantRepository;
     private final MemberListRepository memberListRepository;
     private final Firestore firestore;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Long createChannel(ChannelCreateRequest request, CustomUserDetails userDetails) {
 
@@ -119,6 +123,14 @@ public class ChannelService {
                 .toList();
 
         participantRepository.saveAll(CPList);
+
+        if (request.getType() != ChannelType.NOTICE && request.getType() != ChannelType.GENERAL) {
+            eventPublisher.publishEvent(BoxActivityEvent.of(
+                    box.getBoxPk(), ActivityType.CHANNEL_CREATED,
+                    creator.getMemberPk(), creator.getNickname(),
+                    request.getChannelName()
+            ));
+        }
 
         return saved.getChannelPk();
     }

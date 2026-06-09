@@ -2,7 +2,9 @@ package com.fitian.burntz.domain.record.service;
 
 import com.fitian.burntz.domain.alarm.service.PushService;
 import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
+import com.fitian.burntz.domain.box.enums.ActivityType;
 import com.fitian.burntz.domain.box.enums.MemberRole;
+import com.fitian.burntz.domain.box.event.BoxActivityEvent;
 import com.fitian.burntz.domain.classes.entity.Classes;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -21,6 +23,7 @@ import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +52,7 @@ public class RecordService {
     private final RecordRepository recordRepository;
     private final PushService pushService;
     private final RankingService rankingService;
+    private final ApplicationEventPublisher eventPublisher;
     /*
      * record 생성
      * */
@@ -60,7 +64,7 @@ public class RecordService {
          * 클래스 1번 당 운동기록 1개
          * */
         //1. 해당 box에 등록된 매니저, 오너만 pass 되도록 유효성 검증(로그인한 유저)
-        requireManagerOrOwner(memberPk, boxPk);
+        MemberList actor = requireManagerOrOwner(memberPk, boxPk);
 
         //2. wod 유효성 검증 : box+date로 조회
         Wod wod = requireActiveWod(boxPk, date);
@@ -108,6 +112,13 @@ public class RecordService {
             // DB 유니크 제약 위반 등 동시성 문제로 인해 발생할 수 있음
             throw new ValidationException(ErrorCode.ALREADY_EXISTS_RECORD_FOR_CLASS);
         }
+
+        eventPublisher.publishEvent(BoxActivityEvent.withTarget(
+                boxPk, ActivityType.RECORD_CREATED, memberPk, actor.getBoxNickname(),
+                targetMember != null ? targetMember.getMember().getMemberPk() : null,
+                targetMember != null ? targetMember.getBoxNickname() : req.getNickname(),
+                date.toString()
+        ));
 
         PushDto dto = PushDto.builder()
                 .title(wod.getBox().getBoxName())
@@ -465,7 +476,7 @@ public class RecordService {
      * */
 
     //해당 멤버가 박스에 속해있는지 & 해당 Box의 매니저와 오너인지 검증하는 헬퍼 메서드
-    private void requireManagerOrOwner(Long memberPk, Long boxPk) {
+    private MemberList requireManagerOrOwner(Long memberPk, Long boxPk) {
         MemberList memberList = memberListRepository
                 .findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
@@ -473,6 +484,7 @@ public class RecordService {
         if (memberList.getRole() == MemberRole.GUEST || memberList.getRole() == MemberRole.MEMBER) {
             throw new ValidationException(ErrorCode.ACCESS_DENIED);
         }
+        return memberList;
     }
 
     //Wod 유효성 검증(box+date로 체크)

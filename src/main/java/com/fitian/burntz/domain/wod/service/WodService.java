@@ -3,7 +3,9 @@ package com.fitian.burntz.domain.wod.service;
 import com.fitian.burntz.domain.alarm.service.PushService;
 import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
 import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.enums.ActivityType;
 import com.fitian.burntz.domain.box.enums.MemberRole;
+import com.fitian.burntz.domain.box.event.BoxActivityEvent;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
@@ -18,6 +20,7 @@ import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +46,7 @@ public class WodService {
     private final WodRepository wodRespository;
     private final BoxRepository boxRepository;
     private final MemberListRepository memberListRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /*
     * wod 생성
@@ -54,7 +58,7 @@ public class WodService {
         Box box = requireActiveBox(boxPk);
 
         //2. 해당 box에 등록된 매니저, 오너만 pass되도록 유효성 검증
-        requireManagerOrOwner(memberPk, boxPk);
+        MemberList actor = requireManagerOrOwner(memberPk, boxPk);
 
         //3. 해당 날짜의 wod가 이미 생성되어 있는지 확인 -> 생성되어있으면 에러
         if(wodRespository.existsByBoxAndWodDateAndDeletedYN(box, request.getWodDate(), BaseTime.Yn.N)){
@@ -68,6 +72,10 @@ public class WodService {
         try {
             wodRespository.save(wod);
 
+            eventPublisher.publishEvent(BoxActivityEvent.of(
+                    boxPk, ActivityType.WOD_CREATED, memberPk, actor.getBoxNickname(),
+                    request.getWodDate().toString()
+            ));
 
             // 해당 box 내 멤버에게 와드 등록 푸시 발송
             PushDto dto = PushDto.builder()
@@ -153,7 +161,7 @@ public class WodService {
     }
     
     //해당 멤버가 박스에 속해있는지 & 해당 Box의 매니저와 오너인지 검증하는 헬퍼 메서드
-    private void requireManagerOrOwner(Long memberPk, Long boxPk) {
+    private MemberList requireManagerOrOwner(Long memberPk, Long boxPk) {
         MemberList memberList = memberListRepository
                 .findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
@@ -161,6 +169,7 @@ public class WodService {
         if (memberList.getRole() == MemberRole.GUEST || memberList.getRole() == MemberRole.MEMBER) {
             throw new ValidationException(ErrorCode.ACCESS_DENIED);
         }
+        return memberList;
     }
     
     //Wod 유효성 검증

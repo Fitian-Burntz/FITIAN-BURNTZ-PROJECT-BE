@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitian.burntz.domain.alarm.service.PushService;
 import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.enums.ActivityType;
 import com.fitian.burntz.domain.box.enums.MemberRole;
+import com.fitian.burntz.domain.box.event.BoxActivityEvent;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.channel.service.ChannelService;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -24,6 +26,7 @@ import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +57,7 @@ public class MembershipService {
     private final MemberListRepository memberListRepository;
     private final MembershipHistoryRepository historyRepository;
     private final PushService pushService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MembershipResponse getMembership(Long boxPk, Long memberPk, CustomUserDetails userDetails) {
         //회원 등급 검증
@@ -141,6 +145,12 @@ public class MembershipService {
                     membership.getMembershipPk(), boxPk, memberPk, e);
             throw new RuntimeException("Failed to save Membership History.", e);
         }
+
+        eventPublisher.publishEvent(BoxActivityEvent.withTarget(
+                boxPk, ActivityType.MEMBERSHIP_CREATED,
+                userDetails.getMemberPk(), list.getBoxNickname(),
+                memberPk, member.getNickname(), null
+        ));
     }
 
     public void updateMembership(Long boxPk, Long memberPk, MembershipUpdateRequest request, CustomUserDetails userDetails){
@@ -177,6 +187,12 @@ public class MembershipService {
                     membership.getMembershipPk(), boxPk, memberPk, e);
             throw new RuntimeException("Failed to save Membership History.", e);
         }
+
+        eventPublisher.publishEvent(BoxActivityEvent.withTarget(
+                boxPk, ActivityType.MEMBERSHIP_EXTENDED,
+                userDetails.getMemberPk(), list.getBoxNickname(),
+                memberPk, membership.getMember().getNickname(), null
+        ));
     }
 
     public void deleteMembership(Long boxPk, Long memberPk, MembershipIdentifierRequest request, CustomUserDetails userDetails){

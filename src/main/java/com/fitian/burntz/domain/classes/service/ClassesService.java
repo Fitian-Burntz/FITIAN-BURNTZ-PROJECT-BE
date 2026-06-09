@@ -1,7 +1,9 @@
 package com.fitian.burntz.domain.classes.service;
 
 import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.enums.ActivityType;
 import com.fitian.burntz.domain.box.enums.MemberRole;
+import com.fitian.burntz.domain.box.event.BoxActivityEvent;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.classes.v1.dto.*;
 import com.fitian.burntz.domain.classes.entity.ClassParticipant;
@@ -17,6 +19,7 @@ import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +43,7 @@ public class ClassesService {
     private final ClassesRepository classesRepository;
     private final ClassParticipantRepository participantRepository;
     private final RecordRepository recordRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     //참여인원 카운트없이 가져오는 getClasses 현재 안씀.
     public List<ClassesResponse> getClasses(ClassesSearchRequest request, CustomUserDetails userDetails) {
@@ -185,6 +189,12 @@ public class ClassesService {
         }
 
         classesRepository.saveAll(classesList);
+
+        eventPublisher.publishEvent(BoxActivityEvent.of(
+                box.getBoxPk(), ActivityType.CLASS_CREATED,
+                userDetails.getMemberPk(), list.getBoxNickname(),
+                requestList.get(0).getClassDate().toString()
+        ));
     }
 
     public void joinClass(ClassesIdentifierRequest request, CustomUserDetails userDetails) {

@@ -2,7 +2,9 @@ package com.fitian.burntz.domain.admin.controller;
 
 import com.fitian.burntz.domain.admin.dto.AdminAccount;
 import com.fitian.burntz.domain.admin.dto.response.AdminBoxDetailResponse;
+import com.fitian.burntz.domain.admin.dto.response.BoxActivityResponse;
 import com.fitian.burntz.domain.box.entity.Box;
+import com.fitian.burntz.domain.box.repository.BoxActivityRepository;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.classes.repository.ClassParticipantRepository;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
@@ -25,6 +27,8 @@ import com.fitian.burntz.global.exception.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +49,7 @@ import java.util.stream.Collectors;
 public class AdminBoxController {
 
     private final AdminAccount adminAccount;
+    private final BoxActivityRepository boxActivityRepository;
     private final BoxRepository boxRepository;
     private final MemberRepository memberRepository;
     private final MemberListRepository memberListRepository;
@@ -349,5 +354,24 @@ public class AdminBoxController {
                 .toList();
 
         return ApiResponse.success(records);
+    }
+
+    @GetMapping("/boxes/{boxPk}/activities")
+    public ApiResponse<Page<BoxActivityResponse>> getBoxActivities(
+            @PathVariable Long boxPk,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpServletRequest request) {
+
+        if (!adminAccount.validateAccount(request)) {
+            log.info("[Admin] 관리자 인증 실패 - 박스 활동 조회 불가 (boxPk={})", boxPk);
+            return ApiResponse.success(null);
+        }
+
+        Page<BoxActivityResponse> activities = boxActivityRepository
+                .findByBoxPkOrderByCreatedAtDesc(boxPk, PageRequest.of(page, size))
+                .map(BoxActivityResponse::from);
+
+        return ApiResponse.success(activities);
     }
 }
