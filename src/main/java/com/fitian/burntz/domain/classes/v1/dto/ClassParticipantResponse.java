@@ -40,4 +40,7 @@ public class ClassParticipantResponse {
 
     @Schema(description = "생성일시(서버 기준)", example = "2025-09-16T15:00:00")
     private LocalDateTime createdAt;
+
+    @Schema(description = "프로필 이미지 URL")
+    private String profileImageUrl;
 }

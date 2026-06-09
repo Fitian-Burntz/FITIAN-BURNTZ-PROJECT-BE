@@ -31,4 +31,7 @@ public class ParticipantListResponse {
 
     @Schema(description = "박스 내 닉네임", example = "문정동 이경영")
     private String boxNickname;
+
+    @Schema(description = "프로필 이미지 URL")
+    private String profileImageUrl;
 }

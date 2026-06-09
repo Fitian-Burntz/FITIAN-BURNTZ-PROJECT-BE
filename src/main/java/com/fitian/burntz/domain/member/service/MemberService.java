@@ -213,7 +213,7 @@ public class MemberService {
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
 
         S3Service.ProfileImageUrls urls = s3Service.uploadProfileImage(memberPk, boxPk, image);
-        memberList.updateProfileImageUrl(urls.mediumUrl());
+        memberList.updateProfileImageUrl(urls.thumbUrl());
         memberListRepository.save(memberList);
 
         return urls;

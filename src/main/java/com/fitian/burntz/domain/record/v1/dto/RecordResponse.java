@@ -64,12 +64,16 @@ public class RecordResponse {
     @Schema(description = "메모", example = "자세 좋음")
     private String memo;
 
+    @Schema(description = "프로필 이미지 URL")
+    private String profileImageUrl;
+
 
 
     public static RecordResponse from(Record r) {
         if (r == null) return null;
 
         Long memberListPk = (r.getMemberList() != null) ? r.getMemberList().getMemberListPk() : null;
+        String profileImageUrl = (r.getMemberList() != null) ? r.getMemberList().getProfileImageUrl() : null;
 
         return RecordResponse.builder()
                 .rank(0)
@@ -85,6 +89,7 @@ public class RecordResponse {
                 .result(r.getResult())
                 .team(r.getTeam())
                 .memo(r.getMemo())
+                .profileImageUrl(profileImageUrl)
                 .build();
     }
 
