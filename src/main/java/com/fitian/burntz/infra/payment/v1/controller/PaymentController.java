@@ -55,6 +55,15 @@ public class PaymentController implements PaymentDocs {
     return ResponseEntity.ok().build();
   }
 
+  @PostMapping("/webhook/expiration")
+  public ResponseEntity<?> handleExpirationWebhook(
+          @RequestBody WebhookPurchaseResponse webhookPurchaseResponse,
+          HttpServletRequest request
+  ) {
+    paymentService.handleExpirationWebhook(webhookPurchaseResponse, request);
+    return ResponseEntity.ok().build();
+  }
+
   @PostMapping("/webhook/uncancel")
   public ResponseEntity<?> handleUncancelWebhook(
           @RequestBody WebhookPurchaseResponse webhookPurchaseResponse,

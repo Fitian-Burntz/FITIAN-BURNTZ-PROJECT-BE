@@ -163,6 +163,59 @@ public class PaymentService {
   }
 
   @Transactional
+  public void handleExpirationWebhook(WebhookPurchaseResponse webhookPurchaseResponse, HttpServletRequest request) {
+    verifyWebhookAuthorization(request);
+
+    log.info("[expiration webhook] 수신 시작");
+
+    validateWebhookType(webhookPurchaseResponse, PaymentEventType.EXPIRATION);
+
+    String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
+    Long memberPk = Long.parseLong(ownerMemberId);
+
+    String boxPkValue = extractWebhookBoxPk(webhookPurchaseResponse);
+    Long boxPk = Long.parseLong(boxPkValue);
+
+    Member member = memberRepository.findById(memberPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+    Box box = boxRepository.findActiveBoxByIdWithLock(boxPk)
+            .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+    BoxSubscription boxSubscription = boxSubscriptionRepository
+            .findByOwnerMemberIdAndBoxPk(memberPk, boxPk)
+            .orElseGet(() -> createEmptySubscription(member, box));
+
+    LocalDateTime expiredAt = toLocalDateTime(webhookPurchaseResponse.getEvent().getExpirationAtMs());
+
+    boxSubscription.sync(
+            webhookPurchaseResponse.getEvent().getProductId(),
+            webhookPurchaseResponse.getEvent().getStore(),
+            SubscriptionStatus.EXPIRED,
+            boxSubscription.getStartedAt(),
+            expiredAt,
+            webhookPurchaseResponse.getEvent().getPrice()
+    );
+
+    boxSubscriptionRepository.save(boxSubscription);
+
+    box.unsubscribe();
+    boxRepository.save(box);
+
+    SubscriptionEventLog eventLog = createWebhookLog(
+            webhookPurchaseResponse,
+            member,
+            box,
+            SubscriptionStatus.EXPIRED,
+            null,
+            null
+    );
+    subscriptionEventLogRepository.save(eventLog);
+
+    log.info("[expiration webhook] 처리 완료 memberPk={}, boxPk={}, expiredAt={}", memberPk, boxPk, expiredAt);
+  }
+
+  @Transactional
   public void handleUncancelWebhook(WebhookPurchaseResponse webhookPurchaseResponse, HttpServletRequest request) {
     verifyWebhookAuthorization(request);
 
