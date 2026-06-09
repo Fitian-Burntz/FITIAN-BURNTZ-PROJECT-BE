@@ -247,7 +247,8 @@ public class ChannelService {
                     .memberPk(ml.getMember().getMemberPk())
                     .memberListPk(ml.getMemberListPk())
                     .role(ml.getRole())
-                    .boxNickname(ml.getBoxNickname()).build();
+                    .boxNickname(ml.getBoxNickname())
+                    .profileImageUrl(ml.getProfileImageUrl()).build();
             pList.add(p);
         }
 

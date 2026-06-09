@@ -39,9 +39,6 @@ public class MemberListWithMembershipDto {
         Objects.requireNonNull(memberPk, "memberPk required");
         Objects.requireNonNull(boxPk, "boxPk required");
 
-        String mediumUrl = memberList.getProfileImageUrl();
-        String thumbUrl = mediumUrl != null ? mediumUrl.replace("/medium.jpg", "/thumb.jpg") : null;
-
         return MemberListWithMembershipDto.builder()
                 .memberListPk(memberList.getMemberListPk())
                 .memberPk(memberPk)
@@ -49,7 +46,7 @@ public class MemberListWithMembershipDto {
                 .boxNickname(memberList.getBoxNickname())
                 .role(memberList.getRole())
                 .membership(membershipDto)
-                .profileImageThumbUrl(thumbUrl)
+                .profileImageThumbUrl(memberList.getProfileImageUrl())
                 .build();
     }
 

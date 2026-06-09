@@ -265,6 +265,7 @@ public class ClassesService {
                     .memberListPk(cp.getMemberList().getMemberListPk())
                     .boxNickname(cp.getMemberList().getBoxNickname())
                     .createdAt(cp.getCreatedAt())
+                    .profileImageUrl(cp.getMemberList().getProfileImageUrl())
                     .build();
             responseList.add(response);
         }
