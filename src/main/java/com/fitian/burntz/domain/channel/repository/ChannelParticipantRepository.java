@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.channel.entity.Channel;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -60,4 +61,14 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
 
     @Query("SELECT cp.channel.channelPk, COUNT(cp) FROM ChannelParticipant cp WHERE cp.channel.channelPk IN :channelPks AND cp.deletedYN = 'N' GROUP BY cp.channel.channelPk")
     List<Object[]> countActiveParticipantsGroupByChannelPk(@Param("channelPks") List<Long> channelPks);
+
+    @Query("SELECT cp.channel.channelPk, ml.profileImageUrl " +
+            "FROM ChannelParticipant cp " +
+            "JOIN MemberList ml ON ml.member = cp.member AND ml.box = :box AND ml.deletedYN = 'N' " +
+            "WHERE cp.channel IN :channels AND cp.member <> :me AND cp.deletedYN = 'N'")
+    List<Object[]> findPartnerProfileImagesByChannelsAndBox(
+            @Param("channels") List<Channel> channels,
+            @Param("me") Member me,
+            @Param("box") Box box
+    );
 }

@@ -148,14 +148,26 @@ public class ChannelService {
         Box box = boxRepository.findById(boxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
-        return participantRepository.findChannelsByMemberAndBox(member, box)
-                .stream()
+        List<Channel> channels = participantRepository.findChannelsByMemberAndBox(member, box);
+
+        List<Channel> dmChannels = channels.stream()
+                .filter(c -> c.getChannelType() == ChannelType.DM)
+                .toList();
+
+        Map<Long, String> dmProfileMap = new HashMap<>();
+        if (!dmChannels.isEmpty()) {
+            participantRepository.findPartnerProfileImagesByChannelsAndBox(dmChannels, member, box)
+                    .forEach(row -> dmProfileMap.put((Long) row[0], (String) row[1]));
+        }
+
+        return channels.stream()
                 .map(c -> ChannelListResponse.builder()
                         .channelPk(c.getChannelPk())
                         .channelId(c.getChannelId())
                         .channelEmoji(c.getChannelEmoji())
                         .channelName(c.getChannelName())
                         .type(c.getChannelType())
+                        .dmPartnerProfileImageUrl(c.getChannelType() == ChannelType.DM ? dmProfileMap.get(c.getChannelPk()) : null)
                         .build())
                 .collect(Collectors.toList());
     }
