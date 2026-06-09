@@ -35,7 +35,7 @@ public class RecordCreateRequest {
     @Schema(description = "클래스 pk")
     private Long classesPk;
 
-    @Schema(description = "단계")
+    @Schema(description = "단계. 허용값: Rx'd, Rx'd/A, Rx'd/B, Rx'd/C, Rx'd/S, A, A/B, A/C, A/S, B, B/C, B/S, C, C/S, Scale", example = "Rx'd")
     private String level;
 
     @Schema(description = "라운드")

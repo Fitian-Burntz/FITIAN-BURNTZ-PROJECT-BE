@@ -30,7 +30,7 @@ public class RecordUpdateRequest {
     @Schema(description = "비회원일 경우 닉네임(memberPk가 없을 때 필수)")
     private String nickname;
 
-    @Schema(description = "단계")
+    @Schema(description = "단계. 허용값: Rx'd, Rx'd/A, Rx'd/B, Rx'd/C, Rx'd/S, A, A/B, A/C, A/S, B, B/C, B/S, C, C/S, Scale", example = "Rx'd")
     private String level;
 
     @Schema(description = "라운드")

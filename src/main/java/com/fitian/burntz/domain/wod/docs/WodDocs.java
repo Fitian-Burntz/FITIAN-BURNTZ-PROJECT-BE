@@ -38,7 +38,7 @@ public interface WodDocs {
             @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
-    @Operation(summary = "Wod 수정", description = "지정한 박스(boxPk)와 날짜를 기준으로 기존 WOD 정보를 수정합니다.")
+    @Operation(summary = "Wod 수정", description = "지정한 박스(boxPk)와 날짜를 기준으로 기존 WOD 정보를 수정합니다. 전송한 필드만 반영되며, 포함하지 않은 필드는 기존 값이 유지됩니다(partial update).")
     ApiResponse<Void> updateWod(
             @Valid @RequestBody WodUpdateRequest request,
             @PathVariable Long boxPk,
