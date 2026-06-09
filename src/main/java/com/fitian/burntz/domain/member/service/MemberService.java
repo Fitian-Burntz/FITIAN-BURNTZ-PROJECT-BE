@@ -205,17 +205,18 @@ public class MemberService {
     }
 
     /** 프로필 이미지 업데이트 **/
-    public MemberDto updateProfileImage(Long memberPk, MultipartFile image) {
+    public S3Service.ProfileImageUrls updateProfileImage(Long memberPk, Long boxPk, MultipartFile image) {
         memberPk = preconditionValidator.requireMemberPk(memberPk);
+        boxPk = preconditionValidator.requireBoxPk(boxPk);
 
-        Member member = memberRepository.findActiveById(memberPk)
-                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        MemberList memberList = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
 
-        S3Service.ProfileImageUrls urls = s3Service.uploadProfileImage(memberPk, image);
-        member.updateProfileImageUrl(urls.mediumUrl());
-        memberRepository.save(member);
+        S3Service.ProfileImageUrls urls = s3Service.uploadProfileImage(memberPk, boxPk, image);
+        memberList.updateProfileImageUrl(urls.mediumUrl());
+        memberListRepository.save(memberList);
 
-        return MemberDto.from(member);
+        return urls;
     }
 
     /** 가장 마지막으로 방문한 Box PK 정보 멤버에 업데이트 **/

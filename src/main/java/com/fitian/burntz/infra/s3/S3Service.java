@@ -26,11 +26,11 @@ public class S3Service {
     @Value("${cloud.aws.region.static}")
     private String region;
 
-    public ProfileImageUrls uploadProfileImage(Long memberPk, MultipartFile file) {
+    public ProfileImageUrls uploadProfileImage(Long memberPk, Long boxPk, MultipartFile file) {
         validateImageFile(file);
 
-        String mediumKey = "images/profile/" + memberPk + "/medium.jpg";
-        String thumbKey  = "images/profile/" + memberPk + "/thumb.jpg";
+        String mediumKey = "images/profile/" + memberPk + "/" + boxPk + "/medium.jpg";
+        String thumbKey  = "images/profile/" + memberPk + "/" + boxPk + "/thumb.jpg";
 
         try {
             upload(mediumKey, resizeMedium(file));
@@ -43,9 +43,9 @@ public class S3Service {
         return new ProfileImageUrls(baseUrl + mediumKey, baseUrl + thumbKey);
     }
 
-    public void deleteProfileImage(Long memberPk) {
-        deleteObject("images/profile/" + memberPk + "/medium.jpg");
-        deleteObject("images/profile/" + memberPk + "/thumb.jpg");
+    public void deleteProfileImage(Long memberPk, Long boxPk) {
+        deleteObject("images/profile/" + memberPk + "/" + boxPk + "/medium.jpg");
+        deleteObject("images/profile/" + memberPk + "/" + boxPk + "/thumb.jpg");
     }
 
     private byte[] resizeMedium(MultipartFile file) throws IOException {
