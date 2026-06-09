@@ -57,4 +57,7 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
     int markDeletedByMemberPkAndChannelIn(@Param("memberPk") Long memberPk, @Param("channelList") Collection<Channel> channelList, @Param("yn") BaseTime.Yn yn);
 
     boolean existsByMemberAndChannel_ChannelPkAndDeletedYN(Member member, Long channelPk, BaseTime.Yn deletedYN);
+
+    @Query("SELECT cp.channel.channelPk, COUNT(cp) FROM ChannelParticipant cp WHERE cp.channel.channelPk IN :channelPks AND cp.deletedYN = 'N' GROUP BY cp.channel.channelPk")
+    List<Object[]> countActiveParticipantsGroupByChannelPk(@Param("channelPks") List<Long> channelPks);
 }

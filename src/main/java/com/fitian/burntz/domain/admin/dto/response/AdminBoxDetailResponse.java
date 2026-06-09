@@ -122,4 +122,14 @@ public class AdminBoxDetailResponse {
         private String boxNickname;
         private String role;
     }
+
+    @Getter
+    @Builder
+    public static class ChannelInfo {
+        private Long channelPk;
+        private String channelName;
+        private String channelEmoji;
+        private String channelType;
+        private int participantCount;
+    }
 }

@@ -30,4 +30,6 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     int markDeletedByChannelPk(@Param("channelPk") Long channelPk, @Param("yn") BaseTime.Yn yn);
 
     List<Channel> findByBoxBoxPkAndDeletedYNAndChannelTypeIn(Long boxPk, BaseTime.Yn deletedYN, List<ChannelType> types);
+
+    List<Channel> findAllByBoxBoxPkAndDeletedYNOrderByChannelPkAsc(Long boxPk, BaseTime.Yn deletedYN);
 }

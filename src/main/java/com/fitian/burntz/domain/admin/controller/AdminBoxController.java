@@ -12,6 +12,9 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.domain.membership.repository.MembershipHistoryRepository;
 import com.fitian.burntz.domain.membership.repository.MembershipRepository;
+import com.fitian.burntz.domain.channel.entity.Channel;
+import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
+import com.fitian.burntz.domain.channel.repository.ChannelRepository;
 import com.fitian.burntz.domain.record.repository.RecordRepository;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.domain.wod.repository.WodRepository;
@@ -51,6 +54,8 @@ public class AdminBoxController {
     private final ClassesRepository classesRepository;
     private final ClassParticipantRepository classParticipantRepository;
     private final RecordRepository recordRepository;
+    private final ChannelRepository channelRepository;
+    private final ChannelParticipantRepository channelParticipantRepository;
 
     @GetMapping("/boxes/{boxPk}/detail")
     public ApiResponse<AdminBoxDetailResponse> getBoxDetail(
@@ -269,6 +274,43 @@ public class AdminBoxController {
                         .toList();
 
         return ApiResponse.success(participants);
+    }
+
+    @GetMapping("/boxes/{boxPk}/channels")
+    public ApiResponse<List<AdminBoxDetailResponse.ChannelInfo>> getBoxChannels(
+            @PathVariable Long boxPk,
+            HttpServletRequest request) {
+
+        if (!adminAccount.validateAccount(request)) {
+            log.info("[Admin] 관리자 인증 실패 - 채널 조회 불가 (boxPk={})", boxPk);
+            return ApiResponse.success(List.of());
+        }
+
+        boxRepository.findActiveById(boxPk)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_NOT_FOUND));
+
+        List<Channel> channels = channelRepository.findAllByBoxBoxPkAndDeletedYNOrderByChannelPkAsc(boxPk, BaseTime.Yn.N);
+
+        if (channels.isEmpty()) {
+            return ApiResponse.success(List.of());
+        }
+
+        List<Long> channelPks = channels.stream().map(Channel::getChannelPk).toList();
+        Map<Long, Long> participantCountMap = channelParticipantRepository
+                .countActiveParticipantsGroupByChannelPk(channelPks)
+                .stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
+
+        List<AdminBoxDetailResponse.ChannelInfo> result = channels.stream()
+                .map(c -> AdminBoxDetailResponse.ChannelInfo.builder()
+                        .channelPk(c.getChannelPk())
+                        .channelName(c.getChannelName())
+                        .channelEmoji(c.getChannelEmoji())
+                        .channelType(c.getChannelType().name())
+                        .participantCount(participantCountMap.getOrDefault(c.getChannelPk(), 0L).intValue())
+                        .build())
+                .toList();
+
+        return ApiResponse.success(result);
     }
 
     @GetMapping("/boxes/{boxPk}/records")

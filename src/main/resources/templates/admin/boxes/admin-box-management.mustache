@@ -297,6 +297,8 @@
           <div class="box-item-meta">
             <span class="subscribe-dot ${b.subscribeStatus==='Y'?'dot-active':'dot-inactive'}"></span>
             <span>#${b.boxPk}</span>
+            <span>·</span>
+            <span>${b.memberCount}명</span>
           </div>
         </div>
       </div>`).join('');
@@ -356,6 +358,7 @@
           <button class="tab-btn active" id="tab-btn-members" onclick="switchTab('members')">👥 회원 <span class="tab-cnt" id="cnt-members">${d.memberCount}</span></button>
           <button class="tab-btn" id="tab-btn-wods" onclick="switchTab('wods')">🏋️ WOD</button>
           <button class="tab-btn" id="tab-btn-classes" onclick="switchTab('classes')">📅 클래스</button>
+          <button class="tab-btn" id="tab-btn-channels" onclick="switchTab('channels')">💬 채널</button>
         </div>
         <div class="tab-body" id="tabBody">${renderMembersTab(d.members)}</div>
       </div>`;
@@ -368,8 +371,9 @@
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-btn-' + tab).classList.add('active');
 
-    if (tab === 'wods')    { renderWodTab(); return; }
-    if (tab === 'classes') { renderClassesTab(); return; }
+    if (tab === 'wods')     { renderWodTab(); return; }
+    if (tab === 'classes')  { renderClassesTab(); return; }
+    if (tab === 'channels') { renderChannelsTab(); return; }
 
     if (tabCache[tab] !== undefined) { document.getElementById('tabBody').innerHTML = renderMembersTab(tabCache[tab]); return; }
     document.getElementById('tabBody').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
@@ -577,6 +581,25 @@
     loadClasses();
   }
 
+  /* ── 채널 탭 ── */
+  async function renderChannelsTab() {
+    document.getElementById('tabBody').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/channels`);
+      const channels = (r.success && r.data) ? r.data : [];
+      if (!channels.length) { document.getElementById('tabBody').innerHTML = '<div class="tab-msg">등록된 채널이 없습니다.</div>'; return; }
+      document.getElementById('tabBody').innerHTML = `<div class="tbl"><table>
+        <thead><tr><th>#</th><th>채널명</th><th>타입</th><th>참여자</th></tr></thead>
+        <tbody>${channels.map(c => `<tr>
+          <td style="color:var(--bw40);font-size:11px">${c.channelPk}</td>
+          <td><span style="margin-right:5px">${c.channelEmoji||''}</span><strong>${esc(c.channelName)}</strong></td>
+          <td><span class="badge" style="${channelTypeBadgeStyle(c.channelType)}">${channelTypeLabel(c.channelType)}</span></td>
+          <td>${c.participantCount}명</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    } catch { document.getElementById('tabBody').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
   /* ── 참여자 모달 ── */
   async function openParticipants(classesPk, classTitle) {
     document.getElementById('ptModalTitle').textContent = (classTitle||'클래스') + ' 참여자';
@@ -613,6 +636,10 @@
     return res.json();
   }
   function roleLabel(r) { return {OWNER:'오너',MANAGER:'매니저',MEMBER:'멤버',GUEST:'게스트'}[r]||r; }
+  function channelTypeLabel(t) { return {PUBLIC:'공개',NOTICE:'공지',GROUP:'그룹',GENERAL:'일반'}[t]||t; }
+  function channelTypeBadgeStyle(t) {
+    return {PUBLIC:'background:#e3f2fd;color:#1565c0',NOTICE:'background:#fff3e0;color:#e65100',GROUP:'background:#f3e5f5;color:#6a1b9a',GENERAL:'background:#e8f5e9;color:#2e7d32'}[t]||'background:#f5f5f5;color:#616161';
+  }
   function msLabel(s) { return {ACTIVE:'활성',EXPIRED:'만료',PENDING:'대기',DELETE:'삭제'}[s]||s; }
   function histLabel(a) { return {CREATE:'생성',UPDATE:'수정',DELETE:'삭제'}[a]||a; }
   function boxColor(pk) {

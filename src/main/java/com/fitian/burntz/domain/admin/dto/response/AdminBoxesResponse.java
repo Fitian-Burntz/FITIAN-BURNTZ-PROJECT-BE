@@ -11,5 +11,6 @@ public class AdminBoxesResponse {
 
   private Long boxPk;
   private String boxName;
+  private int memberCount;
 
 }

@@ -12,6 +12,7 @@ import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.box.repository.BoxSubscriptionRepository;
 import com.fitian.burntz.domain.box.repository.SubscriptionEventLogRepository;
 import com.fitian.burntz.domain.member.entity.Member;
+import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.NotFoundException;
@@ -19,6 +20,8 @@ import com.fitian.burntz.infra.payment.dto.response.PurchaseLogResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,16 +42,20 @@ public class AdminPaymentController {
   private final AdminPaymentService adminPaymentService;
   private final AdminAccount adminAccount;
   private final SubscriptionEventLogRepository subscriptionEventLogRepository;
+  private final MemberListRepository memberListRepository;
 
   @GetMapping("/boxes")
   public ApiResponse<List<AdminBoxesResponse>> getBoxes(HttpServletRequest request) {
      if(adminAccount.validateAccount(request)) {
        List<Box> boxes = boxRepository.findAllOrderByBoxPkAsc();
+       Map<Long, Long> memberCountMap = memberListRepository.countActiveMembersGroupByBoxPk()
+           .stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
        List<AdminBoxesResponse> adminBoxesResponses = boxes.stream()
            .map(box -> AdminBoxesResponse
                .builder()
                .boxPk(box.getBoxPk())
                .boxName(box.getBoxName())
+               .memberCount(memberCountMap.getOrDefault(box.getBoxPk(), 0L).intValue())
                .build()).toList();
 
        return ApiResponse.success(adminBoxesResponses);

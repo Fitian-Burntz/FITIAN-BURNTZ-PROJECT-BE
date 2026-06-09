@@ -96,6 +96,9 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
             Long memberPk,
             BaseTime.Yn deletedYN);
 
+    @Query("SELECT ml.box.boxPk, COUNT(ml) FROM MemberList ml WHERE ml.deletedYN = 'N' GROUP BY ml.box.boxPk")
+    List<Object[]> countActiveMembersGroupByBoxPk();
+
     /** Box 엔티티로 해당 박스의 활성화중인 모든 멤버 반환 **/
     List<MemberList> findAllByBoxAndDeletedYN(
             Box box,
