@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,7 @@ public class PaymentService {
   public void handlePuchaseWebhook(WebhookPurchaseResponse webhookPurchaseResponse, HttpServletRequest request) {
     // 1. 토큰 검증
     verifyWebhookAuthorization(request);
+    validateWebhookType(webhookPurchaseResponse, PaymentEventType.INITIAL_PURCHASE, PaymentEventType.RENEWAL);
 
     String ownerMemberId = webhookPurchaseResponse.getEvent().getOwnerMemberId();
     String boxPk = webhookPurchaseResponse.getEvent().getSubscriberAttributes().getBoxPk().getValue();
@@ -90,11 +92,10 @@ public class PaymentService {
 
     SubscriptionEventLog subscriptionEventLog = SubscriptionEventLog.from(webhookPurchaseResponse, member, box);
 
-    if(boxSubscriptionRepository.findByBoxPk(boxPkToLong).isPresent()) {
+    Optional<BoxSubscription> existing = boxSubscriptionRepository.findByBoxPk(boxPkToLong);
+    if (existing.isPresent()) {
       log.info("[purchase webhook] 구독 업데이트 memberPk={} boxPk={}", ownerMemberId, boxPk);
-      BoxSubscription oldBoxSubscription = boxSubscriptionRepository.findByBoxPk(boxPkToLong)
-          .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
-      BoxSubscription updatedBoxSubscription = oldBoxSubscription.replaceTo(boxSubscription);
+      BoxSubscription updatedBoxSubscription = existing.get().replaceTo(boxSubscription);
       boxSubscriptionRepository.save(updatedBoxSubscription);
     } else {
       log.info("[purchase webhook] 신규 구독 생성 memberPk={} boxPk={}", ownerMemberId, boxPk);
@@ -445,10 +446,12 @@ public class PaymentService {
    * @param bokPk 조회하고자 하는 박스 pk 입니다.
    * @return 정제된 구매 로그 리스트 입니다.
    */
-  public List<PurchaseLogResponse> getPurchaseLog(Long bokPk) {
+  public List<PurchaseLogResponse> getPurchaseLog(Long memberPk, Long bokPk) {
 
     Box box = boxRepository.findById(bokPk)
         .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_NOT_FOUND));
+
+    validateBoxOwner(memberPk, box);
 
     List<SubscriptionEventLog> subscriptionEventLogs = subscriptionEventLogRepository.findAllByBoxPk(bokPk);
 
@@ -485,15 +488,17 @@ public class PaymentService {
       }
   }
 
-  private void validateWebhookType(WebhookPurchaseResponse response, PaymentEventType expectedType) {
+  private void validateWebhookType(WebhookPurchaseResponse response, PaymentEventType... expectedTypes) {
     if (response == null || response.getEvent() == null || response.getEvent().getType() == null) {
       throw new ValidationException(ErrorCode.INVALID_REQUEST);
     }
 
-    if (response.getEvent().getType() != expectedType) {
-      log.error("[webhook type] expectedType={}, actualType={}", expectedType, response.getEvent().getType());
-      throw new ValidationException(ErrorCode.INVALID_REQUEST);
+    PaymentEventType actual = response.getEvent().getType();
+    for (PaymentEventType expected : expectedTypes) {
+      if (actual == expected) return;
     }
+    log.error("[webhook type] expected={}, actual={}", java.util.Arrays.toString(expectedTypes), actual);
+    throw new ValidationException(ErrorCode.INVALID_REQUEST);
   }
 
   private String extractWebhookBoxPk(WebhookPurchaseResponse response) {

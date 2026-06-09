@@ -80,9 +80,12 @@ public class PaymentController implements PaymentDocs {
   }
 
 
+  @Override
   @GetMapping("/purchase/log/{boxPk}")
-  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(@PathVariable(value = "boxPk") Long boxPk) {
-    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(boxPk);
+  public ApiResponse<List<PurchaseLogResponse>> getPurchaseLog(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @PathVariable(value = "boxPk") Long boxPk) {
+    List<PurchaseLogResponse> response = paymentService.getPurchaseLog(userDetails.getMemberPk(), boxPk);
     return ApiResponse.success(response);
   }
 
