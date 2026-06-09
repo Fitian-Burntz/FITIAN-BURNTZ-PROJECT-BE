@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.alarm.service;
 import com.fitian.burntz.domain.alarm.entity.FcmToken;
 import com.fitian.burntz.domain.alarm.repository.FcmTokenRepository;
 import com.fitian.burntz.domain.alarm.v1.dto.PushDto;
+import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.exception.ErrorCode;
 import com.fitian.burntz.global.exception.ValidationException;
 import com.google.firebase.messaging.*;
@@ -105,18 +106,53 @@ public class PushService {
         }
     }
 
-    //여러 유저의 각 사용기기에 보내는 노티
+    //여러 유저의 각 사용기기에 보내는 노티 (단일 쿼리 + 단일 발송)
     public void notifyUsers(List<Long> memberPkList, PushDto dto) {
         if (memberPkList == null || memberPkList.isEmpty()) {
             log.debug("memberPkList is empty. skip notifyUsers");
             return;
         }
 
-        // 중복 memberPk 제거 + null 방지
-        memberPkList.stream()
+        List<Long> distinctPks = memberPkList.stream()
                 .filter(Objects::nonNull)
                 .distinct()
-                .forEach(memberPk -> notifyUser(memberPk, dto));
+                .toList();
+
+        List<FcmToken> tokenEntities = fcmTokenRepository.findActiveTokensByMemberPks(distinctPks, BaseTime.Yn.N);
+        if (tokenEntities.isEmpty()) {
+            log.debug("No tokens for {} members. skip notifyUsers", distinctPks.size());
+            return;
+        }
+
+        List<String> tokens = tokenEntities.stream().map(FcmToken::getToken).toList();
+
+        MulticastMessage message = MulticastMessage.builder()
+                .addAllTokens(tokens)
+                .setNotification(Notification.builder()
+                        .setTitle(dto.getTitle())
+                        .setBody(dto.getBody())
+                        .build())
+                .putData("click_action", "FLUTTER_NOTIFICATION_CLICK")
+                .build();
+
+        try {
+            BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+            log.info("[PUSH LOG] notifyUsers: {} members, {} tokens, success={}, failure={}",
+                    distinctPks.size(), tokens.size(), response.getSuccessCount(), response.getFailureCount());
+
+            for (int i = 0; i < response.getResponses().size(); i++) {
+                SendResponse resp = response.getResponses().get(i);
+                if (!resp.isSuccessful()) {
+                    FcmToken entity = tokenEntities.get(i);
+                    entity.markDeleted();
+                    fcmTokenRepository.save(entity);
+                    log.warn("Deleted invalid FCM token for memberPk={}, error={}",
+                            entity.getMember().getMemberPk(), resp.getException().getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Failed to send multicast FCM message to multiple users", ex);
+        }
     }
 
     //memberPk로 토큰 리스트를 가져옵니다.

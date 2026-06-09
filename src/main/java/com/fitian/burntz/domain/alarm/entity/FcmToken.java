@@ -38,4 +38,8 @@ public class FcmToken extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_pk", nullable = false)
     private Member member;
+
+    public void updateToken(String newToken) {
+        this.token = newToken;
+    }
 }

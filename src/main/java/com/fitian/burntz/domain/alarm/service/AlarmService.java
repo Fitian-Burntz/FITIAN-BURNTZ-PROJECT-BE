@@ -43,26 +43,31 @@ public class AlarmService {
     private final MemberRepository memberRepository;
     private final FirestorePushPort firestorePushPort;
     private final PushService pushService;
+    private final ObjectMapper objectMapper;
 
     public FcmToken upsertToken(CustomUserDetails userDetails, FcmTokenCreateRequest request) {
-        return fcmTokenRepository.findTokenByMemberMemberPkAndDeviceIdAndDeletedYN(userDetails.getMemberPk(), request.getDeviceId())
-                .orElseGet(() -> {
-                    Member member = memberRepository.findById(userDetails.getMemberPk())
-                            .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        FcmToken existing = fcmTokenRepository.findTokenByMemberMemberPkAndDeviceIdAndDeletedYN(
+                userDetails.getMemberPk(), request.getDeviceId()).orElse(null);
 
-                    List<FcmToken> fcmTokenList = fcmTokenRepository.findTokensByDeviceIdAndDeletedYN(request.getDeviceId(), BaseTime.Yn.N);
-                    for(FcmToken t : fcmTokenList) {
-                        t.markDeleted();
-                    }
+        if (existing != null) {
+            existing.updateToken(request.getToken());
+            return fcmTokenRepository.save(existing);
+        }
 
-                    FcmToken newToken = FcmToken.builder()
-                            .deviceId(request.getDeviceId())
-                            .token(request.getToken())
-                            .isActive("1")
-                            .member(member)
-                            .build();
-                    return fcmTokenRepository.save(newToken);
-                });
+        // 다른 사용자가 같은 기기에서 사용하던 토큰 정리
+        List<FcmToken> fcmTokenList = fcmTokenRepository.findTokensByDeviceIdAndDeletedYN(request.getDeviceId(), BaseTime.Yn.N);
+        fcmTokenList.forEach(FcmToken::markDeleted);
+
+        Member member = memberRepository.findById(userDetails.getMemberPk())
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        FcmToken newToken = FcmToken.builder()
+                .deviceId(request.getDeviceId())
+                .token(request.getToken())
+                .isActive("1")
+                .member(member)
+                .build();
+        return fcmTokenRepository.save(newToken);
     }
 
     public MessagePushResponse dispatch(MessagePushRequest request) {
@@ -116,8 +121,11 @@ public class AlarmService {
                     .body(request.getBoxNickname() + " : " + request.getText())
                     .build();
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            log.info("PushDto = {}", objectMapper.writeValueAsString(dto));
+            try {
+                log.info("PushDto = {}", objectMapper.writeValueAsString(dto));
+            } catch (JsonProcessingException ignored) {
+                log.info("PushDto title={}, body={}", dto.getTitle(), dto.getBody());
+            }
             log.info("memberPks = {}", memberPks);
 
             pushService.notifyUsers(memberPks, dto);
@@ -128,7 +136,7 @@ public class AlarmService {
                     .dispatched(true)
                     .deduped(false)
                     .targetCount(memberPks.size())
-                    .tokenCount(0) // 여기서는 PushService가 토큰 수를 리턴하지 않으니 0 또는 제거 권장
+                    .tokenCount(0)
                     .build();
 
         } catch (Exception e) {
@@ -138,11 +146,7 @@ public class AlarmService {
                     request.getMessageId(),
                     safeReason(e)
             );
-            try {
-                throw e;
-            } catch (JsonProcessingException ex) {
-                throw new RuntimeException(ex);
-            }
+            throw new RuntimeException(e);
         }
     }
 
