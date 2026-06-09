@@ -215,17 +215,32 @@ public class ClassesService {
                 .build();
 
         participantRepository.save(cp);
+
+        String classDetail = classes.getClassDate() + (classes.getStartTime() != null ? " " + classes.getStartTime() : "");
+        eventPublisher.publishEvent(BoxActivityEvent.of(
+                request.getBoxPk(), ActivityType.CLASS_JOINED,
+                userDetails.getMemberPk(), memberList.getBoxNickname(),
+                classDetail
+        ));
     }
 
     public void cancelClass(ClassesIdentifierRequest request, CustomUserDetails userDetails) {
         //해당 박스에 존재하는 회원인지 검증
-        boolean memberExist = memberListRepository.existsByBoxBoxPkAndMemberMemberPkAndDeletedYN(request.getBoxPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
-        if(!memberExist) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+        MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.ACCESS_DENIED));
         //해당 수업에 참여중인지 검증
         ClassParticipant participant = participantRepository.findByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
         participant.markDeleted();
+
+        Classes classes = participant.getClasses();
+        String classDetail = classes.getClassDate() + (classes.getStartTime() != null ? " " + classes.getStartTime() : "");
+        eventPublisher.publishEvent(BoxActivityEvent.of(
+                request.getBoxPk(), ActivityType.CLASS_CANCELLED,
+                userDetails.getMemberPk(), memberList.getBoxNickname(),
+                classDetail
+        ));
     }
 
     public List<ClassParticipantResponse> getMembersByClassPk(ClassesIdentifierRequest request, CustomUserDetails userDetails) {

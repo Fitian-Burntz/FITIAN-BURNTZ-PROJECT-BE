@@ -118,6 +118,8 @@
     .act-WOD_CREATED{background:#f3e5f5;color:#6a1b9a}
     .act-RECORD_CREATED{background:#e8f5e9;color:#2e7d32}
     .act-CLASS_CREATED{background:#fff3e0;color:#e65100}
+    .act-CLASS_JOINED{background:#e8eaf6;color:#283593}
+    .act-CLASS_CANCELLED{background:#fafafa;color:#757575}
     .act-MEMBERSHIP_CREATED{background:#e0f2f1;color:#00695c}
     .act-MEMBERSHIP_EXTENDED{background:#fce4ec;color:#c62828}
     .act-row{padding:10px 0;border-bottom:1px solid var(--bw15);display:flex;align-items:flex-start;gap:10px}
@@ -683,7 +685,7 @@
   }
 
   function actTypeLabel(t) {
-    return {CHANNEL_CREATED:'채널 생성',WOD_CREATED:'WOD 추가',RECORD_CREATED:'기록 추가',CLASS_CREATED:'클래스 추가',MEMBERSHIP_CREATED:'멤버십 생성',MEMBERSHIP_EXTENDED:'멤버십 연장'}[t]||t;
+    return {CHANNEL_CREATED:'채널 생성',WOD_CREATED:'WOD 추가',RECORD_CREATED:'기록 추가',CLASS_CREATED:'클래스 추가',CLASS_JOINED:'수강신청',CLASS_CANCELLED:'수강취소',MEMBERSHIP_CREATED:'멤버십 생성',MEMBERSHIP_EXTENDED:'멤버십 연장'}[t]||t;
   }
 
   function buildActMsg(a) {
@@ -695,6 +697,8 @@
       case 'WOD_CREATED':        return `${actor}이 ${detail} WOD를 추가했습니다`;
       case 'RECORD_CREATED':     return target ? `${actor}이 ${target}의 ${detail} 기록을 추가했습니다` : `${actor}이 ${detail} 기록을 추가했습니다 (일일체험)`;
       case 'CLASS_CREATED':      return `${actor}이 ${detail} 클래스를 추가했습니다`;
+      case 'CLASS_JOINED':       return `${actor}이 ${detail} 수업에 수강신청했습니다`;
+      case 'CLASS_CANCELLED':    return `${actor}이 ${detail} 수업 수강을 취소했습니다`;
       case 'MEMBERSHIP_CREATED': return `${actor}이 ${target}의 멤버십을 생성했습니다`;
       case 'MEMBERSHIP_EXTENDED':return `${actor}이 ${target}의 멤버십을 연장했습니다`;
       default: return `${actor}이 ${a.type} 작업을 수행했습니다`;
