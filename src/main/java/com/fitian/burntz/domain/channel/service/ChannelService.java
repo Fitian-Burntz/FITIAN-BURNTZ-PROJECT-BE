@@ -67,6 +67,14 @@ public class ChannelService {
 
         Box box = boxRepository.findByBoxCode(request.getBoxCode())
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
+
+        MemberList ml = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(
+                        userDetails.getMemberPk(), box.getBoxPk(), BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+        if (ml.getRole() != MemberRole.OWNER && ml.getRole() != MemberRole.MANAGER) {
+            throw new ValidationException(ErrorCode.FORBIDDEN);
+        }
+
         Member creator = memberRepository.findById(userDetails.getMemberPk())
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
