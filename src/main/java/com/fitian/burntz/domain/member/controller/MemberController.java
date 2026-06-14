@@ -64,6 +64,7 @@ public class MemberController implements MemberDocs {
 
 
     /** 프로필 이미지 업데이트 **/
+    @Override
     @PatchMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<S3Service.ProfileImageUrls>> updateProfileImage(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -78,6 +79,7 @@ public class MemberController implements MemberDocs {
     }
 
     /** 프로필 이미지 삭제 **/
+    @Override
     @DeleteMapping("/profile-image")
     public ResponseEntity<ApiResponse<Void>> deleteProfileImage(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,

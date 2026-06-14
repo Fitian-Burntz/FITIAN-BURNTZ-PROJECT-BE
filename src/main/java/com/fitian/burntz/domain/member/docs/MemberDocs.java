@@ -5,11 +5,14 @@ import com.fitian.burntz.domain.member.dto.MemberInfoResponse;
 import com.fitian.burntz.domain.member.dto.memberList_dto.BoxAndMemberListDto;
 import com.fitian.burntz.global.common.response.ApiResponse;
 import com.fitian.burntz.global.security.core.CustomUserDetails;
+import com.fitian.burntz.infra.s3.S3Service;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -39,4 +42,21 @@ public interface MemberDocs {
     @Operation(summary = "서비스 탈퇴하기", description = "사용자가 자발적으로 서비스를 탈퇴합니다. 탈퇴하더라도 재로그인 시 계정이 다시 활성화 됩니다.(휴먼계정 개념)")
     public ResponseEntity<ApiResponse<MemberInfoResponse>> withdrawMember(
             @AuthenticationPrincipal CustomUserDetails customUserDetails);
+
+    @Operation(
+            summary = "프로필 이미지 업로드/변경",
+            description = "지정한 박스의 프로필 이미지를 업로드합니다. 기존 이미지가 있으면 덮어씁니다. medium(800×800)·thumb(200×200) 두 사이즈로 저장되며, DB에는 thumb URL만 저장됩니다."
+    )
+    public ResponseEntity<ApiResponse<S3Service.ProfileImageUrls>> updateProfileImage(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Parameter(description = "박스 PK", required = true, example = "1") @RequestParam("boxPk") Long boxPk,
+            @Parameter(description = "업로드할 이미지 파일 (최대 10MB, image/* 형식만 허용)", required = true) MultipartFile image);
+
+    @Operation(
+            summary = "프로필 이미지 삭제",
+            description = "지정한 박스의 프로필 이미지를 S3에서 삭제하고 DB 값을 null로 초기화합니다."
+    )
+    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Parameter(description = "박스 PK", required = true, example = "1") @RequestParam("boxPk") Long boxPk);
 }
