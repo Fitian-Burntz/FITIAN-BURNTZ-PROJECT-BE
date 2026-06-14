@@ -8,7 +8,11 @@ import com.fitian.burntz.domain.box.repository.BoxRepository;
 import com.fitian.burntz.domain.channel.entity.ChannelParticipant;
 import com.fitian.burntz.domain.channel.enums.ChannelType;
 import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
+import com.fitian.burntz.domain.alarm.service.AlarmService;
+import com.fitian.burntz.domain.alarm.v1.dto.MessagePushRequest;
 import com.fitian.burntz.domain.channel.v1.dto.*;
+import com.fitian.burntz.domain.channel.v2.dto.MessageSendRequest;
+import com.fitian.burntz.domain.channel.v2.dto.MessageSendResponse;
 import com.fitian.burntz.domain.channel.entity.Channel;
 import com.fitian.burntz.domain.channel.repository.ChannelRepository;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -60,6 +64,7 @@ public class ChannelService {
     private final MemberListRepository memberListRepository;
     private final Firestore firestore;
     private final ApplicationEventPublisher eventPublisher;
+    private final AlarmService alarmService;
 
     public Long createChannel(ChannelCreateRequest request, CustomUserDetails userDetails) {
 
@@ -391,6 +396,113 @@ public class ChannelService {
                 }
             }
         });
+    }
+
+    public MessageSendResponse sendMessage(Long channelPk, MessageSendRequest request, CustomUserDetails userDetails) {
+
+        Channel channel = channelRepository.findById(channelPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
+
+        boolean isParticipant = participantRepository.existByChannelPkAndMemberPkAndDeletedYN(
+                userDetails.getMemberPk(), channelPk, BaseTime.Yn.N);
+        if (!isParticipant) throw new ValidationException(ErrorCode.FORBIDDEN);
+
+        Long boxPk = channel.getBox().getBoxPk();
+        String boxCode = channel.getBox().getBoxCode();
+        String channelId = channel.getChannelId();
+
+        MemberList ml = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(
+                        userDetails.getMemberPk(), boxPk, BaseTime.Yn.N)
+                .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
+
+        String senderId = userDetails.getMemberPk().toString();
+        String boxNickname = ml.getBoxNickname();
+        Long memberListPk = ml.getMemberListPk();
+        String profileImageUrl = ml.getProfileImageUrl();
+
+        com.google.cloud.firestore.CollectionReference messagesRef = firestore
+                .collection("boxes").document(boxCode)
+                .collection("channels").document(channelId)
+                .collection("messages");
+
+        com.google.cloud.firestore.DocumentReference docRef = (request.getClientMessageId() != null && !request.getClientMessageId().isBlank())
+                ? messagesRef.document(request.getClientMessageId())
+                : messagesRef.document();
+
+        String messageId = docRef.getId();
+        long sentAtMillis = System.currentTimeMillis();
+        com.google.cloud.Timestamp sentAt = com.google.cloud.Timestamp.ofTimeSecondsAndNanos(
+                sentAtMillis / 1000, (int) ((sentAtMillis % 1000) * 1_000_000));
+
+        Map<String, Object> messageData = new HashMap<>();
+        messageData.put("type", "user_message");
+        messageData.put("schemaVersion", 1);
+        messageData.put("senderType", "user");
+        messageData.put("source", "server");
+        messageData.put("senderId", senderId);
+        messageData.put("text", request.getText().trim());
+        messageData.put("sentAt", sentAt);
+        messageData.put("memberListPk", memberListPk);
+        if (request.getParentMessageId() != null) {
+            messageData.put("parentMessageId", request.getParentMessageId());
+        }
+        if (boxNickname != null && !boxNickname.isBlank()) {
+            messageData.put("boxNickname", boxNickname);
+        }
+        if (channel.getChannelName() != null) {
+            messageData.put("channelName", channel.getChannelName());
+        }
+        if (profileImageUrl != null && !profileImageUrl.isBlank()) {
+            messageData.put("senderProfileImageUrl", profileImageUrl);
+        }
+
+        try {
+            docRef.set(messageData).get();
+        } catch (Exception e) {
+            throw new RuntimeException("메시지 Firestore 저장 실패", e);
+        }
+
+        // 채널 목록 미리보기용 lastMessage 업데이트
+        Map<String, Object> lastMessage = new HashMap<>();
+        lastMessage.put("text", request.getText().trim());
+        lastMessage.put("senderId", senderId);
+        lastMessage.put("sentAt", sentAt);
+        lastMessage.put("type", "user_message");
+        if (boxNickname != null && !boxNickname.isBlank()) {
+            lastMessage.put("boxNickname", boxNickname);
+        }
+
+        try {
+            firestore.collection("boxes").document(boxCode)
+                    .collection("channels").document(channelId)
+                    .set(Map.of("lastMessage", lastMessage), com.google.cloud.firestore.SetOptions.merge());
+        } catch (Exception e) {
+            log.warn("lastMessage 업데이트 실패 channelId={}: {}", channelId, e.getMessage());
+        }
+
+        // push dispatch 내부 트리거
+        try {
+            MessagePushRequest pushRequest = MessagePushRequest.builder()
+                    .boxCode(boxCode)
+                    .channelId(channelId)
+                    .channelName(channel.getChannelName())
+                    .messageId(messageId)
+                    .sentAtMillis(sentAtMillis)
+                    .senderId(userDetails.getMemberPk())
+                    .boxNickname(boxNickname)
+                    .memberListPk(memberListPk)
+                    .text(request.getText().trim())
+                    .type("user_message")
+                    .build();
+            alarmService.dispatch(pushRequest);
+        } catch (Exception e) {
+            log.error("push dispatch 실패 (메시지는 저장됨) messageId={}: {}", messageId, e.getMessage());
+        }
+
+        return MessageSendResponse.builder()
+                .messageId(messageId)
+                .sentAtMillis(sentAtMillis)
+                .build();
     }
 
     private static class ChannelSnapshot {
