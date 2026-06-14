@@ -4,6 +4,7 @@ import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.wod.entity.Wod;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -159,4 +160,8 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
             @Param("endDate") LocalDate endDate,
             @Param("deletedYN") BaseTime.Yn deletedYN
     );
+
+    @Modifying
+    @Query("DELETE FROM Record r WHERE r.wod.wodPk IN (SELECT w.wodPk FROM Wod w WHERE w.box.boxPk = :boxPk)")
+    void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }

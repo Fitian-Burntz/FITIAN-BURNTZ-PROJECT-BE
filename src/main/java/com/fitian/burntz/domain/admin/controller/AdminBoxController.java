@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -137,5 +138,24 @@ public class AdminBoxController {
         }
 
         return ApiResponse.success(adminBoxService.getBoxActivities(boxPk, page, size));
+    }
+
+    /**
+     * [테스트 박스 전용] 박스 하드딜리트.
+     * 운영 중인 실제 박스에는 사용 금지.
+     */
+    @DeleteMapping("/boxes/{boxPk}")
+    public ApiResponse<Void> deleteBox(
+            @PathVariable Long boxPk,
+            HttpServletRequest request) {
+
+        if (!adminAccount.validateAccount(request)) {
+            log.info("[Admin] 관리자 인증 실패 - 박스 삭제 불가 (boxPk={})", boxPk);
+            return ApiResponse.success(null);
+        }
+
+        log.info("[Admin][테스트박스 삭제] 박스 하드딜리트 요청 (boxPk={})", boxPk);
+        adminBoxService.deleteBox(boxPk);
+        return ApiResponse.success(null);
     }
 }

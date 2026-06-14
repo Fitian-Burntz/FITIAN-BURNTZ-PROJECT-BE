@@ -5,6 +5,7 @@ import com.fitian.burntz.domain.membership.enums.MembershipStatus;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.entity.BaseTime.Yn;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -80,4 +81,8 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
             BaseTime.Yn deletedYN,
             MembershipStatus status
     );
+
+    @Modifying
+    @Query("DELETE FROM Membership m WHERE m.box.boxPk = :boxPk")
+    void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }

@@ -135,6 +135,10 @@
     .ms-link{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;color:inherit}
     .ms-link:hover{opacity:0.75}
 
+    /* 박스 삭제 버튼 */
+    .delete-box-btn{background:#fce4ec;color:#c62828;border:1.5px solid #ef9a9a;border-radius:6px;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:all 0.15s;margin-left:auto;flex-shrink:0}
+    .delete-box-btn:hover{background:#ef9a9a;color:white;border-color:#c62828}
+
     /* WOD 날짜 뷰 */
     .wod-date-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
     .date-nav-btn{background:none;border:1.5px solid var(--bw15);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--bw70);transition:all 0.15s}
@@ -368,6 +372,7 @@
             <div class="meta-item"><div class="meta-label">연락처</div><div class="meta-val ${!d.boxContact?'empty':''}">${d.boxContact?esc(d.boxContact):'미등록'}</div></div>
           </div>
         </div>
+        <button class="delete-box-btn" onclick="confirmDeleteBox(${d.boxPk}, '${esc(d.boxName)}')">🗑 테스트 박스 삭제</button>
       </div>
       ${ownerHtml}
       <div class="tabs-wrap">
@@ -732,6 +737,33 @@
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open')); });
+
+  /* ── 박스 삭제 ── */
+  async function confirmDeleteBox(boxPk, boxName) {
+    const first = confirm(`⚠️ [테스트 박스 전용] 박스 삭제 확인\n\n"${boxName}" 박스를 영구 삭제하시겠습니까?\n\n• 이 기능은 테스트 박스 제거 전용입니다.\n• 운영 중인 실제 박스에는 절대 사용하지 마십시오.\n• WOD, 기록, 클래스, 채널, 멤버십이 모두 삭제됩니다.\n• 회원(Member) 계정은 유지됩니다.\n• 이 작업은 되돌릴 수 없습니다.`);
+    if (!first) return;
+    const typed = prompt(`재확인: 박스 이름을 정확히 입력하세요.\n\n박스명: ${boxName}`);
+    if (typed !== boxName) { alert('박스 이름이 일치하지 않습니다. 삭제가 취소되었습니다.'); return; }
+
+    try {
+      const { t, p } = auth();
+      const res = await fetch(`/api/v1/admin/boxes/${boxPk}`, { method: 'DELETE', headers: { 'A_Token': t, 'A_Password': p } });
+      const data = await res.json();
+      if (res.ok && data.success !== false) {
+        alert(`"${boxName}" 박스가 삭제되었습니다.`);
+        allBoxes = allBoxes.filter(b => b.boxPk !== boxPk);
+        selectedBoxPk = null;
+        document.getElementById('boxCountBadge').textContent = allBoxes.length;
+        renderBoxList(allBoxes);
+        document.getElementById('detailContent').style.display = 'none';
+        document.getElementById('detailEmpty').style.display = '';
+      } else {
+        alert('삭제 실패: ' + (data.message || res.status));
+      }
+    } catch (e) {
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  }
 
   /* ── 유틸 ── */
   function auth() { return { t: localStorage.getItem('A_Token'), p: localStorage.getItem('A_Password') }; }

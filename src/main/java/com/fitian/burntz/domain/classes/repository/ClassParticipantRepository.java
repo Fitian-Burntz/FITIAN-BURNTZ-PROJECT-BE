@@ -3,6 +3,7 @@ package com.fitian.burntz.domain.classes.repository;
 import com.fitian.burntz.domain.classes.entity.ClassParticipant;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -45,4 +46,8 @@ public interface ClassParticipantRepository extends JpaRepository<ClassParticipa
             @Param("classesPks") Collection<Long> classesPks,
             @Param("memberListPk") Long memberListPk,
             @Param("deletedYN") BaseTime.Yn deletedYN);
+
+    @Modifying
+    @Query("DELETE FROM ClassParticipant cp WHERE cp.classes.classesPk IN (SELECT c.classesPk FROM Classes c WHERE c.box.boxPk = :boxPk)")
+    void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }
