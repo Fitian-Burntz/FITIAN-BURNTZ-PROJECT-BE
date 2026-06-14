@@ -77,6 +77,19 @@ public class MemberController implements MemberDocs {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /** 프로필 이미지 삭제 **/
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam("boxPk") Long boxPk) {
+
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        memberService.deleteProfileImage(loginMemberPk, boxPk);
+
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
     /** 멤버 자진 탈퇴
      * 서비스 재로그인 시 계정이 다시 활성화됩니다.
      * 탈퇴회원 재가입 가능

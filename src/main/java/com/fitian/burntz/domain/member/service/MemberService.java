@@ -219,6 +219,19 @@ public class MemberService {
         return urls;
     }
 
+    /** 프로필 이미지 삭제 **/
+    public void deleteProfileImage(Long memberPk, Long boxPk) {
+        memberPk = preconditionValidator.requireMemberPk(memberPk);
+        boxPk = preconditionValidator.requireBoxPk(boxPk);
+
+        MemberList memberList = memberListRepository.findActiveByBoxPkAndMemberPk(boxPk, memberPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.MEMBER_NOT_IN_BOX));
+
+        s3Service.deleteProfileImage(memberPk, boxPk);
+        memberList.updateProfileImageUrl(null);
+        memberListRepository.save(memberList);
+    }
+
     /** 가장 마지막으로 방문한 Box PK 정보 멤버에 업데이트 **/
     public Long updateLastVisitedBox(Long memberPk, Long boxPk) {
 
