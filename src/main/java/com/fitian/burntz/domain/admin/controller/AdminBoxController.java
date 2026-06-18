@@ -125,6 +125,19 @@ public class AdminBoxController {
         return ApiResponse.success(adminBoxService.getBoxRecords(boxPk));
     }
 
+    @GetMapping("/boxes/{boxPk}/lockers")
+    public ApiResponse<List<AdminBoxDetailResponse.LockerInfo>> getBoxLockers(
+            @PathVariable Long boxPk,
+            HttpServletRequest request) {
+
+        if (!adminAccount.validateAccount(request)) {
+            log.info("[Admin] 관리자 인증 실패 - 사물함 조회 불가 (boxPk={})", boxPk);
+            return ApiResponse.success(List.of());
+        }
+
+        return ApiResponse.success(adminBoxService.getBoxLockers(boxPk));
+    }
+
     @GetMapping("/boxes/{boxPk}/activities")
     public ApiResponse<Page<BoxActivityResponse>> getBoxActivities(
             @PathVariable Long boxPk,

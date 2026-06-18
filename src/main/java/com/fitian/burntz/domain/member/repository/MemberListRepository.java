@@ -122,4 +122,7 @@ public interface MemberListRepository extends JpaRepository<MemberList, Long> {
     @Modifying
     @Query("DELETE FROM MemberList ml WHERE ml.box.boxPk = :boxPk")
     void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
+
+    @Query("SELECT ml FROM MemberList ml JOIN FETCH ml.member JOIN FETCH ml.box WHERE ml.deletedYN = 'N' ORDER BY ml.createdAt DESC")
+    List<MemberList> findRecentMemberJoins(Pageable pageable);
 }

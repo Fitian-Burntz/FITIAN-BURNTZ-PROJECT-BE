@@ -102,6 +102,7 @@
     .ms-EXPIRED{background:#fce4ec;color:#c62828}
     .ms-PENDING{background:#fff8e1;color:#f57f17}
     .ms-DELETE{background:#f5f5f5;color:#9e9e9e}
+    .ms-HOLDING{background:#e3f2fd;color:#1565c0}
     .wt-ForTime,.wt-AMRAP,.wt-EMOM,.wt-SuccessFail,.wt-EMOMMAX,.wt-MaxReps{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700}
     .wt-ForTime{background:#e3f2fd;color:#1565c0}
     .wt-AMRAP{background:#f3e5f5;color:#6a1b9a}
@@ -114,6 +115,25 @@
     .hist-CREATE{background:#e3f2fd;color:#1565c0}
     .hist-UPDATE{background:#fff8e1;color:#f57f17}
     .hist-DELETE{background:#fce4ec;color:#c62828}
+    .hist-HOLD{background:#e3f2fd;color:#1565c0}
+    .hist-UNHOLD{background:#e8f5e9;color:#2e7d32}
+    .hist-HOLD_CANCELLED{background:#fce4ec;color:#c62828}
+
+    /* 사물함 그리드 */
+    .locker-summary{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .locker-stat{background:var(--bw05);border:1px solid var(--bw15);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px}
+    .locker-stat-num{font-size:22px;font-weight:700;color:var(--bw100)}
+    .locker-stat-label{font-size:11px;color:var(--bw40);margin-top:2px}
+    .locker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+    .locker-card{border:1.5px solid var(--bw15);border-radius:8px;padding:10px 12px;background:white;transition:box-shadow 0.15s}
+    .locker-card.in-use{border-color:#1565c0;background:#e3f2fd}
+    .locker-card.empty{border-color:var(--bw20);background:white}
+    .locker-num{font-size:14px;font-weight:700;color:var(--bw100);margin-bottom:4px}
+    .locker-status{font-size:11px;font-weight:600;margin-bottom:4px}
+    .locker-status.in-use{color:#1565c0}
+    .locker-status.empty{color:var(--bw40)}
+    .locker-member{font-size:11px;color:var(--bw70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .locker-date{font-size:10px;color:var(--bw40);margin-top:2px}
     .act-CHANNEL_CREATED{background:#e3f2fd;color:#1565c0}
     .act-WOD_CREATED{background:#f3e5f5;color:#6a1b9a}
     .act-RECORD_CREATED{background:#e8f5e9;color:#2e7d32}
@@ -381,6 +401,7 @@
           <button class="tab-btn" id="tab-btn-wods" onclick="switchTab('wods')">🏋️ WOD</button>
           <button class="tab-btn" id="tab-btn-classes" onclick="switchTab('classes')">📅 클래스</button>
           <button class="tab-btn" id="tab-btn-channels" onclick="switchTab('channels')">💬 채널</button>
+          <button class="tab-btn" id="tab-btn-lockers" onclick="switchTab('lockers')">🔒 사물함</button>
           <button class="tab-btn" id="tab-btn-activities" onclick="switchTab('activities')">📋 활동</button>
         </div>
         <div class="tab-body" id="tabBody">${renderMembersTab(d.members)}</div>
@@ -397,6 +418,7 @@
     if (tab === 'wods')       { renderWodTab(); return; }
     if (tab === 'classes')    { renderClassesTab(); return; }
     if (tab === 'channels')   { renderChannelsTab(); return; }
+    if (tab === 'lockers')    { renderLockersTab(); return; }
     if (tab === 'activities') { renderActivitiesTab(); return; }
 
     if (tabCache[tab] !== undefined) { document.getElementById('tabBody').innerHTML = renderMembersTab(tabCache[tab]); return; }
@@ -624,6 +646,38 @@
     } catch { document.getElementById('tabBody').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
   }
 
+  /* ── 사물함 탭 ── */
+  async function renderLockersTab() {
+    document.getElementById('tabBody').innerHTML = '<div class="tab-msg">불러오는 중...</div>';
+    try {
+      const r = await apiFetch(`/api/v1/admin/boxes/${selectedBoxPk}/lockers`);
+      const lockers = (r.success && r.data) ? r.data : [];
+      if (!lockers.length) { document.getElementById('tabBody').innerHTML = '<div class="tab-msg">등록된 사물함이 없습니다.</div>'; return; }
+
+      const total = lockers.length;
+      const inUse = lockers.filter(l => l.inUse).length;
+      const empty = total - inUse;
+
+      document.getElementById('tabBody').innerHTML = `
+        <div class="locker-summary">
+          <div class="locker-stat"><div class="locker-stat-num">${total}</div><div class="locker-stat-label">전체</div></div>
+          <div class="locker-stat"><div class="locker-stat-num" style="color:#1565c0">${inUse}</div><div class="locker-stat-label">사용 중</div></div>
+          <div class="locker-stat"><div class="locker-stat-num" style="color:#2e7d32">${empty}</div><div class="locker-stat-label">비어 있음</div></div>
+        </div>
+        <div class="locker-grid">
+          ${lockers.map(l => `
+            <div class="locker-card ${l.inUse ? 'in-use' : 'empty'}">
+              <div class="locker-num">No. ${esc(l.lockerNumber)}</div>
+              <div class="locker-status ${l.inUse ? 'in-use' : 'empty'}">${l.inUse ? '사용 중' : '비어 있음'}</div>
+              ${l.inUse ? `
+                <div class="locker-member">${l.assignedNickname ? esc(l.assignedNickname) : '<span class="nil">-</span>'}</div>
+                <div class="locker-date">${l.usageStartDate || ''} ~ ${l.usageEndDate || ''}</div>
+              ` : ''}
+            </div>`).join('')}
+        </div>`;
+    } catch { document.getElementById('tabBody').innerHTML = '<div class="tab-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
   /* ── 활동 탭 ── */
   let actPage = 0;
   let actHasMore = true;
@@ -777,8 +831,8 @@
   function channelTypeBadgeStyle(t) {
     return {PUBLIC:'background:#e3f2fd;color:#1565c0',NOTICE:'background:#fff3e0;color:#e65100',GROUP:'background:#f3e5f5;color:#6a1b9a',GENERAL:'background:#e8f5e9;color:#2e7d32'}[t]||'background:#f5f5f5;color:#616161';
   }
-  function msLabel(s) { return {ACTIVE:'활성',EXPIRED:'만료',PENDING:'대기',DELETE:'삭제'}[s]||s; }
-  function histLabel(a) { return {CREATE:'생성',UPDATE:'수정',DELETE:'삭제'}[a]||a; }
+  function msLabel(s) { return {ACTIVE:'활성',EXPIRED:'만료',PENDING:'대기',DELETE:'삭제',HOLDING:'홀딩 중'}[s]||s; }
+  function histLabel(a) { return {CREATE:'생성',UPDATE:'수정',DELETE:'삭제',HOLD:'홀딩 신청',UNHOLD:'홀딩 종료',HOLD_CANCELLED:'홀딩 취소'}[a]||a; }
   function boxColor(pk) {
     const c = ['#3949AB','#00897B','#E53935','#8E24AA','#F4511E','#1E88E5','#43A047'];
     const h = String(pk).split('').reduce((a,b)=>{ a=((a<<5)-a)+b.charCodeAt(0); return a&a; }, 0);

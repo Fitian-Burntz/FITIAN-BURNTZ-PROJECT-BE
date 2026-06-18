@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burntz Admin - 신규 유입 현황</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bw05:#f8f9fa;--bw08:#f1f3f4;--bw15:#e8eaed;--bw20:#dadce0;--bw30:#9aa0a6;--bw40:#80868b;--bw70:#5f6368;--bw80:#3c4043;--bw100:#202124}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bw05);color:var(--bw80);min-height:100vh}
+
+    .header{background:white;padding:16px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1);flex-shrink:0}
+    .header-content{padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+    .logo{font-family:'Sofia Sans Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--bw100)}
+    .header-right{display:flex;align-items:center;gap:12px}
+    .header-title{font-size:14px;color:var(--bw40)}
+    .back-btn{background:none;border:none;cursor:pointer;padding:8px 12px;border-radius:4px;transition:background-color 0.2s;display:flex;align-items:center;gap:6px;color:var(--bw70);font-size:14px;font-family:inherit}
+    .back-btn:hover{background:var(--bw08)}
+    .back-btn svg{width:18px;height:18px;fill:var(--bw70)}
+
+    .main{padding:32px 24px;max-width:1400px;margin:0 auto}
+
+    .page-title{font-family:'Sofia Sans Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--bw100);margin-bottom:6px}
+    .page-sub{font-size:14px;color:var(--bw40);margin-bottom:28px}
+
+    .limit-bar{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+    .limit-bar label{font-size:13px;color:var(--bw70)}
+    .limit-select{padding:6px 10px;border:1.5px solid var(--bw15);border-radius:6px;font-family:inherit;font-size:13px;color:var(--bw80);background:white;cursor:pointer}
+    .limit-select:focus{outline:none;border-color:var(--bw100)}
+    .refresh-btn{padding:6px 14px;border:1.5px solid var(--bw15);border-radius:6px;background:white;font-family:inherit;font-size:13px;color:var(--bw70);cursor:pointer;transition:all 0.15s}
+    .refresh-btn:hover{background:var(--bw08);border-color:var(--bw30)}
+
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    @media(max-width:960px){.two-col{grid-template-columns:1fr}}
+
+    .section{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);overflow:hidden}
+    .section-hd{padding:16px 20px;border-bottom:1px solid var(--bw15);display:flex;align-items:center;justify-content:space-between}
+    .section-title{font-size:15px;font-weight:700;color:var(--bw100);display:flex;align-items:center;gap:8px}
+    .cnt-badge{background:var(--bw08);color:var(--bw70);font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
+    .section-body{overflow-y:auto;max-height:560px}
+
+    .item-row{padding:12px 20px;border-bottom:1px solid var(--bw15);display:flex;align-items:flex-start;gap:12px;transition:background 0.1s}
+    .item-row:last-child{border-bottom:none}
+    .item-row:hover{background:var(--bw05)}
+
+    .avatar{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-size:15px;font-weight:700;flex-shrink:0}
+    .item-body{flex:1;min-width:0}
+    .item-name{font-size:13px;font-weight:700;color:var(--bw100);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .item-meta{font-size:11px;color:var(--bw40);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .item-time{font-size:11px;color:var(--bw40);white-space:nowrap;flex-shrink:0}
+
+    .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700}
+    .sub-Y{background:#e8f5e9;color:#2e7d32}
+    .sub-N{background:#f5f5f5;color:#757575}
+    .sub-C{background:#fff3e0;color:#e65100}
+    .role-OWNER{background:#212121;color:white}
+    .role-MANAGER{background:#1565C0;color:white}
+    .role-MEMBER{background:#2E7D32;color:white}
+    .role-GUEST{background:#e0e0e0;color:#616161}
+
+    .empty-msg{padding:48px 20px;text-align:center;color:var(--bw30);font-size:13px}
+    .loading-msg{padding:48px 20px;text-align:center;color:var(--bw40);font-size:13px}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-content">
+    <div class="logo">Burntz Admin</div>
+    <div class="header-right">
+      <span class="header-title">신규 유입 현황</span>
+      <button class="back-btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        대시보드
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">신규 유입 현황</div>
+  <div class="page-sub">최근 생성된 박스와 새로 가입한 멤버를 확인할 수 있습니다.</div>
+
+  <div class="limit-bar">
+    <label>최근</label>
+    <select class="limit-select" id="limitSelect" onchange="loadAll()">
+      <option value="20">20건</option>
+      <option value="50" selected>50건</option>
+      <option value="100">100건</option>
+    </select>
+    <label>씩 표시</label>
+    <button class="refresh-btn" onclick="loadAll()">새로고침</button>
+  </div>
+
+  <div class="two-col">
+    <div class="section">
+      <div class="section-hd">
+        <div class="section-title">🏋️ 신규 박스 <span class="cnt-badge" id="boxCnt">-</span></div>
+      </div>
+      <div class="section-body" id="boxList"><div class="loading-msg">불러오는 중...</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-hd">
+        <div class="section-title">👤 신규 멤버 가입 <span class="cnt-badge" id="memberCnt">-</span></div>
+      </div>
+      <div class="section-body" id="memberList"><div class="loading-msg">불러오는 중...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await validateAuth();
+    await loadAll();
+  });
+
+  async function validateAuth() {
+    const { t, p } = auth();
+    if (!t || !p) { go('/api/v1/admin/error'); return; }
+    try {
+      const res = await fetch('/api/v1/admin/login', { method:'POST', headers:{'Content-Type':'application/json','A_Token':t,'A_Password':p} });
+      if (!res.ok || !(await res.json()).data) go('/api/v1/admin/error');
+    } catch { go('/api/v1/admin/error'); }
+  }
+
+  async function loadAll() {
+    const limit = document.getElementById('limitSelect').value;
+    await Promise.all([loadBoxes(limit), loadMembers(limit)]);
+  }
+
+  async function loadBoxes(limit) {
+    const el = document.getElementById('boxList');
+    el.innerHTML = '<div class="loading-msg">불러오는 중...</div>';
+    try {
+      const r = await apiFetch(`/api/v1/admin/growth/new-boxes?limit=${limit}`);
+      const data = (r.success && r.data) ? r.data : [];
+      document.getElementById('boxCnt').textContent = data.length;
+      if (!data.length) { el.innerHTML = '<div class="empty-msg">데이터가 없습니다.</div>'; return; }
+      el.innerHTML = data.map(b => `
+        <div class="item-row">
+          <div class="avatar" style="background:${boxColor(b.boxPk)}">${b.boxName.charAt(0)}</div>
+          <div class="item-body">
+            <div class="item-name">${esc(b.boxName)}</div>
+            <div class="item-meta">
+              <span style="font-family:monospace;font-size:10px;color:var(--bw30)">${esc(b.boxCode||'-')}</span>
+              <span class="badge sub-${b.subscribeStatus}">${subLabel(b.subscribeStatus)}</span>
+              ${b.boxAddress ? `<span>${esc(b.boxAddress)}</span>` : ''}
+            </div>
+          </div>
+          <div class="item-time">${fmtDateTime(b.createdAt)}</div>
+        </div>`).join('');
+    } catch { el.innerHTML = '<div class="empty-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
+  async function loadMembers(limit) {
+    const el = document.getElementById('memberList');
+    el.innerHTML = '<div class="loading-msg">불러오는 중...</div>';
+    try {
+      const r = await apiFetch(`/api/v1/admin/growth/new-members?limit=${limit}`);
+      const data = (r.success && r.data) ? r.data : [];
+      document.getElementById('memberCnt').textContent = data.length;
+      if (!data.length) { el.innerHTML = '<div class="empty-msg">데이터가 없습니다.</div>'; return; }
+      el.innerHTML = data.map(m => `
+        <div class="item-row">
+          <div class="avatar" style="background:${boxColor(m.boxPk)}">${m.nickname ? m.nickname.charAt(0) : '?'}</div>
+          <div class="item-body">
+            <div class="item-name">${esc(m.nickname||'-')}</div>
+            <div class="item-meta">
+              <span style="color:var(--bw70)">${esc(m.email||'-')}</span>
+              <span class="badge role-${m.role}">${roleLabel(m.role)}</span>
+              <span style="color:var(--bw40)">${esc(m.boxName)}</span>
+            </div>
+          </div>
+          <div class="item-time">${fmtDateTime(m.joinedAt)}</div>
+        </div>`).join('');
+    } catch { el.innerHTML = '<div class="empty-msg" style="color:#f44336">불러오기 실패</div>'; }
+  }
+
+  function auth() { return { t: localStorage.getItem('A_Token'), p: localStorage.getItem('A_Password') }; }
+  async function apiFetch(url) {
+    const { t, p } = auth();
+    const res = await fetch(url, { headers:{ 'A_Token':t, 'A_Password':p } });
+    return res.json();
+  }
+  function subLabel(s) { return {Y:'구독 중',N:'미구독',C:'해지'}[s]||s; }
+  function roleLabel(r) { return {OWNER:'오너',MANAGER:'매니저',MEMBER:'멤버',GUEST:'게스트'}[r]||r; }
+  function boxColor(pk) {
+    const c = ['#3949AB','#00897B','#E53935','#8E24AA','#F4511E','#1E88E5','#43A047'];
+    const h = String(pk).split('').reduce((a,b)=>{ a=((a<<5)-a)+b.charCodeAt(0); return a&a; }, 0);
+    return c[Math.abs(h)%c.length];
+  }
+  function esc(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtDateTime(dt) {
+    if (!dt) return '-';
+    return String(dt).replace('T',' ').substring(0, 16);
+  }
+  function go(url) { window.location.href = url; }
+  function goBack() { go('/api/v1/admin/lobby'); }
+</script>
+</body>
+</html>

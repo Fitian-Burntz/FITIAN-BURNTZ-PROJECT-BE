@@ -13,6 +13,11 @@ import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
 import com.fitian.burntz.domain.channel.repository.ChannelRepository;
 import com.fitian.burntz.domain.classes.repository.ClassParticipantRepository;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
+import com.fitian.burntz.domain.locker.entity.Locker;
+import com.fitian.burntz.domain.locker.entity.LockerUsage;
+import com.fitian.burntz.domain.locker.enums.LockerUsageStatus;
+import com.fitian.burntz.domain.locker.repository.LockerRepository;
+import com.fitian.burntz.domain.locker.repository.LockerUsageRepository;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -32,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -56,6 +62,8 @@ public class AdminBoxService {
     private final ChannelRepository channelRepository;
     private final ChannelParticipantRepository channelParticipantRepository;
     private final ArticleRepository articleRepository;
+    private final LockerRepository lockerRepository;
+    private final LockerUsageRepository lockerUsageRepository;
 
     public AdminBoxDetailResponse getBoxDetail(Long boxPk) {
         Box box = boxRepository.findActiveById(boxPk)
@@ -269,6 +277,33 @@ public class AdminBoxService {
         return boxActivityRepository
                 .findByBoxPkOrderByCreatedAtDesc(boxPk, PageRequest.of(page, safeSize))
                 .map(BoxActivityResponse::from);
+    }
+
+    public List<AdminBoxDetailResponse.LockerInfo> getBoxLockers(Long boxPk) {
+        boxRepository.findActiveById(boxPk)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_NOT_FOUND));
+
+        List<Locker> lockers = lockerRepository.findAllByBoxBoxPkAndDeletedYN(boxPk, BaseTime.Yn.N);
+        if (lockers.isEmpty()) return List.of();
+
+        List<LockerUsage> activeUsages = lockerUsageRepository.findActiveUsagesByBoxPk(boxPk, LockerUsageStatus.ACTIVE, BaseTime.Yn.N);
+        Map<Long, LockerUsage> usageByLockerPk = activeUsages.stream()
+                .collect(Collectors.toMap(u -> u.getLocker().getLockerPk(), u -> u));
+
+        return lockers.stream()
+                .map(l -> {
+                    LockerUsage usage = usageByLockerPk.get(l.getLockerPk());
+                    return AdminBoxDetailResponse.LockerInfo.builder()
+                            .lockerPk(l.getLockerPk())
+                            .lockerNumber(l.getLockerNumber())
+                            .inUse(usage != null)
+                            .assignedNickname(usage != null ? usage.getMemberList().getBoxNickname() : null)
+                            .usageStartDate(usage != null ? usage.getStartDate() : null)
+                            .usageEndDate(usage != null ? usage.getEndDate() : null)
+                            .build();
+                })
+                .sorted(Comparator.comparing(AdminBoxDetailResponse.LockerInfo::getLockerNumber))
+                .toList();
     }
 
     /**

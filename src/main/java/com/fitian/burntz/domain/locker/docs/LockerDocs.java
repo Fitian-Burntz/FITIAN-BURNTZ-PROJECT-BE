@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@Tag(name = "사물함 관련 api 입니다.", description = "사물함 등록, 조회, 배정, 해제를 수행합니다.")
+@Tag(name = "사물함 API (v2)", description = "사물함 등록, 조회, 배정, 해제를 수행합니다.")
 public interface LockerDocs {
 
     @Operation(summary = "사물함 일괄 등록 (운영자)",

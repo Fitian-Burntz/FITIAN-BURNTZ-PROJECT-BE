@@ -96,7 +96,17 @@
         <div class="card-icon">🏋️</div>
         <div class="card-title">박스 관리</div>
         <div class="card-description">
-          전체 박스 현황 및 오너, 회원, 멤버십 정보를 확인할 수 있습니다.
+          전체 박스 현황 및 오너, 회원, 멤버십·사물함·홀딩 정보를 확인할 수 있습니다.
+        </div>
+        <div class="card-footer">
+        </div>
+      </div>
+
+      <div class="admin-card" onclick="goToGrowth()">
+        <div class="card-icon">📈</div>
+        <div class="card-title">신규 유입 현황</div>
+        <div class="card-description">
+          최근 신규 생성된 박스와 새로 가입한 멤버 현황을 확인할 수 있습니다.
         </div>
         <div class="card-footer">
         </div>
@@ -154,6 +164,10 @@
 
   function goToBoxManagement() {
     window.location.href = '/api/v1/admin/box-management';
+  }
+
+  function goToGrowth() {
+    window.location.href = '/api/v1/admin/growth';
   }
 
   function logout() {
