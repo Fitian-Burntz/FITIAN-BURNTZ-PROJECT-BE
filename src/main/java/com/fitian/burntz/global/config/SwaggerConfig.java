@@ -165,4 +165,14 @@ public class SwaggerConfig {
                 .build();
     }
 
+    // 사물함 API 그룹
+    @Bean
+    public GroupedOpenApi lockerApi() {
+        return GroupedOpenApi.builder()
+                .group("🔒 사물함 API")
+                .pathsToMatch("/api/v2/boxes/**/lockers/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
 }
