@@ -107,6 +107,16 @@ public class SwaggerConfig {
                 .build();
     }
 
+    // 채널 메시지 API 그룹 (v2)
+    @Bean
+    public GroupedOpenApi channelMessageV2Api() {
+        return GroupedOpenApi.builder()
+                .group("💬 채널 메시지 API (v2)")
+                .pathsToMatch("/api/v2/channels/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
     //Wod API 그룹
     @Bean
     public GroupedOpenApi wodApi() {

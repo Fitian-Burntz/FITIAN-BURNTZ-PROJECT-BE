@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.channel.v2.controller;
 
+import com.fitian.burntz.domain.channel.v2.docs.ChannelMessageDocs;
 import com.fitian.burntz.domain.channel.service.ChannelService;
 import com.fitian.burntz.domain.channel.v2.dto.MessageSendRequest;
 import com.fitian.burntz.domain.channel.v2.dto.MessageSendResponse;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v2/channels")
 @RequiredArgsConstructor
-public class ChannelMessageController {
+public class ChannelMessageController implements ChannelMessageDocs {
 
     private final ChannelService channelService;
 
