@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +47,19 @@ public interface ClassParticipantRepository extends JpaRepository<ClassParticipa
             @Param("classesPks") Collection<Long> classesPks,
             @Param("memberListPk") Long memberListPk,
             @Param("deletedYN") BaseTime.Yn deletedYN);
+
+    // 홀딩 시작 시 해당 기간 수업 신청 일괄 취소용
+    @Query("SELECT cp FROM ClassParticipant cp " +
+            "WHERE cp.memberList.member.memberPk = :memberPk " +
+            "AND cp.classes.box.boxPk = :boxPk " +
+            "AND cp.classes.classDate >= :startDate " +
+            "AND cp.classes.classDate <= :endDate " +
+            "AND cp.deletedYN = 'N'")
+    List<ClassParticipant> findActiveByMemberAndBoxAndDateRange(
+            @Param("memberPk") Long memberPk,
+            @Param("boxPk") Long boxPk,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
 
     @Modifying
     @Query("DELETE FROM ClassParticipant cp WHERE cp.classes.classesPk IN (SELECT c.classesPk FROM Classes c WHERE c.box.boxPk = :boxPk)")

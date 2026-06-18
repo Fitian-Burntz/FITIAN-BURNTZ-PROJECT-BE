@@ -12,6 +12,9 @@ import com.fitian.burntz.domain.classes.repository.ClassParticipantRepository;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
+import com.fitian.burntz.domain.membership.enums.MembershipStatus;
+import com.fitian.burntz.domain.membership.repository.MembershipHoldRepository;
+import com.fitian.burntz.domain.membership.repository.MembershipRepository;
 import com.fitian.burntz.domain.record.entity.Record;
 import com.fitian.burntz.domain.record.repository.RecordRepository;
 import com.fitian.burntz.global.common.entity.BaseTime;
@@ -44,6 +47,8 @@ public class ClassesService {
     private final ClassParticipantRepository participantRepository;
     private final RecordRepository recordRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final MembershipRepository membershipRepository;
+    private final MembershipHoldRepository membershipHoldRepository;
 
     //참여인원 카운트없이 가져오는 getClasses 현재 안씀.
     public List<ClassesResponse> getClasses(ClassesSearchRequest request, CustomUserDetails userDetails) {
@@ -202,12 +207,34 @@ public class ClassesService {
         MemberList memberList = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(userDetails.getMemberPk(), request.getBoxPk(), BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
         if (memberList.getRole() == MemberRole.GUEST) throw new ValidationException(ErrorCode.ACCESS_DENIED);
+
+        // MANAGER/OWNER는 홀딩 상태와 무관하게 수업 신청 가능
+        Classes targetClass = classesRepository.findById(request.getClassesPk())
+                .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
+
+        boolean isManagerOrOwner = memberList.getRole() == MemberRole.MANAGER || memberList.getRole() == MemberRole.OWNER;
+        if (!isManagerOrOwner) {
+            membershipRepository.findAllMembershipByBoxPkAndMemberPk(request.getBoxPk(), userDetails.getMemberPk())
+                    .stream()
+                    .filter(m -> m.getStatus() == MembershipStatus.ACTIVE || m.getStatus() == MembershipStatus.HOLDING)
+                    .findFirst()
+                    .ifPresent(membership -> {
+                        if (membership.getStatus() == MembershipStatus.HOLDING) {
+                            throw new ValidationException(ErrorCode.MEMBERSHIP_HOLDING);
+                        }
+                        membershipHoldRepository.findActiveOrScheduledOnDate(
+                                membership.getMembershipPk(), targetClass.getClassDate())
+                                .ifPresent(hold -> {
+                                    throw new ValidationException(ErrorCode.MEMBERSHIP_HOLDING);
+                                });
+                    });
+        }
+
         //해당 수업에 참여중인지 검증
         boolean isInClass = participantRepository.existsByClassesClassesPkAndMemberListMemberMemberPkAndDeletedYN(request.getClassesPk(), userDetails.getMemberPk(), BaseTime.Yn.N);
         if(isInClass) throw new ValidationException(ErrorCode.DUPLICATED_USER);
 
-        Classes classes = classesRepository.findById(request.getClassesPk())
-                .orElseThrow(() -> new ValidationException(ErrorCode.CLASS_NOT_FOUND));
+        Classes classes = targetClass;
 
         if (classes.getClassMemberCapacity() != null) {
             int currentCount = participantRepository.countByClassesClassesPkAndDeletedYN(request.getClassesPk(), BaseTime.Yn.N);

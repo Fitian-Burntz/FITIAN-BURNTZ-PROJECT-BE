@@ -185,4 +185,17 @@ public class SwaggerConfig {
                 .build();
     }
 
+    // 멤버십 홀딩 API 그룹 (v2)
+    @Bean
+    public GroupedOpenApi membershipHoldApi() {
+        return GroupedOpenApi.builder()
+                .group("🪪 멤버십 홀딩 API (v2)")
+                .pathsToMatch(
+                        "/api/v2/boxPk/*/membership/*/hold/**",
+                        "/api/v2/boxPk/*/holding-policy/**"
+                )
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
 }

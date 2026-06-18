@@ -287,6 +287,7 @@ public class MembershipService {
 
         List<Membership> expiredTargets =
                 membershipRepository.findAllByExpirationDateLessThanAndStatusAndDeletedYN(today, MembershipStatus.ACTIVE, BaseTime.Yn.N);
+        // HOLDING 상태는 홀딩 스케줄러가 처리하므로 만료 대상에서 제외됨 (이미 ACTIVE만 조회)
 
         List<MemberList> mlList = new ArrayList<>();
 
