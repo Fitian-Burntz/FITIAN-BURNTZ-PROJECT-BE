@@ -42,14 +42,17 @@ public class PushService {
             return;
         }
 
-        MulticastMessage message = MulticastMessage.builder()
+        MulticastMessage.Builder messageBuilder = MulticastMessage.builder()
                 .addAllTokens(tokens)
                 .setNotification(Notification.builder()
                         .setTitle(dto.getTitle())
                         .setBody(dto.getBody())
                         .build())
-                .putData("click_action", "FLUTTER_NOTIFICATION_CLICK")
-                .build();
+                .putData("click_action", "FLUTTER_NOTIFICATION_CLICK");
+        if (dto.getChannelId() != null) {
+            messageBuilder.putData("channelId", dto.getChannelId());
+        }
+        MulticastMessage message = messageBuilder.build();
 
         try {
             BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
@@ -126,14 +129,17 @@ public class PushService {
 
         List<String> tokens = tokenEntities.stream().map(FcmToken::getToken).toList();
 
-        MulticastMessage message = MulticastMessage.builder()
+        MulticastMessage.Builder messageBuilder = MulticastMessage.builder()
                 .addAllTokens(tokens)
                 .setNotification(Notification.builder()
                         .setTitle(dto.getTitle())
                         .setBody(dto.getBody())
                         .build())
-                .putData("click_action", "FLUTTER_NOTIFICATION_CLICK")
-                .build();
+                .putData("click_action", "FLUTTER_NOTIFICATION_CLICK");
+        if (dto.getChannelId() != null) {
+            messageBuilder.putData("channelId", dto.getChannelId());
+        }
+        MulticastMessage message = messageBuilder.build();
 
         try {
             BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);

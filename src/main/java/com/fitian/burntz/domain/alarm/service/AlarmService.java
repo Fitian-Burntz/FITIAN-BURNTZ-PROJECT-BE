@@ -119,6 +119,7 @@ public class AlarmService {
             PushDto dto = PushDto.builder()
                     .title(request.getChannelName())
                     .body(request.getBoxNickname() + " : " + request.getText())
+                    .channelId(request.getChannelId())
                     .build();
 
             try {
