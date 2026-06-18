@@ -40,17 +40,25 @@ public class LockerService {
     public void createLocker(Long boxPk, LockerCreateRequest request, CustomUserDetails userDetails) {
         requireManagerOrOwner(userDetails.getMemberPk(), boxPk);
 
-        if (lockerRepository.existsByBoxBoxPkAndLockerNumberAndDeletedYN(boxPk, request.getLockerNumber(), Yn.N)) {
-            throw new ValidationException(ErrorCode.LOCKER_NUMBER_DUPLICATE);
+        if (request.getStartNumber() > request.getEndNumber()) {
+            throw new ValidationException(ErrorCode.INVALID_REQUEST);
         }
 
         Box box = boxRepository.findById(boxPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.BOX_NOT_FOUND));
 
-        lockerRepository.save(Locker.builder()
-                .box(box)
-                .lockerNumber(request.getLockerNumber())
-                .build());
+        List<Locker> lockers = new java.util.ArrayList<>();
+        for (int num = request.getStartNumber(); num <= request.getEndNumber(); num++) {
+            String lockerNumber = String.valueOf(num);
+            if (lockerRepository.existsByBoxBoxPkAndLockerNumberAndDeletedYN(boxPk, lockerNumber, Yn.N)) {
+                throw new ValidationException(ErrorCode.LOCKER_NUMBER_DUPLICATE);
+            }
+            lockers.add(Locker.builder()
+                    .box(box)
+                    .lockerNumber(lockerNumber)
+                    .build());
+        }
+        lockerRepository.saveAll(lockers);
     }
 
     @Transactional(readOnly = true)

@@ -1,5 +1,6 @@
 package com.fitian.burntz.domain.locker.v2.controller;
 
+import com.fitian.burntz.domain.locker.docs.LockerDocs;
 import com.fitian.burntz.domain.locker.service.LockerService;
 import com.fitian.burntz.domain.locker.v2.dto.*;
 import com.fitian.burntz.global.common.response.ApiResponse;
@@ -14,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v2/boxes/{boxPk}/lockers")
 @RequiredArgsConstructor
-public class LockerController {
+public class LockerController implements LockerDocs {
 
     private final LockerService lockerService;
 
