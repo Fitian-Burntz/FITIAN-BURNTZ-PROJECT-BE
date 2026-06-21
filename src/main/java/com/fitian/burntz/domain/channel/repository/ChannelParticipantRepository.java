@@ -71,4 +71,8 @@ public interface ChannelParticipantRepository extends JpaRepository<ChannelParti
             @Param("me") Member me,
             @Param("box") Box box
     );
+
+    @Modifying
+    @Query("DELETE FROM ChannelParticipant cp WHERE cp.channel.channelPk IN (SELECT c.channelPk FROM Channel c WHERE c.box.boxPk = :boxPk)")
+    void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }

@@ -8,5 +8,5 @@ package com.fitian.burntz.domain.membership.enums;
  * @description : 멤버쉽 상태 enum
  */
 public enum MembershipStatus {
-    ACTIVE, DELETE, PENDING, EXPIRED
+    ACTIVE, DELETE, PENDING, EXPIRED, HOLDING
 }

@@ -2,6 +2,7 @@ package com.fitian.burntz.domain.membership.repository;
 
 import com.fitian.burntz.domain.membership.entity.MembershipHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,4 +29,8 @@ public interface MembershipHistoryRepository extends JpaRepository<MembershipHis
         order by mh.createdAt desc
     """)
     List<MembershipHistory> findAllByMembershipPkWithCreator(@Param("membershipPk") Long membershipPk);
+
+    @Modifying
+    @Query("DELETE FROM MembershipHistory mh WHERE mh.membership.membershipPk IN (SELECT m.membershipPk FROM Membership m WHERE m.box.boxPk = :boxPk)")
+    void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }

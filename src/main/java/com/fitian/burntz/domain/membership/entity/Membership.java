@@ -45,6 +45,10 @@ public class Membership extends BaseTime {
     @Column(name = "memo", length = 255)
     private String memo;
 
+    // null이면 박스 정책(BoxHoldingPolicy) 기준, 값이 있으면 이 회원에게만 적용되는 커스텀 한도
+    @Column(name = "custom_max_hold_days")
+    private Integer customMaxHoldDays;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_pk", nullable = false)
     private Member member;
@@ -76,6 +80,15 @@ public class Membership extends BaseTime {
         if (req.getMemo() != null && !req.getMemo().isBlank()) {
             this.memo = req.getMemo();
         }
+    }
+
+    public void startHolding() {
+        this.status = MembershipStatus.HOLDING;
+    }
+
+    public void resumeActive(LocalDate newExpirationDate) {
+        this.status = MembershipStatus.ACTIVE;
+        this.expirationDate = newExpirationDate;
     }
 
     public void expire() {

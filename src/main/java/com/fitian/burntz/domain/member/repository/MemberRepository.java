@@ -19,6 +19,20 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     int updateLastVisitedBoxPk(@Param("memberPk") Long memberPk,
                                @Param("boxPk") Long boxPk);
 
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+        UPDATE burntz.member m
+        SET last_visited_box_pk = (
+            SELECT ml.box_pk
+            FROM burntz.member_list ml
+            WHERE ml.member_pk = m.member_pk
+              AND ml.box_pk != :boxPk
+              AND ml.deleted_yn = 'N'
+            LIMIT 1
+        )
+        WHERE m.last_visited_box_pk = :boxPk
+        """, nativeQuery = true)
+    void reassignLastVisitedBoxPk(@Param("boxPk") Long boxPk);
 
     @Query("SELECT m FROM Member m WHERE m.memberPk = :memberPk AND m.deletedYN = 'N'")
     Optional<Member> findActiveById(@Param("memberPk") Long memberPk);

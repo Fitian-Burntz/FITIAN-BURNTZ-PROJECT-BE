@@ -85,6 +85,8 @@ public enum ErrorCode {
     BOX_SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "BOX_SUBSCRIPTION_NOT_FOUND", "해당 박스 구독 정보를 찾을 수 없습니다."),
     FCMTOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "FCMTOKEN_NOT_FOUND", "FcmToken 에 해당 조건을 만족하는 값이 없습니다."),
     AGREEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "AGREEMENT_NOT_FOUND", "Agreement 에 해당 조건을 만족하는 값이 없습니다."),
+    LOCKER_NOT_FOUND(HttpStatus.NOT_FOUND, "LOCKER_NOT_FOUND", "해당 사물함을 찾을 수 없습니다."),
+    LOCKER_USAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "LOCKER_USAGE_NOT_FOUND", "해당 사물함 이용권을 찾을 수 없습니다."),
 
     // 405 Method Not Allowed
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "허용되지 않은 HTTP 메서드입니다."),
@@ -94,6 +96,15 @@ public enum ErrorCode {
     DUPLICATE_BOX_CODE(HttpStatus.CONFLICT, "DUPLICATE_BOX_CODE", "이미 사용중인 boxCode 입니다."),
     DUPLICATE_MEMBER(HttpStatus.CONFLICT, "DUPLICATE_MEMBER", "이미 해당 박스에 가입된 멤버입니다."),
     DUPLICATE_MEMBERSHIP(HttpStatus.CONFLICT, "DUPLICATE_MEMBERSHIP", "이미 해당 멤버의 멤버십이 존재합니다."),
+    LOCKER_NUMBER_DUPLICATE(HttpStatus.CONFLICT, "LOCKER_NUMBER_DUPLICATE", "이미 존재하는 사물함 번호입니다."),
+    LOCKER_ALREADY_ASSIGNED(HttpStatus.CONFLICT, "LOCKER_ALREADY_ASSIGNED", "이미 배정된 사물함입니다."),
+    HOLD_OVERLAPPING(HttpStatus.CONFLICT, "HOLD_OVERLAPPING", "해당 기간에 이미 홀딩이 존재합니다."),
+    HOLD_DAYS_EXCEEDED(HttpStatus.BAD_REQUEST, "HOLD_DAYS_EXCEEDED", "박스의 최대 홀딩 가능 일수를 초과했습니다."),
+    HOLD_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "HOLD_COUNT_EXCEEDED", "박스의 최대 홀딩 횟수를 초과했습니다."),
+    HOLD_NOT_FOUND(HttpStatus.NOT_FOUND, "HOLD_NOT_FOUND", "해당 홀딩 정보를 찾을 수 없습니다."),
+    HOLD_NOT_CANCELLABLE(HttpStatus.BAD_REQUEST, "HOLD_NOT_CANCELLABLE", "취소할 수 없는 홀딩 상태입니다."),
+    MEMBERSHIP_HOLDING(HttpStatus.BAD_REQUEST, "MEMBERSHIP_HOLDING", "홀딩 중인 멤버십입니다. 수업 신청이 불가합니다."),
+    HOLDING_POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "HOLDING_POLICY_NOT_FOUND", "해당 박스의 홀딩 정책이 없습니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),

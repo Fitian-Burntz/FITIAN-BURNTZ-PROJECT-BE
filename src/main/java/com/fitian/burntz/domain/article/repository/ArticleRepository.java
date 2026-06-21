@@ -2,6 +2,9 @@ package com.fitian.burntz.domain.article.repository;
 
 import com.fitian.burntz.domain.article.entity.Article;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * @author : 김관중
@@ -12,4 +15,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface ArticleRepository extends JpaRepository<Article, Long> {
 
+    @Modifying
+    @Query("DELETE FROM Article a WHERE a.box.boxPk = :boxPk")
+    void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }

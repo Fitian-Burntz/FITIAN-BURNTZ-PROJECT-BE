@@ -50,4 +50,7 @@ public interface BoxRepository extends JpaRepository<Box, Long> {
     @Query("SELECT b FROM Box b ORDER BY b.boxPk ASC")
     List<Box> findAllOrderByBoxPkAsc();
 
+    @Query("SELECT b FROM Box b WHERE b.deletedYN = 'N' ORDER BY b.createdAt DESC")
+    List<Box> findRecentActiveBoxes(Pageable pageable);
+
 }

@@ -33,4 +33,10 @@ public class AdminPageController {
     return "admin/boxes/admin-box-management";
   }
 
+  @GetMapping("/growth")
+  public String growthPage() {
+    log.info("Admin Growth Page Accessed");
+    return "admin/growth/admin-growth";
+  }
+
 }

@@ -107,6 +107,16 @@ public class SwaggerConfig {
                 .build();
     }
 
+    // 채널 메시지 API 그룹 (v2)
+    @Bean
+    public GroupedOpenApi channelMessageV2Api() {
+        return GroupedOpenApi.builder()
+                .group("💬 채널 메시지 API (v2)")
+                .pathsToMatch("/api/v2/channels/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
     //Wod API 그룹
     @Bean
     public GroupedOpenApi wodApi() {
@@ -161,6 +171,29 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("💰 결제 API")
                 .pathsToMatch("/api/v1/payments/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // 사물함 API 그룹
+    @Bean
+    public GroupedOpenApi lockerApi() {
+        return GroupedOpenApi.builder()
+                .group("🔒 사물함 API")
+                .pathsToMatch("/api/v2/boxes/**/lockers/**")
+                .addOpenApiCustomizer(jwtSecurityCustomizer())
+                .build();
+    }
+
+    // 멤버십 홀딩 API 그룹 (v2)
+    @Bean
+    public GroupedOpenApi membershipHoldApi() {
+        return GroupedOpenApi.builder()
+                .group("🪪 멤버십 홀딩 API (v2)")
+                .pathsToMatch(
+                        "/api/v2/boxPk/*/membership/*/hold/**",
+                        "/api/v2/boxPk/*/holding-policy/**"
+                )
                 .addOpenApiCustomizer(jwtSecurityCustomizer())
                 .build();
     }

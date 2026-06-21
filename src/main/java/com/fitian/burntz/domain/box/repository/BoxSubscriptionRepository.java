@@ -3,7 +3,9 @@ package com.fitian.burntz.domain.box.repository;
 import com.fitian.burntz.domain.box.entity.BoxSubscription;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface BoxSubscriptionRepository extends JpaRepository<BoxSubscription, Long> {
 
@@ -23,4 +25,7 @@ public interface BoxSubscriptionRepository extends JpaRepository<BoxSubscription
       """)
   Optional<BoxSubscription> findByOwnerMemberIdAndBoxPk(Long ownerMemberId, Long boxPk);
 
+  @Modifying
+  @Query("DELETE FROM BoxSubscription bs WHERE bs.box.boxPk = :boxPk")
+  void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }

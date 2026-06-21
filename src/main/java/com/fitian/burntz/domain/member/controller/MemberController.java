@@ -64,6 +64,7 @@ public class MemberController implements MemberDocs {
 
 
     /** 프로필 이미지 업데이트 **/
+    @Override
     @PatchMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<S3Service.ProfileImageUrls>> updateProfileImage(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -75,6 +76,20 @@ public class MemberController implements MemberDocs {
         S3Service.ProfileImageUrls result = memberService.updateProfileImage(loginMemberPk, boxPk, image);
 
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /** 프로필 이미지 삭제 **/
+    @Override
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam("boxPk") Long boxPk) {
+
+        Long loginMemberPk = preconditionValidator.requireLogin(customUserDetails);
+
+        memberService.deleteProfileImage(loginMemberPk, boxPk);
+
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     /** 멤버 자진 탈퇴

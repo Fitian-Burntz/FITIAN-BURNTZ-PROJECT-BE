@@ -2,14 +2,22 @@ package com.fitian.burntz.domain.admin.service;
 
 import com.fitian.burntz.domain.admin.dto.response.AdminBoxDetailResponse;
 import com.fitian.burntz.domain.admin.dto.response.BoxActivityResponse;
+import com.fitian.burntz.domain.article.repository.ArticleRepository;
 import com.fitian.burntz.domain.box.entity.Box;
 import com.fitian.burntz.domain.box.repository.BoxActivityRepository;
 import com.fitian.burntz.domain.box.repository.BoxRepository;
+import com.fitian.burntz.domain.box.repository.BoxSubscriptionRepository;
+import com.fitian.burntz.domain.box.repository.SubscriptionEventLogRepository;
 import com.fitian.burntz.domain.channel.entity.Channel;
 import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
 import com.fitian.burntz.domain.channel.repository.ChannelRepository;
 import com.fitian.burntz.domain.classes.repository.ClassParticipantRepository;
 import com.fitian.burntz.domain.classes.repository.ClassesRepository;
+import com.fitian.burntz.domain.locker.entity.Locker;
+import com.fitian.burntz.domain.locker.entity.LockerUsage;
+import com.fitian.burntz.domain.locker.enums.LockerUsageStatus;
+import com.fitian.burntz.domain.locker.repository.LockerRepository;
+import com.fitian.burntz.domain.locker.repository.LockerUsageRepository;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
@@ -29,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,6 +49,8 @@ public class AdminBoxService {
 
     private final BoxActivityRepository boxActivityRepository;
     private final BoxRepository boxRepository;
+    private final BoxSubscriptionRepository boxSubscriptionRepository;
+    private final SubscriptionEventLogRepository subscriptionEventLogRepository;
     private final MemberRepository memberRepository;
     private final MemberListRepository memberListRepository;
     private final MembershipRepository membershipRepository;
@@ -50,6 +61,9 @@ public class AdminBoxService {
     private final RecordRepository recordRepository;
     private final ChannelRepository channelRepository;
     private final ChannelParticipantRepository channelParticipantRepository;
+    private final ArticleRepository articleRepository;
+    private final LockerRepository lockerRepository;
+    private final LockerUsageRepository lockerUsageRepository;
 
     public AdminBoxDetailResponse getBoxDetail(Long boxPk) {
         Box box = boxRepository.findActiveById(boxPk)
@@ -263,5 +277,61 @@ public class AdminBoxService {
         return boxActivityRepository
                 .findByBoxPkOrderByCreatedAtDesc(boxPk, PageRequest.of(page, safeSize))
                 .map(BoxActivityResponse::from);
+    }
+
+    public List<AdminBoxDetailResponse.LockerInfo> getBoxLockers(Long boxPk) {
+        boxRepository.findActiveById(boxPk)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_NOT_FOUND));
+
+        List<Locker> lockers = lockerRepository.findAllByBoxBoxPkAndDeletedYN(boxPk, BaseTime.Yn.N);
+        if (lockers.isEmpty()) return List.of();
+
+        List<LockerUsage> activeUsages = lockerUsageRepository.findActiveUsagesByBoxPk(boxPk, LockerUsageStatus.ACTIVE, BaseTime.Yn.N);
+        Map<Long, LockerUsage> usageByLockerPk = activeUsages.stream()
+                .collect(Collectors.toMap(u -> u.getLocker().getLockerPk(), u -> u));
+
+        return lockers.stream()
+                .map(l -> {
+                    LockerUsage usage = usageByLockerPk.get(l.getLockerPk());
+                    return AdminBoxDetailResponse.LockerInfo.builder()
+                            .lockerPk(l.getLockerPk())
+                            .lockerNumber(l.getLockerNumber())
+                            .inUse(usage != null)
+                            .assignedNickname(usage != null ? usage.getMemberList().getBoxNickname() : null)
+                            .usageStartDate(usage != null ? usage.getStartDate() : null)
+                            .usageEndDate(usage != null ? usage.getEndDate() : null)
+                            .build();
+                })
+                .sorted(Comparator.comparing(AdminBoxDetailResponse.LockerInfo::getLockerNumber))
+                .toList();
+    }
+
+    /**
+     * [테스트 박스 전용 하드딜리트]
+     * 테스트 목적으로 생성된 박스를 완전히 제거하기 위한 어드민 전용 기능입니다.
+     * 박스에 속한 WOD·기록·클래스·채널·멤버십 등 모든 데이터를 영구 삭제합니다.
+     * 회원(Member) 계정은 삭제하지 않습니다.
+     * 운영 중인 실제 박스에는 절대 사용하지 마십시오.
+     */
+    @Transactional
+    public void deleteBox(Long boxPk) {
+        boxRepository.findById(boxPk)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.BOX_NOT_FOUND));
+
+        recordRepository.deleteAllByBoxPk(boxPk);
+        wodRepository.deleteAllByBoxPk(boxPk);
+        classParticipantRepository.deleteAllByBoxPk(boxPk);
+        classesRepository.deleteAllByBoxPk(boxPk);
+        channelParticipantRepository.deleteAllByBoxPk(boxPk);
+        channelRepository.deleteAllByBoxPk(boxPk);
+        membershipHistoryRepository.deleteAllByBoxPk(boxPk);
+        membershipRepository.deleteAllByBoxPk(boxPk);
+        memberRepository.reassignLastVisitedBoxPk(boxPk);
+        memberListRepository.deleteAllByBoxPk(boxPk);
+        boxActivityRepository.deleteAllByBoxPk(boxPk);
+        subscriptionEventLogRepository.deleteAllByBoxPk(boxPk);
+        boxSubscriptionRepository.deleteAllByBoxPk(boxPk);
+        articleRepository.deleteAllByBoxPk(boxPk);
+        boxRepository.deleteById(boxPk);
     }
 }

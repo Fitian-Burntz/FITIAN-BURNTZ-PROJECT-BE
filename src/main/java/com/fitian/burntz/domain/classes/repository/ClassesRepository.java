@@ -6,6 +6,7 @@ import com.fitian.burntz.domain.classes.v1.dto.ClassesWithCountResponse;
 import com.fitian.burntz.global.common.entity.BaseTime;
 import com.fitian.burntz.global.common.entity.BaseTime.Yn;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -52,4 +53,8 @@ public interface ClassesRepository extends JpaRepository<Classes, Long> {
 
      List<Classes> findByBoxBoxPkAndClassDateAndDeletedYN(
              Long boxPk, LocalDate classDate, Yn deletedYN);
+
+    @Modifying
+    @Query("DELETE FROM Classes c WHERE c.box.boxPk = :boxPk")
+    void deleteAllByBoxPk(@Param("boxPk") Long boxPk);
 }

@@ -27,4 +27,6 @@ public class PushDto {
     @NotBlank(message = "body must not be blank")
     @Schema(description = "body", example = "CrossFit AID를 둘러보세요.")
     private String body;
+
+    private String channelId;
 }

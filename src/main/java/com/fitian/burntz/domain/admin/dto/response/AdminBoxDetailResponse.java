@@ -132,4 +132,15 @@ public class AdminBoxDetailResponse {
         private String channelType;
         private int participantCount;
     }
+
+    @Getter
+    @Builder
+    public static class LockerInfo {
+        private Long lockerPk;
+        private String lockerNumber;
+        private boolean inUse;
+        private String assignedNickname;
+        private LocalDate usageStartDate;
+        private LocalDate usageEndDate;
+    }
 }
