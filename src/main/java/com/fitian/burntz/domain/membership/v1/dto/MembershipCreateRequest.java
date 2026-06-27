@@ -51,4 +51,7 @@ public class MembershipCreateRequest {
     @Min(1)
     @Schema(description = "기간", example = "30")
     private Integer period;
+
+    @Schema(description = "허용된 홀딩 가능 일수. null이면 홀딩 불가", example = "30")
+    private Integer holdDays;
 }

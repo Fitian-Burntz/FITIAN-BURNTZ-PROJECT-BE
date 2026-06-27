@@ -48,4 +48,10 @@ public class MembershipResponse {
     @Schema(description = "박스 닉네임", example = "문정동 이경영")
     private String boxNickname;
 
+    @Schema(description = "허용된 홀딩 가능 일수. null이면 홀딩 불가", example = "30")
+    private Integer holdDays;
+
+    @Schema(description = "지금까지 사용한 홀딩 일수 (ACTIVE+COMPLETED 합산)", example = "10")
+    private Integer usedHoldDays;
+
 }

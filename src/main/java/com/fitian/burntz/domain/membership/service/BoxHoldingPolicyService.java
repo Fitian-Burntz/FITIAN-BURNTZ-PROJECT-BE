@@ -38,7 +38,7 @@ public class BoxHoldingPolicyService {
                 .orElse(null);
 
         if (policy != null) {
-            policy.update(request.getMaxHoldDaysPerMembership(), request.getMaxHoldCount());
+            policy.update(request.getDefaultHoldDays());
             return BoxHoldingPolicyResponse.from(policy);
         }
 
@@ -47,8 +47,7 @@ public class BoxHoldingPolicyService {
 
         BoxHoldingPolicy newPolicy = BoxHoldingPolicy.builder()
                 .box(box)
-                .maxHoldDaysPerMembership(request.getMaxHoldDaysPerMembership())
-                .maxHoldCount(request.getMaxHoldCount())
+                .defaultHoldDays(request.getDefaultHoldDays())
                 .build();
 
         policyRepository.save(newPolicy);

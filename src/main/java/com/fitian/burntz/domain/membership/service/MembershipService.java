@@ -16,7 +16,10 @@ import com.fitian.burntz.domain.member.repository.MemberRepository;
 import com.fitian.burntz.domain.membership.entity.MembershipHistory;
 import com.fitian.burntz.domain.membership.enums.HistoryActionType;
 import com.fitian.burntz.domain.membership.enums.MembershipStatus;
+import com.fitian.burntz.domain.membership.enums.HoldStatus;
+import com.fitian.burntz.domain.membership.repository.BoxHoldingPolicyRepository;
 import com.fitian.burntz.domain.membership.repository.MembershipHistoryRepository;
+import com.fitian.burntz.domain.membership.repository.MembershipHoldRepository;
 import com.fitian.burntz.domain.membership.v1.dto.*;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.domain.membership.repository.MembershipRepository;
@@ -32,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,6 +53,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MembershipService {
 
+    private static final List<HoldStatus> USED_HOLD_STATUSES = List.of(HoldStatus.ACTIVE, HoldStatus.COMPLETED);
+
     private final ObjectMapper objectMapper;
     private final ChannelService channelService;
     private final MemberRepository memberRepository;
@@ -56,6 +62,8 @@ public class MembershipService {
     private final MembershipRepository membershipRepository;
     private final MemberListRepository memberListRepository;
     private final MembershipHistoryRepository historyRepository;
+    private final MembershipHoldRepository holdRepository;
+    private final BoxHoldingPolicyRepository policyRepository;
     private final PushService pushService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -73,6 +81,12 @@ public class MembershipService {
         MemberList target = memberListRepository.findRoleByMemberMemberPkAndBoxBoxPkAndDeletedYN(memberPk, boxPk, BaseTime.Yn.N)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
+        int usedHoldDays = holdRepository
+                .findAllByMembershipMembershipPkAndStatusIn(membership.getMembershipPk(), USED_HOLD_STATUSES)
+                .stream()
+                .mapToInt(h -> (int) ChronoUnit.DAYS.between(h.getHoldStartDate(), h.getHoldEndDate()) + 1)
+                .sum();
+
         return MembershipResponse.builder()
                 .membershipPk(membership.getMembershipPk())
                 .membershipName(membership.getMembershipName())
@@ -82,6 +96,8 @@ public class MembershipService {
                 .memo(membership.getMemo())
                 .boxPk(membership.getBox().getBoxPk())
                 .boxNickname(target.getBoxNickname())
+                .holdDays(membership.getHoldDays())
+                .usedHoldDays(usedHoldDays)
                 .build();
     }
 
@@ -106,12 +122,19 @@ public class MembershipService {
         membershipRepository.findAllMembershipByBoxPkAndMemberPk(boxPk, memberPk)
                 .forEach(BaseTime::markDeleted);
 
+        Integer holdDays = request.getHoldDays() != null
+                ? request.getHoldDays()
+                : policyRepository.findByBoxBoxPk(boxPk)
+                        .map(p -> p.getDefaultHoldDays())
+                        .orElse(null);
+
         Membership membership = Membership.builder()
                 .membershipName(request.getMembershipName())
                 .startDate(request.getStartDate())
                 .expirationDate(request.getExpirationDate())
                 .status(request.getStatus())
                 .memo(request.getMemo())
+                .holdDays(holdDays)
                 .member(member)
                 .box(box)
                 .build();

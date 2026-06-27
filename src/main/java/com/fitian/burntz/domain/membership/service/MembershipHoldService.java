@@ -10,14 +10,12 @@ import com.fitian.burntz.domain.member.entity.Member;
 import com.fitian.burntz.domain.member.entity.MemberList;
 import com.fitian.burntz.domain.member.repository.MemberListRepository;
 import com.fitian.burntz.domain.member.repository.MemberRepository;
-import com.fitian.burntz.domain.membership.entity.BoxHoldingPolicy;
 import com.fitian.burntz.domain.membership.entity.Membership;
 import com.fitian.burntz.domain.membership.entity.MembershipHistory;
 import com.fitian.burntz.domain.membership.entity.MembershipHold;
 import com.fitian.burntz.domain.membership.enums.HistoryActionType;
 import com.fitian.burntz.domain.membership.enums.HoldStatus;
 import com.fitian.burntz.domain.membership.enums.MembershipStatus;
-import com.fitian.burntz.domain.membership.repository.BoxHoldingPolicyRepository;
 import com.fitian.burntz.domain.membership.repository.MembershipHistoryRepository;
 import com.fitian.burntz.domain.membership.repository.MembershipHoldRepository;
 import com.fitian.burntz.domain.membership.repository.MembershipRepository;
@@ -47,7 +45,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MembershipHoldService {
 
-    private static final List<HoldStatus> ACTIVE_STATUSES = List.of(HoldStatus.SCHEDULED, HoldStatus.ACTIVE, HoldStatus.COMPLETED);
+    private static final List<HoldStatus> USED_HOLD_STATUSES = List.of(HoldStatus.ACTIVE, HoldStatus.COMPLETED);
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ObjectMapper objectMapper;
@@ -56,7 +54,6 @@ public class MembershipHoldService {
     private final MembershipRepository membershipRepository;
     private final MembershipHoldRepository holdRepository;
     private final MembershipHistoryRepository historyRepository;
-    private final BoxHoldingPolicyRepository policyRepository;
     private final ClassParticipantRepository classParticipantRepository;
     private final PushService pushService;
 
@@ -85,7 +82,7 @@ public class MembershipHoldService {
                 .findFirst()
                 .orElseThrow(() -> new ValidationException(ErrorCode.MEMBERSHIP_NOT_FOUND));
 
-        validateHoldPolicy(boxPk, membership, request.getHoldStartDate(), request.getHoldEndDate());
+        validateHoldPolicy(membership, request.getHoldStartDate(), request.getHoldEndDate());
 
         // 날짜 겹침 검증
         List<MembershipHold> overlapping = holdRepository.findOverlapping(
@@ -257,32 +254,19 @@ public class MembershipHoldService {
         log.info("[SCHEDULE] completeActiveHolds END");
     }
 
-    private void validateHoldPolicy(Long boxPk, Membership membership, LocalDate startDate, LocalDate endDate) {
-        BoxHoldingPolicy policy = policyRepository.findByBoxBoxPk(boxPk).orElse(null);
-        if (policy == null) return; // 정책 없으면 무제한
-
-        int newHoldDays = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
-
-        // 회원별 커스텀 한도가 있으면 그걸 우선 사용
-        Integer maxDays = membership.getCustomMaxHoldDays() != null
-                ? membership.getCustomMaxHoldDays()
-                : policy.getMaxHoldDaysPerMembership();
-
-        if (maxDays != null) {
-            int usedDays = holdRepository.findAllByMembershipMembershipPkAndStatusIn(membership.getMembershipPk(), ACTIVE_STATUSES)
-                    .stream()
-                    .mapToInt(h -> (int) ChronoUnit.DAYS.between(h.getHoldStartDate(), h.getHoldEndDate()) + 1)
-                    .sum();
-            if (usedDays + newHoldDays > maxDays) {
-                throw new ValidationException(ErrorCode.HOLD_DAYS_EXCEEDED);
-            }
+    private void validateHoldPolicy(Membership membership, LocalDate startDate, LocalDate endDate) {
+        if (membership.getHoldDays() == null) {
+            throw new ValidationException(ErrorCode.HOLD_NOT_ALLOWED);
         }
 
-        if (policy.getMaxHoldCount() != null) {
-            int usedCount = holdRepository.findAllByMembershipMembershipPkAndStatusIn(membership.getMembershipPk(), ACTIVE_STATUSES).size();
-            if (usedCount >= policy.getMaxHoldCount()) {
-                throw new ValidationException(ErrorCode.HOLD_COUNT_EXCEEDED);
-            }
+        int newHoldDays = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        int usedDays = holdRepository.findAllByMembershipMembershipPkAndStatusIn(membership.getMembershipPk(), USED_HOLD_STATUSES)
+                .stream()
+                .mapToInt(h -> (int) ChronoUnit.DAYS.between(h.getHoldStartDate(), h.getHoldEndDate()) + 1)
+                .sum();
+
+        if (usedDays + newHoldDays > membership.getHoldDays()) {
+            throw new ValidationException(ErrorCode.HOLD_DAYS_EXCEEDED);
         }
     }
 
