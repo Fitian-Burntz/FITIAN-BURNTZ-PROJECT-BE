@@ -9,14 +9,12 @@ import lombok.Getter;
 public class BoxHoldingPolicyResponse {
 
     private Long boxPk;
-    private Integer maxHoldDaysPerMembership;
-    private Integer maxHoldCount;
+    private Integer defaultHoldDays;
 
     public static BoxHoldingPolicyResponse from(BoxHoldingPolicy policy) {
         return BoxHoldingPolicyResponse.builder()
                 .boxPk(policy.getBox().getBoxPk())
-                .maxHoldDaysPerMembership(policy.getMaxHoldDaysPerMembership())
-                .maxHoldCount(policy.getMaxHoldCount())
+                .defaultHoldDays(policy.getDefaultHoldDays())
                 .build();
     }
 }

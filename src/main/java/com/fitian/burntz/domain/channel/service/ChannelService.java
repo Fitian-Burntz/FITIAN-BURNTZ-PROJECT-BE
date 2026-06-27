@@ -11,8 +11,10 @@ import com.fitian.burntz.domain.channel.repository.ChannelParticipantRepository;
 import com.fitian.burntz.domain.alarm.service.AlarmService;
 import com.fitian.burntz.domain.alarm.v1.dto.MessagePushRequest;
 import com.fitian.burntz.domain.channel.v1.dto.*;
+import com.fitian.burntz.domain.channel.v2.dto.ChannelImageUploadResponse;
 import com.fitian.burntz.domain.channel.v2.dto.MessageSendRequest;
 import com.fitian.burntz.domain.channel.v2.dto.MessageSendResponse;
+import com.fitian.burntz.infra.s3.S3Service;
 import com.fitian.burntz.domain.channel.entity.Channel;
 import com.fitian.burntz.domain.channel.repository.ChannelRepository;
 import com.fitian.burntz.domain.member.entity.Member;
@@ -65,6 +67,7 @@ public class ChannelService {
     private final Firestore firestore;
     private final ApplicationEventPublisher eventPublisher;
     private final AlarmService alarmService;
+    private final S3Service s3Service;
 
     public Long createChannel(ChannelCreateRequest request, CustomUserDetails userDetails) {
 
@@ -398,6 +401,23 @@ public class ChannelService {
         });
     }
 
+    public ChannelImageUploadResponse uploadChannelImage(Long channelPk, org.springframework.web.multipart.MultipartFile image, CustomUserDetails userDetails) {
+
+        boolean isParticipant = participantRepository.existByChannelPkAndMemberPkAndDeletedYN(
+                userDetails.getMemberPk(), channelPk, BaseTime.Yn.N);
+        if (!isParticipant) throw new ValidationException(ErrorCode.FORBIDDEN);
+
+        channelRepository.findById(channelPk)
+                .orElseThrow(() -> new ValidationException(ErrorCode.CHANNEL_NOT_FOUND));
+
+        S3Service.ChannelImageUrls urls = s3Service.uploadChannelImage(channelPk, image);
+
+        return ChannelImageUploadResponse.builder()
+                .originalUrl(urls.originalUrl())
+                .mediumUrl(urls.mediumUrl())
+                .build();
+    }
+
     public MessageSendResponse sendMessage(Long channelPk, MessageSendRequest request, CustomUserDetails userDetails) {
 
         Channel channel = channelRepository.findById(channelPk)
@@ -434,13 +454,25 @@ public class ChannelService {
         com.google.cloud.Timestamp sentAt = com.google.cloud.Timestamp.ofTimeSecondsAndNanos(
                 sentAtMillis / 1000, (int) ((sentAtMillis % 1000) * 1_000_000));
 
+        boolean hasText  = request.getText() != null && !request.getText().isBlank();
+        boolean hasImage = request.getImageUrl() != null && !request.getImageUrl().isBlank();
+        String displayText = hasText ? request.getText().trim() : "[이미지]";
+
         Map<String, Object> messageData = new HashMap<>();
         messageData.put("type", "user_message");
         messageData.put("schemaVersion", 1);
         messageData.put("senderType", "user");
         messageData.put("source", "server");
         messageData.put("senderId", senderId);
-        messageData.put("text", request.getText().trim());
+        if (hasText) {
+            messageData.put("text", request.getText().trim());
+        }
+        if (hasImage) {
+            messageData.put("imageUrl", request.getImageUrl());
+            if (request.getImageOriginalUrl() != null && !request.getImageOriginalUrl().isBlank()) {
+                messageData.put("imageOriginalUrl", request.getImageOriginalUrl());
+            }
+        }
         messageData.put("sentAt", sentAt);
         messageData.put("memberListPk", memberListPk);
         if (request.getParentMessageId() != null) {
@@ -464,7 +496,7 @@ public class ChannelService {
 
         // 채널 목록 미리보기용 lastMessage 업데이트
         Map<String, Object> lastMessage = new HashMap<>();
-        lastMessage.put("text", request.getText().trim());
+        lastMessage.put("text", displayText);
         lastMessage.put("senderId", senderId);
         lastMessage.put("sentAt", sentAt);
         lastMessage.put("type", "user_message");
@@ -491,7 +523,7 @@ public class ChannelService {
                     .senderId(userDetails.getMemberPk())
                     .boxNickname(boxNickname)
                     .memberListPk(memberListPk)
-                    .text(request.getText().trim())
+                    .text(displayText)
                     .type("user_message")
                     .build();
             alarmService.dispatch(pushRequest);

@@ -21,14 +21,10 @@ public class BoxHoldingPolicy extends BaseTime {
     @JoinColumn(name = "box_pk", nullable = false, unique = true)
     private Box box;
 
-    @Column(name = "max_hold_days_per_membership")
-    private Integer maxHoldDaysPerMembership;
+    @Column(name = "default_hold_days")
+    private Integer defaultHoldDays;
 
-    @Column(name = "max_hold_count")
-    private Integer maxHoldCount;
-
-    public void update(Integer maxHoldDaysPerMembership, Integer maxHoldCount) {
-        this.maxHoldDaysPerMembership = maxHoldDaysPerMembership;
-        this.maxHoldCount = maxHoldCount;
+    public void update(Integer defaultHoldDays) {
+        this.defaultHoldDays = defaultHoldDays;
     }
 }

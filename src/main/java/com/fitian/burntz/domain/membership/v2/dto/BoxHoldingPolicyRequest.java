@@ -5,6 +5,5 @@ import lombok.Getter;
 @Getter
 public class BoxHoldingPolicyRequest {
 
-    private Integer maxHoldDaysPerMembership;
-    private Integer maxHoldCount;
+    private Integer defaultHoldDays;
 }

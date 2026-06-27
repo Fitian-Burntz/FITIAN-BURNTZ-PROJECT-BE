@@ -48,6 +48,64 @@ public class S3Service {
         deleteObject("images/profile/" + memberPk + "/" + boxPk + "/thumb.jpg");
     }
 
+    public ChannelImageUrls uploadChannelImage(Long channelPk, MultipartFile file) {
+        validateChannelImageFile(file);
+
+        String uuid = java.util.UUID.randomUUID().toString();
+        String ext = resolveExtension(file.getContentType());
+        String originalKey = "images/channel/" + channelPk + "/" + uuid + "/original." + ext;
+        String mediumKey   = "images/channel/" + channelPk + "/" + uuid + "/medium.jpg";
+
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(originalKey)
+                            .contentType(file.getContentType())
+                            .build(),
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
+            );
+            upload(mediumKey, resizeChannelMedium(file));
+        } catch (IOException e) {
+            throw new RuntimeException("채널 이미지 처리 중 오류가 발생했습니다.", e);
+        }
+
+        String baseUrl = "https://" + bucket + ".s3." + region + ".amazonaws.com/";
+        return new ChannelImageUrls(baseUrl + originalKey, baseUrl + mediumKey);
+    }
+
+    private byte[] resizeChannelMedium(MultipartFile file) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Thumbnails.of(file.getInputStream())
+                .size(1080, 1080)
+                .keepAspectRatio(true)
+                .outputFormat("jpg")
+                .toOutputStream(out);
+        return out.toByteArray();
+    }
+
+    private void validateChannelImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("이미지 파일이 없습니다.");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+        }
+        if (file.getSize() > 20 * 1024 * 1024) {
+            throw new IllegalArgumentException("파일 크기는 20MB를 초과할 수 없습니다.");
+        }
+    }
+
+    private String resolveExtension(String contentType) {
+        return switch (contentType) {
+            case "image/png"  -> "png";
+            case "image/webp" -> "webp";
+            case "image/gif"  -> "gif";
+            default           -> "jpg";
+        };
+    }
+
     private byte[] resizeMedium(MultipartFile file) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Thumbnails.of(file.getInputStream())
@@ -102,4 +160,6 @@ public class S3Service {
     }
 
     public record ProfileImageUrls(String mediumUrl, String thumbUrl) {}
+
+    public record ChannelImageUrls(String originalUrl, String mediumUrl) {}
 }
