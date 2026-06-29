@@ -466,6 +466,8 @@ public class ChannelService {
         messageData.put("senderId", senderId);
         if (hasText) {
             messageData.put("text", request.getText().trim());
+        } else if (hasImage) {
+            messageData.put("text", "업데이트시 이미지가 보입니다.");
         }
         if (hasImage) {
             messageData.put("imageUrl", request.getImageUrl());
