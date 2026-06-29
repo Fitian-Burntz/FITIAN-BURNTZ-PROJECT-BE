@@ -89,7 +89,16 @@ public class MemberService {
         Member member = memberRepository.findActiveById(memberPk)
                 .orElseThrow(() -> new ValidationException(ErrorCode.USER_NOT_FOUND));
 
-        return MemberDto.from(member);
+        String thumbUrl = null;
+        Long lastVisitedBoxPk = member.getLastVisitedBoxPk();
+        if (lastVisitedBoxPk != null) {
+            thumbUrl = memberListRepository
+                    .findActiveByBoxPkAndMemberPk(lastVisitedBoxPk, memberPk)
+                    .map(MemberList::getProfileImageUrl)
+                    .orElse(null);
+        }
+
+        return MemberDto.from(member, thumbUrl);
     }
 
     /** member 정보 수정 (default nickname, gender) **/

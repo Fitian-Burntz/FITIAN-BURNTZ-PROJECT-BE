@@ -18,6 +18,7 @@ public class MemberDto {
     private String gender;   // enum이면 .name() 사용
     private String provider;
     private Long lastVisitedBoxPk;
+    private String thumbUrl;
 
     public static MemberDto from(Member member) {
         Objects.requireNonNull(member, "member required.");
@@ -30,6 +31,21 @@ public class MemberDto {
                 .gender(member.getGender() == null ? null : member.getGender().name())
                 .provider(member.getProvider())
                 .lastVisitedBoxPk(member.getLastVisitedBoxPk())
+                .build();
+    }
+
+    public static MemberDto from(Member member, String thumbUrl) {
+        Objects.requireNonNull(member, "member required.");
+
+        return MemberDto.builder()
+                .memberPk(member.getMemberPk())
+                .memberId(member.getMemberId())
+                .nickname(member.getNickname())
+                .email(member.getEmail())
+                .gender(member.getGender() == null ? null : member.getGender().name())
+                .provider(member.getProvider())
+                .lastVisitedBoxPk(member.getLastVisitedBoxPk())
+                .thumbUrl(thumbUrl)
                 .build();
     }
 }
