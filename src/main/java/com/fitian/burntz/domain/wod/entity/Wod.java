@@ -43,9 +43,9 @@ public class Wod extends BaseTime {
     @Column(name = "wod_date")
     private LocalDate wodDate;
 
-    // Wod update — null이면 기존값 유지
+    // Wod update — null이면 기존값 유지, 빈 문자열("")이면 null로 초기화(타이틀 제거)
     public void update(String wodTitle, String wodScript, WodType wodType) {
-        if (wodTitle != null && !wodTitle.isBlank()) this.wodTitle = wodTitle;
+        if (wodTitle != null) this.wodTitle = wodTitle.isBlank() ? null : wodTitle;
         if (wodScript != null && !wodScript.isBlank()) this.wodScript = wodScript;
         if (wodType != null) this.wodType = wodType;
         setUpdatedAtToNow();
